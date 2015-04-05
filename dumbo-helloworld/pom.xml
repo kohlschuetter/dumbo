@@ -1,0 +1,52 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.evernote.ai.dumbo</groupId>
+    <artifactId>dumbo-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>dumbo-helloworld</artifactId>
+
+  <properties>
+    <mainClass>com.evernote.ai.helloworld.HelloWorldApp</mainClass>
+    <dumbo.project.basedir>${project.basedir}/..</dumbo.project.basedir>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.evernote.ai.dumbo</groupId>
+      <artifactId>dumbo-core</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.evernote.ai.dumbo</groupId>
+      <artifactId>dumbo-extensions</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <!-- Call "mvn exec:java" to run this app from the command line -->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>${mainClass}</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>ConsoleDemo</id>
+      <properties>
+        <mainClass>com.evernote.ai.helloworld.console.ConsoleDemoApp</mainClass>
+      </properties>
+    </profile>
+  </profiles>
+</project>

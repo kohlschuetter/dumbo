@@ -1,0 +1,45 @@
+<div id="noLongerCurrentTopCallout"
+  class="bs-callout bs-callout-danger hidden"
+  style="margin-top: -50px; position: fixed; width: 100%; z-index: 10000">This
+  window is no longer being updated.</div>
+<div id="noLongerCurrentModal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Window is no longer current</h4>
+      </div>
+      <div class="modal-body">
+        <p>This window is no longer being updated; probably because
+          the application terminated, or you have opened another window.</p>
+      </div>
+      <div class="modal-footer">
+        <a
+          href="javascript:$('BODY').addClass('noLongerCurrent');$('#noLongerCurrentTopCallout').removeClass('hidden');$('#noLongerCurrentModal').modal('hide');"><button
+            type="button" class="btn btn-default">Keep it open</button></a>
+        <a href="javascript:window.close()"><button type="button"
+            class="btn btn-primary">Close Window</button></a>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  $(document)
+      .ready(
+          function() {
+            if ($.app && $.app.console) {
+              $.app.console.onClose = function() {
+                if ($("#noLongerCurrentModal").size() == 0) {
+                  $('BODY').addClass('noLongerCurrent');
+                  var callout = $('#noLongerCurrentTopCallout');
+                  callout.removeClass('bs-callout-danger');
+                  callout.addClass('bs-callout-info');
+                  callout
+                      .text("The application has been shut down. This window is no longer being updated.");
+                  callout.removeClass('hidden');
+                } else {
+                  $("#noLongerCurrentModal").modal("show");
+                }
+              };
+            }
+          });
+</script>

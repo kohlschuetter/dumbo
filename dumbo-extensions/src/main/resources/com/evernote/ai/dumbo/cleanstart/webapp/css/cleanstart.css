@@ -1,0 +1,7 @@
+BODY {
+  visibility: hidden;
+}
+
+BODY.visible {
+  visibility: visible !important;
+}

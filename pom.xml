@@ -1,0 +1,52 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.evernote.ai.test</groupId>
+    <artifactId>ai-test-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <groupId>com.evernote.ai.dumbo</groupId>
+  <artifactId>dumbo-parent</artifactId>
+  <packaging>pom</packaging>
+
+  <properties>
+    <dumbo.project.basedir>${project.basedir}</dumbo.project.basedir>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <!-- invoke with mvn license:format -->
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <configuration>
+          <header>${dumbo.project.basedir}/LICENSE</header>
+          <includes>
+            <include>src/main/java/com/evernote/ai/dumbo/**/*.java</include>
+            <include>src/test/java/com/evernote/ai/dumbo/**/*.java</include>
+          </includes>
+          <excludes>
+            <exclude>**/package-info.java</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <modules>
+    <module>dumbo-core</module>
+    <module>dumbo-extensions</module>
+    <module>dumbo-helloworld</module>
+  </modules>
+</project>

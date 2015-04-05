@@ -1,0 +1,12 @@
+This folder contains non-mandatory system tools used by dumbo.
+Please install the binaries to /usr/local/bin
+
+NOTE: At this point, the only supported platform is OS X (tested with 10.9)
+
+modifierkeys
+============
+
+Checks whether one or more modifier keys (shift, command, control, etc.) are held down.
+
+Pre-compiled binary for OS X
+Compilation instructions included in the source file: modifierkeys.m
