@@ -32,7 +32,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.jabsorb.JSONRPCBridge;
-import org.jabsorb.JSONRPCResult;
+import org.jabsorb.serializer.response.results.FailedResult;
+import org.jabsorb.serializer.response.results.JSONRPCResult;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -121,8 +122,8 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       result = bridge.call(new Object[] {request, response}, jsonRequest);
     } catch (UnsupportedEncodingException | RuntimeException e) {
       result =
-          new JSONRPCResult(JSONRPCResult.CODE_ERR_PARSE, null,
-              JSONRPCResult.MSG_ERR_PARSE);
+          new FailedResult(FailedResult.CODE_ERR_PARSE, null,
+              FailedResult.MSG_ERR_PARSE);
     }
 
     ByteBuffer byteBuffer = UTF_8.encode(result.toString());
