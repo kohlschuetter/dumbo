@@ -34,8 +34,20 @@ import com.evernote.ai.dumbo.ServerApp;
  * strings.
  */
 public final class Console implements Closeable {
-  private final StringWriter sw = new StringWriter();
-  private final PrintWriter consoleOut = new PrintWriter(sw);
+  private final StringWriter sw = new StringWriter() {
+    @Override
+    public void flush() {
+      super.flush();
+      synchronized (consoleService) {
+        if (markedDontFlush) {
+          return;
+        }
+        addChunkFromBufferToCache();
+        consoleService.notifyAll();
+      }
+    }
+  };
+  private final PrintWriter consoleOut = new PrintWriter(sw, true);
   private final ServerApp app;
   private volatile boolean closed = false;
   private volatile ShutdownNotice shutdownRequested = null;
