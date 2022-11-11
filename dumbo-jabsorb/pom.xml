@@ -13,6 +13,7 @@
     </parent>
 
     <properties>
+        <kohlschutter.project.notice.file>${project.basedir}/NOTICE</kohlschutter.project.notice.file>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
         <file.encoding>UTF-8</file.encoding>
@@ -46,14 +47,6 @@
             </plugin>
 
             <plugin>
-                <groupId>com.mycila</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
@@ -71,6 +64,30 @@
                         <include>org/jabsorb/**/*.java</include>
                     </includes>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <!-- invoke with: mvn license:format -->
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <configuration>
+                    <failIfMissing>${license.strict}</failIfMissing>
+                    <header>${kohlschutter.project.notice.file}</header>
+                    <includes>
+                        <include>src/main/java/org/jabsorb/**/*.java</include>
+                        <include>src/test/java/org/jabsorb/**/*.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/package-info.java</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
