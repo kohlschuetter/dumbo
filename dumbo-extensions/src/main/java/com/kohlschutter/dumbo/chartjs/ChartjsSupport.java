@@ -21,8 +21,8 @@ import com.kohlschutter.dumbo.Extension;
 /**
  * Helper class to add Chart.js support to the demo server.
  * 
- * @see dumbo-helloworld
- * @see http://www.chartjs.org/
+ * @see "dumbo-helloworld"
+ * @see "http://www.chartjs.org/"
  */
 public final class ChartjsSupport extends Extension {
   @Override

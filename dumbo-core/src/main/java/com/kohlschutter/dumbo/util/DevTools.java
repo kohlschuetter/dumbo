@@ -58,8 +58,12 @@ public final class DevTools {
   }
 
   /**
-   * @param url
-   * @throws IOException
+   * Opens some URL, using some system API.
+   * 
+   * FIXME: This is currently implemented for macOS only.
+   * 
+   * @param url The URL to open.
+   * @throws IOException on error.
    */
   public static void openURL(String url) throws IOException {
     Runtime.getRuntime().exec(new String[] {"/usr/bin/open", url});

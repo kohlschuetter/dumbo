@@ -19,6 +19,8 @@
         <maven.compile.encoding>UTF-8</maven.compile.encoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+
+        <javadoc.strict>false</javadoc.strict>
     </properties>
 
     <build>
@@ -47,6 +49,15 @@
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
                 <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <failOnWarnings>false</failOnWarnings>
                     <skip>true</skip>
                 </configuration>
             </plugin>

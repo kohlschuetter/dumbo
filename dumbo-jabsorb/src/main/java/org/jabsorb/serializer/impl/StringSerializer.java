@@ -26,6 +26,8 @@
 
 package org.jabsorb.serializer.impl;
 
+import java.nio.charset.StandardCharsets;
+
 import org.jabsorb.serializer.AbstractSerializer;
 import org.jabsorb.serializer.MarshallException;
 import org.jabsorb.serializer.ObjectMatch;
@@ -54,16 +56,19 @@ public class StringSerializer extends AbstractSerializer
   private static Class<?>[] _JSONClasses = new Class[] { String.class,
       Integer.class };
 
+  @Override
   public Class<?>[] getJSONClasses()
   {
     return _JSONClasses;
   }
 
+  @Override
   public Class<?>[] getSerializableClasses()
   {
     return _serializableClasses;
   }
 
+  @Override
   public Object marshall(SerializerState state, Object p, Object o)
       throws MarshallException
   {
@@ -73,7 +78,7 @@ public class StringSerializer extends AbstractSerializer
     }
     else if (o instanceof byte[])
     {
-      return new String((byte[]) o);
+      return new String((byte[]) o, StandardCharsets.UTF_8);
     }
     else if (o instanceof char[])
     {
@@ -85,6 +90,7 @@ public class StringSerializer extends AbstractSerializer
     }
   }
 
+  @Override
   public ObjectMatch tryUnmarshall(SerializerState state, Class<?> clazz,
       Object jso) throws UnmarshallException
   {
@@ -108,6 +114,7 @@ public class StringSerializer extends AbstractSerializer
     return ObjectMatch.SIMILAR;
   }
 
+  @Override
   public Object unmarshall(SerializerState state, Class<?> clazz, Object jso)
       throws UnmarshallException
   {
@@ -119,7 +126,7 @@ public class StringSerializer extends AbstractSerializer
     }
     else if (clazz == byte[].class)
     {
-      returnValue = val.getBytes();
+      returnValue = val.getBytes(StandardCharsets.UTF_8);
     }
     else if (clazz == char[].class)
     {

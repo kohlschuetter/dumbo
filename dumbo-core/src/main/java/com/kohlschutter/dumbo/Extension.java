@@ -188,6 +188,10 @@ public abstract class Extension {
 
   /**
    * Performs dependency resolution/checks.
+   * 
+   * @param app The server app
+   * @param extensions The extensions to check.
+   * @throws ExtensionDependencyException on dependency conflict.
    */
   public void resolveDependencies(final ServerApp app, List<Extension> extensions)
       throws ExtensionDependencyException {

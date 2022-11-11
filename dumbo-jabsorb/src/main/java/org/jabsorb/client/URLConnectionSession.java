@@ -30,6 +30,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,11 +53,13 @@ public class URLConnectionSession implements Session
     this.url = url;
   }
 
+  @Override
   public void close()
   {
     //Nothing to do
   }
 
+  @Override
   public JSONObject sendAndReceive(JSONObject message)
   {
     try
@@ -64,22 +67,23 @@ public class URLConnectionSession implements Session
       URLConnection connection= url.openConnection();
       connection.setDoOutput(true);
       // As per http://java.sun.com/docs/books/tutorial/networking/urls/readingWriting.html
-      Writer request = new OutputStreamWriter(connection.getOutputStream());
-      request.write(message.toString());
-      request.close();
+      try (Writer request = new OutputStreamWriter(connection.getOutputStream(),
+          StandardCharsets.UTF_8)) {
+        request.write(message.toString());
+      }
       // TODO the following sequence of reading a string out of output stream is too complicated
       // there must be a simpler way
       StringBuffer builder = new StringBuffer(1024);
       char[] buffer = new char[1024];
-      Reader reader = new InputStreamReader(connection.getInputStream());
-      while (true)
-      {
-        int bytesRead = reader.read(buffer);
-        if (bytesRead < 0)
-          break;
-        builder.append(buffer, 0, bytesRead);
+      try (Reader reader = new InputStreamReader(connection.getInputStream(),
+          StandardCharsets.UTF_8)) {
+        while (true) {
+          int bytesRead = reader.read(buffer);
+          if (bytesRead < 0)
+            break;
+          builder.append(buffer, 0, bytesRead);
+        }
       }
-      reader.close();
       JSONTokener tokener = new JSONTokener(builder.toString());
       Object rawResponseMessage = tokener.nextValue();
       JSONObject responseMessage = (JSONObject) rawResponseMessage;

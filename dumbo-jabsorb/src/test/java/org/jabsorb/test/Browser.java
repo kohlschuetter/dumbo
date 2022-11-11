@@ -28,11 +28,14 @@ package org.jabsorb.test;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -63,24 +66,24 @@ public class Browser implements Serializable
 
     protected synchronized void load() throws IOException
     {
-      BufferedReader in = new BufferedReader(new FileReader(dataFile));
-      String line;
-      while ((line = in.readLine()) != null)
-      {
-        userAgents.add(line);
+      try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(
+          dataFile), StandardCharsets.UTF_8))) {
+        String line;
+        while ((line = in.readLine()) != null)
+        {
+          userAgents.add(line);
+        }
       }
-      in.close();
     }
 
     protected synchronized void save() throws IOException
     {
-      PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
-          dataFile)));
-      for (String userAgent : userAgents)
-      {
-        out.println(userAgent);
+      try (PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
+          new FileOutputStream(dataFile), StandardCharsets.UTF_8)))) {
+        for (String userAgent : userAgents) {
+          out.println(userAgent);
+        }
       }
-      out.close();
     }
 
     protected boolean addUserAgent(String userAgent) throws IOException

@@ -75,7 +75,7 @@ public abstract class SimpleServerApp extends ServerApp {
       }
       try {
         clazz.getConstructor();
-        return clazz.newInstance();
+        return clazz.getDeclaredConstructor().newInstance();
       } catch (NoSuchMethodException e) {
       }
     } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
@@ -140,8 +140,6 @@ public abstract class SimpleServerApp extends ServerApp {
 
   /**
    * This method will be called upon application start.
-   * 
-   * @param consoleOut Will log to the browser, either to its console or a dedicated element.
    */
   protected void onAppStart() {
   }

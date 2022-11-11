@@ -21,7 +21,7 @@ import com.kohlschutter.dumbo.Extension;
 /**
  * Helper class to add required console-specific resources to the demo server.
  * 
- * @see dumbo-helloworld
+ * See {@code dumbo-helloworld}.
  */
 public class ConsoleSupport extends Extension {
   @Override

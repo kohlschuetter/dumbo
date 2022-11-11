@@ -30,10 +30,11 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.lang.reflect.AccessibleObject;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -248,6 +249,7 @@ public class JSONRPCBridge implements Serializable
      */
     private final static long serialVersionUID = 2;
 
+    @Override
     public Object transform(Throwable t)
     {
       return t;
@@ -382,16 +384,16 @@ public class JSONRPCBridge implements Serializable
       {
         if (serializersFile.exists())
         {
-          BufferedReader reader = new BufferedReader(new FileReader(
-              serializersFile));
-          String line;
-          final List<Serializer> serializers = new ArrayList<Serializer>();
-          while ((line = reader.readLine()) != null)
-          {
-            log.info("Creating Serializer: " + line);
-            serializers.add((Serializer) Class.forName(line).newInstance());
+          try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(
+              serializersFile), StandardCharsets.UTF_8))) {
+            String line;
+            final List<Serializer> serializers = new ArrayList<Serializer>();
+            while ((line = reader.readLine()) != null) {
+              log.info("Creating Serializer: " + line);
+              serializers.add((Serializer) Class.forName(line).newInstance());
+            }
+            return serializers;
           }
-          return serializers;
         }
       }
       catch (Exception e)
@@ -410,6 +412,7 @@ public class JSONRPCBridge implements Serializable
    * @return A serializer state class as described by the properties file or the
    *         FixupCircRefAndNonPrimitiveDupes.class if nothing is found
    */
+  @SuppressWarnings("unchecked")
   private static Class<? extends SerializerState> getInitSerializerStateClass(
       Properties properties)
   {

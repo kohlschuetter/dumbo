@@ -173,7 +173,7 @@ public final class Console implements Closeable {
    * This can be used to logically group content before sending it to the client.
    * 
    * @throws IOException
-   * @see {@link #resumeFlushing()}
+   * @see #resumeFlushing()
    */
   public void suspendFlushing() throws IOException {
     synchronized (consoleService) {
@@ -194,7 +194,7 @@ public final class Console implements Closeable {
    * This can be used to logically group content before sending it to the client.
    * 
    * @throws IOException
-   * @see {@link #suspendFlushing()}
+   * @see #suspendFlushing()
    */
   public void resumeFlushing() throws IOException {
     synchronized (consoleService) {

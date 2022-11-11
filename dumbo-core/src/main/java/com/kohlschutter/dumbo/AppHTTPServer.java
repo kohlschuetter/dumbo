@@ -44,7 +44,11 @@ public class AppHTTPServer {
   private final String path;
   private Thread serverThread;
 
-  private static final URL getWebappBaseURL(final ServerApp app) {
+  private final ContextHandlerCollection contextHandlers;
+  private boolean staticMode = false;
+  private final ServerApp app;
+
+  private static URL getWebappBaseURL(final ServerApp app) {
     URL u;
 
     u = app.getClass().getResource("webapp/");
@@ -64,9 +68,9 @@ public class AppHTTPServer {
   /**
    * Creates a new HTTP server for the given {@link ServerApp} on a free port.
    * 
-   * @throws IOException
-   * 
-   * @throws ExtensionDependencyException
+   * @param app The server app.
+   * @throws IOException on error
+   * @throws ExtensionDependencyException on dependency conflict.
    */
   public AppHTTPServer(final ServerApp app) throws IOException {
     this(app, getWebappBaseURL(app));
@@ -75,8 +79,11 @@ public class AppHTTPServer {
   /**
    * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
    * from the given URL path.
+   *
+   * @param app The server app.
+   * @param webappBaseURL The location of the resources that should be served.
    * 
-   * @throws ExtensionDependencyException
+   * @throws ExtensionDependencyException on dependency conflict.
    */
   public AppHTTPServer(final ServerApp app, final URL webappBaseURL) throws IOException {
     this(app, "", 0, webappBaseURL);
@@ -86,7 +93,10 @@ public class AppHTTPServer {
    * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
    * from the given URL path.
    * 
-   * @throws ExtensionDependencyException
+   * @param app The server app.
+   * @param path The base path for the server, {@code ""} for root.
+   * 
+   * @throws ExtensionDependencyException on error
    */
   public AppHTTPServer(final ServerApp app, final String path) throws IOException {
     this(app, path, (URL) null);
@@ -96,24 +106,26 @@ public class AppHTTPServer {
    * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
    * from the given URL path.
    * 
-   * @throws ExtensionDependencyException
+   * @param app The app.
+   * @param path The base path for the server, {@code ""} for root.
+   * @param webappBaseURL The location of the resources that should be served.
+   * 
+   * @throws ExtensionDependencyException on error
    */
   public AppHTTPServer(final ServerApp app, final String path, final URL webappBaseURL)
       throws IOException {
     this(app, path, 0, webappBaseURL != null ? webappBaseURL : getWebappBaseURL(app));
   }
 
-  private final ContextHandlerCollection contextHandlers;
-
-  private boolean staticMode = false;
-
-  private final ServerApp app;
-
   /**
    * Creates a new HTTP server for the given {@link ServerApp} on the given port, using web
    * resources from the given URL path.
+   *
+   * @param app The app.
+   * @param path The base path for the server, {@code ""} for root.
+   * @param webappBaseURL The location of the resources that should be served.
    * 
-   * @throws ExtensionDependencyException
+   * @throws ExtensionDependencyException on dependency conflict.
    */
   private AppHTTPServer(final ServerApp app, final String path, final int port,
       final URL webappBaseURL) throws IOException {
@@ -149,6 +161,13 @@ public class AppHTTPServer {
     server.setConnectors(new Connector[] {connector});
   }
 
+  /**
+   * Registers a web app context/
+   * 
+   * @param contextPrefix The context prefix.
+   * @param pathToWebApp The URL pointing to the resources that should be served.
+   * @return The context.
+   */
   public WebAppContext registerContext(final String contextPrefix, final URL pathToWebApp) {
     return registerContext(new WebAppContext(pathToWebApp.toExternalForm(), contextPrefix));
   }

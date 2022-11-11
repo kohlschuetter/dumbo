@@ -25,8 +25,9 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Helper class to add Bootstrap.js support to the demo server.
  * 
- * @see dumbo-helloworld
+ * See {@code dumbo-helloworld}.
  */
+@SuppressWarnings("resource")
 public final class BootstrapSupport extends Extension {
   private static final String HTML_NO_LONGER_CURRENT;
   private final boolean extras;
