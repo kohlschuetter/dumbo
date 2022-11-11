@@ -35,8 +35,7 @@ import org.json.JSONObject;
 /**
  * Special result for when a specific exception is thrown by the server.
  */
-public class RemoteException extends FailedResult
-{
+public class RemoteException extends FailedResult {
   /**
    * Denotes that an exception was thrown on the server
    */
@@ -48,17 +47,14 @@ public class RemoteException extends FailedResult
    * @param id The id of the response
    * @param error The Exception which was thrown.
    */
-  public RemoteException(Object id, Object error)
-  {
+  public RemoteException(Object id, Object error) {
     super(CODE_REMOTE_EXCEPTION, id, error);
   }
 
   @Override
-  protected JSONObject createOutput() throws JSONException
-  {
+  protected JSONObject createOutput() throws JSONException {
     JSONObject o = super.createOutput();
-    if (getError() instanceof Throwable)
-    {
+    if (getError() instanceof Throwable) {
       Throwable e = (Throwable) getError();
       CharArrayWriter caw = new CharArrayWriter();
       e.printStackTrace(new PrintWriter(caw));
@@ -67,13 +63,11 @@ public class RemoteException extends FailedResult
       err.put("msg", e.getMessage());
       err.put("trace", caw.toString());
       o.put("error", err);
-    }
-    else
-    {
+    } else {
       // When using a customized implementation of ExceptionTransformer
       // an error result may be something other than Throwable. In this
       // case, it has to be a JSON compatible object, we will just store it
-      // to the 'error' property of the response. 
+      // to the 'error' property of the response.
       o.put("error", getError());
     }
 

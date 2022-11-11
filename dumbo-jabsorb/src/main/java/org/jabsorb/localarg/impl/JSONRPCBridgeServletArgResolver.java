@@ -33,16 +33,12 @@ import org.jabsorb.localarg.LocalArgResolveException;
 import org.jabsorb.localarg.LocalArgResolver;
 
 /**
- * A LocalArgResolver implementation that is registered by default on the
- * JSONRPCBridge and will replace an JSONRPCBridge argument on a called method
- * with the session specific bridge object.
+ * A LocalArgResolver implementation that is registered by default on the JSONRPCBridge and will
+ * replace an JSONRPCBridge argument on a called method with the session specific bridge object.
  */
-public class JSONRPCBridgeServletArgResolver implements LocalArgResolver
-{
-  public Object resolveArg(Object context) throws LocalArgResolveException
-  {
-    if (!(context instanceof HttpServletRequest))
-    {
+public class JSONRPCBridgeServletArgResolver implements LocalArgResolver {
+  public Object resolveArg(Object context) throws LocalArgResolveException {
+    if (!(context instanceof HttpServletRequest)) {
       throw new LocalArgResolveException("invalid context");
     }
 

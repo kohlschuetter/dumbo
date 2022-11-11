@@ -30,15 +30,12 @@ import java.util.Map;
 /**
  * A registry of transports serving JSON-RPC-Client
  */
-public class TransportRegistry
-{
+public class TransportRegistry {
 
   /**
-   * A factory used to create transport sessions. Register with
-   * #registerTransport.
+   * A factory used to create transport sessions. Register with #registerTransport.
    */
-  public interface SessionFactory
-  {
+  public interface SessionFactory {
     /**
      * Creates the new session
      * 
@@ -54,15 +51,12 @@ public class TransportRegistry
   private static TransportRegistry singleton;
 
   /**
-   * Use this function when there is no IOC container to rely on creating the
-   * factory.
+   * Use this function when there is no IOC container to rely on creating the factory.
    * 
    * @return singleton instance of the class, created if necessary.
    */
-  public synchronized static TransportRegistry i()
-  {
-    if (singleton == null)
-    {
+  public synchronized static TransportRegistry i() {
+    if (singleton == null) {
       singleton = new TransportRegistry();
     }
     return singleton;
@@ -76,8 +70,7 @@ public class TransportRegistry
   /**
    * Creates a new TransportRegistry
    */
-  public TransportRegistry()
-  {
+  public TransportRegistry() {
     this.registry = new HashMap<String, SessionFactory>();
   }
 
@@ -87,21 +80,16 @@ public class TransportRegistry
    * @param uriString The uri of the session
    * @return a URLConnectionSession
    */
-  public Session createSession(String uriString)
-  {
-    try
-    {
+  public Session createSession(String uriString) {
+    try {
       URI uri = new URI(uriString);
       SessionFactory found = registry.get(uri.getScheme());
-      if (found != null)
-      {
+      if (found != null) {
         return found.newSession(uri);
       }
       // Fallback
       return new URLConnectionSession(uri.toURL());
-    }
-    catch (Exception e)
-    {
+    } catch (Exception e) {
       throw new ClientError(e);
     }
   }
@@ -112,8 +100,7 @@ public class TransportRegistry
    * @param scheme The transport type
    * @param factory The session factory for the scheme
    */
-  public void registerTransport(String scheme, SessionFactory factory)
-  {
+  public void registerTransport(String scheme, SessionFactory factory) {
     registry.put(scheme, factory);
   }
 

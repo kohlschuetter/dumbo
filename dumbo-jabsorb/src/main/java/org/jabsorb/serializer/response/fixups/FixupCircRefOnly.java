@@ -5,24 +5,20 @@ import java.util.List;
 import org.jabsorb.serializer.MarshallException;
 
 /**
- * Use this class to make fixups for circular references. No duplicates are
- * fixed up.
+ * Use this class to make fixups for circular references. No duplicates are fixed up.
  * 
  * @author William Becker
  */
-public class FixupCircRefOnly extends UsingFixups
-{
+public class FixupCircRefOnly extends UsingFixups {
   @Override
-  public Object circularReferenceFound(List<Object> originalLocation, Object ref,
-      Object java) throws MarshallException
-  {
+  public Object circularReferenceFound(List<Object> originalLocation, Object ref, Object java)
+      throws MarshallException {
     return this.addFixUp(originalLocation, ref);
   }
 
   @Override
   public Object duplicateFound(List<Object> originalLocation, Object ref, Object java)
-      throws MarshallException
-  {
+      throws MarshallException {
     return null;
   }
 

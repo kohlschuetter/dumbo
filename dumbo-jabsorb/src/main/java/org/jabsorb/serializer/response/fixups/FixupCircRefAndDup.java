@@ -10,12 +10,10 @@ import org.jabsorb.serializer.MarshallException;
  * 
  * @author William Becker
  */
-public class FixupCircRefAndDup extends FixupCircRefOnly
-{
+public class FixupCircRefAndDup extends FixupCircRefOnly {
   @Override
   public Object duplicateFound(List<Object> originalLocation, Object ref, Object java)
-      throws MarshallException
-  {
+      throws MarshallException {
     return this.addFixUp(originalLocation, ref);
   }
 }

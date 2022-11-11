@@ -39,8 +39,7 @@ import org.json.JSONObject;
 /**
  * Formats the Java JSONObject object.
  */
-public class RawJSONObjectSerializer extends AbstractSerializer
-{
+public class RawJSONObjectSerializer extends AbstractSerializer {
   /**
    * Unique serialisation id.
    */
@@ -49,62 +48,50 @@ public class RawJSONObjectSerializer extends AbstractSerializer
   /**
    * Classes that this can serialise.
    */
-  private static Class<?>[] _serializableClasses = new Class[] { JSONObject.class };
+  private static Class<?>[] _serializableClasses = new Class[] {JSONObject.class};
 
   /**
    * Classes that this can serialise to.
    */
-  private static Class<?>[] _JSONClasses = new Class[] { JSONObject.class };
+  private static Class<?>[] _JSONClasses = new Class[] {JSONObject.class};
 
-  public Class<?>[] getJSONClasses()
-  {
+  public Class<?>[] getJSONClasses() {
     return _JSONClasses;
   }
 
-  public Class<?>[] getSerializableClasses()
-  {
+  public Class<?>[] getSerializableClasses() {
     return _serializableClasses;
   }
 
-  public Object marshall(SerializerState state, Object p, Object o)
-      throws MarshallException
-  {
+  public Object marshall(SerializerState state, Object p, Object o) throws MarshallException {
     // reprocess the raw json in order to fixup circular references and duplicates
     JSONObject jsonIn = (JSONObject) o;
     JSONObject jsonOut = new JSONObject();
     String key = null;
-    try
-    {
+    try {
       Iterator<String> i = jsonIn.keys();
-      while (i.hasNext())
-      {
+      while (i.hasNext()) {
         key = i.next();
 
         Object j = ser.marshall(state, o, jsonIn.opt(key), key);
         jsonOut.put(key, j);
       }
-    }
-    catch (MarshallException e)
-    {
+    } catch (MarshallException e) {
       throw new MarshallException("JSONObject key " + key + " " + e.getMessage(), e);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new MarshallException("JSONObject key " + key + " " + e.getMessage(), e);
     }
     return jsonOut;
   }
 
-  public ObjectMatch tryUnmarshall(SerializerState state, Class<?> clazz,
-      Object jso) throws UnmarshallException
-  {
+  public ObjectMatch tryUnmarshall(SerializerState state, Class<?> clazz, Object jso)
+      throws UnmarshallException {
     state.setSerialized(jso, ObjectMatch.OKAY);
     return ObjectMatch.OKAY;
   }
 
   public Object unmarshall(SerializerState state, Class<?> clazz, Object jso)
-      throws UnmarshallException
-  {
+      throws UnmarshallException {
     state.setSerialized(jso, jso);
     return jso;
   }

@@ -28,8 +28,7 @@ import org.json.JSONObject;
 /**
  * Transport session. May have state associated with it.
  */
-public interface Session
-{
+public interface Session {
   /**
    * Synchronously send JSON message and receive the result
    * 

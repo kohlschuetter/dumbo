@@ -16,103 +16,104 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class AsyncSessionUtil {
-	private static final Logger log = LoggerFactory.getLogger(AsyncSessionUtil.class);
+  private static final Logger log = LoggerFactory.getLogger(AsyncSessionUtil.class);
 
-	public static Session toSyncSession(final AsyncSession asyncSession) {
-		// unwrap if possible
-		if (asyncSession instanceof AsyncedSyncSession) {
-			return ((AsyncedSyncSession)asyncSession).getSession();
-		}
+  public static Session toSyncSession(final AsyncSession asyncSession) {
+    // unwrap if possible
+    if (asyncSession instanceof AsyncedSyncSession) {
+      return ((AsyncedSyncSession) asyncSession).getSession();
+    }
 
-		return new SyncedAsyncSession(asyncSession);
-	}
+    return new SyncedAsyncSession(asyncSession);
+  }
 
-	public static AsyncSession toAsyncSession(final Session session) {
-		// unwrap if possible
-		if (session instanceof SyncedAsyncSession) {
-			return ((SyncedAsyncSession)session).getAsyncSession();
-		}
+  public static AsyncSession toAsyncSession(final Session session) {
+    // unwrap if possible
+    if (session instanceof SyncedAsyncSession) {
+      return ((SyncedAsyncSession) session).getAsyncSession();
+    }
 
-		return new AsyncedSyncSession(session);
-	}
+    return new AsyncedSyncSession(session);
+  }
 
-	private static class SyncedAsyncSession implements Session {
-		private final AsyncSession asyncSession;
+  private static class SyncedAsyncSession implements Session {
+    private final AsyncSession asyncSession;
 
-		public SyncedAsyncSession(final AsyncSession asyncSession) {
-			this.asyncSession = asyncSession;
-		}
+    public SyncedAsyncSession(final AsyncSession asyncSession) {
+      this.asyncSession = asyncSession;
+    }
 
-		/**
-		 * @return the asyncSession
-		 */
-		public AsyncSession getAsyncSession() {
-			return asyncSession;
-		}
+    /**
+     * @return the asyncSession
+     */
+    public AsyncSession getAsyncSession() {
+      return asyncSession;
+    }
 
-		public JSONObject sendAndReceive(final JSONObject message) {
-			final Future<JSONObject> result = asyncSession.send(message);
+    public JSONObject sendAndReceive(final JSONObject message) {
+      final Future<JSONObject> result = asyncSession.send(message);
 
-			JSONObject response = null;
-			try {
-				response = result.get();
-			} catch (final InterruptedException e) {
-				log.error("sendAndReceive was interrupted", e);
-			} catch (final ExecutionException e) {
-				log.error("sendAndReceive could not properly execute", e);
-			}
+      JSONObject response = null;
+      try {
+        response = result.get();
+      } catch (final InterruptedException e) {
+        log.error("sendAndReceive was interrupted", e);
+      } catch (final ExecutionException e) {
+        log.error("sendAndReceive could not properly execute", e);
+      }
 
-			return response;
-		}
+      return response;
+    }
 
-		public void close() {
-			asyncSession.close();
-		}
-	}
+    public void close() {
+      asyncSession.close();
+    }
+  }
 
-	private static class AsyncedSyncSession implements AsyncSession {
-		private final Session session;
+  private static class AsyncedSyncSession implements AsyncSession {
+    private final Session session;
 
-		public AsyncedSyncSession(final Session session) {
-			this.session = session;
-		}
+    public AsyncedSyncSession(final Session session) {
+      this.session = session;
+    }
 
-		/**
-		 * @return the session
-		 */
-		public Session getSession() {
-			return session;
-		}
+    /**
+     * @return the session
+     */
+    public Session getSession() {
+      return session;
+    }
 
-		public Future<JSONObject> send(final JSONObject request) {
-			return send(request, null);
-		}
+    public Future<JSONObject> send(final JSONObject request) {
+      return send(request, null);
+    }
 
-		public Future<JSONObject> send(final JSONObject request, final AsyncResultCallback<AsyncSession, JSONObject, JSONObject> callback) {
-			final SettableFuture<JSONObject> result = new SettableFuture<JSONObject>();
+    public Future<JSONObject> send(final JSONObject request,
+        final AsyncResultCallback<AsyncSession, JSONObject, JSONObject> callback) {
+      final SettableFuture<JSONObject> result = new SettableFuture<JSONObject>();
 
-			new Thread() {
-				@Override
-				public void run() {
-					final JSONObject response = session.sendAndReceive(request);
+      new Thread() {
+        @Override
+        public void run() {
+          final JSONObject response = session.sendAndReceive(request);
 
-					result.set(response);
+          result.set(response);
 
-					if (callback != null) {
-						try {
-							callback.onAsyncResult(AsyncedSyncSession.this, result, request);
-						} catch (final Exception e) {
-							throw new RuntimeException(e);
-						}
-					}
-				}
-			}.start();
+          if (callback != null) {
+            try {
+              callback.onAsyncResult(AsyncedSyncSession.this, result, request);
+            } catch (final Exception e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }
+      }.start();
 
-			return result;
-		}
+      return result;
+    }
 
-		public void close() {
-			session.close();
-		}
-	}
+    public void close() {
+      session.close();
+    }
+  }
 }

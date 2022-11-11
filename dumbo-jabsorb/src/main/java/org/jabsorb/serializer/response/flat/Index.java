@@ -5,8 +5,7 @@ package org.jabsorb.serializer.response.flat;
  * 
  * @author William Becker
  */
-class Index
-{
+class Index {
   /**
    * The index of the object
    */
@@ -15,8 +14,7 @@ class Index
   /**
    * Creates a new index. The value will be set later.
    */
-  public Index()
-  {
+  public Index() {
     this(null);
   }
 
@@ -25,8 +23,7 @@ class Index
    * 
    * @param index The index of the object
    */
-  public Index(String index)
-  {
+  public Index(String index) {
     this.index = index;
   }
 
@@ -35,8 +32,7 @@ class Index
    * 
    * @return The index
    */
-  public String getIndex()
-  {
+  public String getIndex() {
     return index;
   }
 
@@ -45,14 +41,12 @@ class Index
    * 
    * @param index The value to set
    */
-  public void setIndex(String index)
-  {
+  public void setIndex(String index) {
     this.index = index;
   }
 
   @Override
-  public String toString()
-  {
+  public String toString() {
     return index;
   }
 }

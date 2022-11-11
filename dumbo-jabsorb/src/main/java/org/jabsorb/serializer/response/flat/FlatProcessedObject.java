@@ -8,8 +8,7 @@ import org.json.JSONObject;
  * 
  * @author William Becker
  */
-class FlatProcessedObject extends ProcessedObject
-{
+class FlatProcessedObject extends ProcessedObject {
   /**
    * The index that will be assigned to this object
    */
@@ -21,8 +20,7 @@ class FlatProcessedObject extends ProcessedObject
    * @param object The object that is being processed
    * @param index The unique identifier for the object
    */
-  public FlatProcessedObject(Object object, String index)
-  {
+  public FlatProcessedObject(Object object, String index) {
     super(object);
     this.index = new Index(index);
   }
@@ -32,8 +30,7 @@ class FlatProcessedObject extends ProcessedObject
    * 
    * @param object The object that is being processed
    */
-  public FlatProcessedObject(Object object)
-  {
+  public FlatProcessedObject(Object object) {
     super(object);
     this.index = new Index();
   }
@@ -43,8 +40,7 @@ class FlatProcessedObject extends ProcessedObject
    * 
    * @param index The value the index should take
    */
-  public void setIndexValue(String index)
-  {
+  public void setIndexValue(String index) {
     this.index.setIndex(index);
   }
 
@@ -53,30 +49,26 @@ class FlatProcessedObject extends ProcessedObject
    * 
    * @return The index for the object
    */
-  public Index getIndex()
-  {
+  public Index getIndex() {
     return index;
   }
 
   @Override
-  public Object getSerialized()
-  {
+  public Object getSerialized() {
     final Object o = getActualSerialized();
-    if ((o == null) || (o instanceof JSONObject))
-    {
+    if ((o == null) || (o instanceof JSONObject)) {
       return getIndex();
     }
     return o;
   }
 
   /**
-   * Since getSerialized() gets the index if necessary, this is used to get the
-   * real serialized value when it is directly needed.
+   * Since getSerialized() gets the index if necessary, this is used to get the real serialized
+   * value when it is directly needed.
    * 
    * @return The actual serialized value.
    */
-  public Object getActualSerialized()
-  {
+  public Object getActualSerialized() {
     return super.getSerialized();
   }
 }

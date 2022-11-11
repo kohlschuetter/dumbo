@@ -27,11 +27,9 @@
 package org.jabsorb.serializer;
 
 /**
- * Thrown by Serializer objects when they are unable to Marshall the Java
- * objects into JSON objects.
+ * Thrown by Serializer objects when they are unable to Marshall the Java objects into JSON objects.
  */
-public class MarshallException extends Exception
-{
+public class MarshallException extends Exception {
   /**
    * Unique serialisation id.
    */
@@ -42,20 +40,18 @@ public class MarshallException extends Exception
    * 
    * @param msg the message to be displayed.
    */
-  public MarshallException(String msg)
-  {
+  public MarshallException(String msg) {
     super(msg);
   }
 
   /**
    * Creates a new MarshallException.
    * 
-   * @param msg   the message to be displayed
-   * @param cause the cause.  (A <tt>null</tt> value is permitted, and indicates
-   *              that the cause is nonexistent or unknown.)
+   * @param msg the message to be displayed
+   * @param cause the cause. (A <tt>null</tt> value is permitted, and indicates that the cause is
+   *          nonexistent or unknown.)
    */
-  public MarshallException(String msg, Throwable cause)
-  {
-    super(msg,cause);
+  public MarshallException(String msg, Throwable cause) {
+    super(msg, cause);
   }
 }

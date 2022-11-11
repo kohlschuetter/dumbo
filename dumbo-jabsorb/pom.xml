@@ -61,6 +61,17 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <!-- invoke with: mvn formatter:format -->
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>org/jabsorb/**/*.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

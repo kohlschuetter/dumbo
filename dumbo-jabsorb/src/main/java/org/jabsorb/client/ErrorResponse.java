@@ -31,8 +31,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Exception created from the JSON-RPC error response
  */
-public class ErrorResponse extends ClientError
-{
+public class ErrorResponse extends ClientError {
   /**
    * Generated id
    */
@@ -40,44 +39,39 @@ public class ErrorResponse extends ClientError
   private String message;
   private String trace;
 
-  public ErrorResponse(Integer code, String message, String trace)
-  {
+  public ErrorResponse(Integer code, String message, String trace) {
     super(ErrorResponse.formatMessage(code));
-    this.message= message;
-    this.trace= trace;
+    this.message = message;
+    this.trace = trace;
   }
 
-  private static String formatMessage(Integer code)
-  {
-    String result = code == null ? "JSONRPC error: " : "JSONRPC error code "
-        + code.toString() + ": ";
+  private static String formatMessage(Integer code) {
+    String result = code == null ? "JSONRPC error: " : "JSONRPC error code " + code.toString()
+        + ": ";
     return result;
   }
-  
-  /** Borrowed from org.apache.commons.lang.exception.NestableDelegate */ 
+
+  /** Borrowed from org.apache.commons.lang.exception.NestableDelegate */
   @Override
   public void printStackTrace(PrintStream out) {
-      synchronized (out) {
-          PrintWriter pw = new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8),
-            false);
-          printStackTrace(pw);
-          // Flush the PrintWriter before it's GC'ed.
-          pw.flush();
-      }
+    synchronized (out) {
+      PrintWriter pw = new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8), false);
+      printStackTrace(pw);
+      // Flush the PrintWriter before it's GC'ed.
+      pw.flush();
+    }
   }
 
   @Override
   public void printStackTrace(PrintWriter s) {
-	  super.printStackTrace(s);
-	  if (message != null)
-	  {
-	     s.print("\nCaused by: ");
-	     s.println(message);
-	  }
-	  if (trace != null)
-	  {
-		  s.println();
-		  s.println(trace);
-      }
+    super.printStackTrace(s);
+    if (message != null) {
+      s.print("\nCaused by: ");
+      s.println(message);
+    }
+    if (trace != null) {
+      s.println();
+      s.println(trace);
+    }
   }
 }

@@ -36,74 +36,69 @@ import org.jabsorb.serializer.response.fixups.FixupCircRefAndNonPrimitiveDupes;
  */
 public class AsyncClient {
 
-	/**
-	 * Maps proxy keys to proxies
-	 */
-	private final Map<Object, String> proxyMap;
+  /**
+   * Maps proxy keys to proxies
+   */
+  private final Map<Object, String> proxyMap;
 
-	/**
-	 * The serializer instance to use.
-	 */
-	private final JSONSerializer serializer;
+  /**
+   * The serializer instance to use.
+   */
+  private final JSONSerializer serializer;
 
-	/**
-	 * The transport session to use for this connection
-	 */
-	private final AsyncSession session;
+  /**
+   * The transport session to use for this connection
+   */
+  private final AsyncSession session;
 
-	/**
-	 * Create a client given a session
-	 *
-	 * @param session
-	 *            transport session to use for this connection
-	 */
-	public AsyncClient(final AsyncSession session) {
-		try {
-			this.session = session;
-			this.proxyMap = new HashMap<Object, String>();
-			// TODO: this might need a better way of initialising it
-			this.serializer = new JSONSerializer(
-					FixupCircRefAndNonPrimitiveDupes.class,
-					new FixupsCircularReferenceHandler());
-			this.serializer.registerDefaultSerializers();
-		} catch (final Exception e) {
-			throw new ClientError(e);
-		}
-	}
+  /**
+   * Create a client given a session
+   *
+   * @param session transport session to use for this connection
+   */
+  public AsyncClient(final AsyncSession session) {
+    try {
+      this.session = session;
+      this.proxyMap = new HashMap<Object, String>();
+      // TODO: this might need a better way of initialising it
+      this.serializer = new JSONSerializer(FixupCircRefAndNonPrimitiveDupes.class,
+          new FixupsCircularReferenceHandler());
+      this.serializer.registerDefaultSerializers();
+    } catch (final Exception e) {
+      throw new ClientError(e);
+    }
+  }
 
-	/**
-	 * Create a proxy for communicating with the remote service.
-	 *
-	 * @param key
-	 *            the remote object key
-	 * @param klass
-	 *            the class of the interface the remote object should adhere to
-	 * @return created proxy
-	 */
-	public Object openProxy(final String key, final Class<?> klass) {
-		final Object result = java.lang.reflect.Proxy.newProxyInstance(
-				klass.getClassLoader(), new Class[] { klass, AsyncProxy.class }, new AsyncProxyHandler(key, session, serializer));
+  /**
+   * Create a proxy for communicating with the remote service.
+   *
+   * @param key the remote object key
+   * @param klass the class of the interface the remote object should adhere to
+   * @return created proxy
+   */
+  public Object openProxy(final String key, final Class<?> klass) {
+    final Object result = java.lang.reflect.Proxy.newProxyInstance(klass.getClassLoader(),
+        new Class[] {klass, AsyncProxy.class}, new AsyncProxyHandler(key, session, serializer));
 
-		proxyMap.put(result, key);
-		return result;
-	}
+    proxyMap.put(result, key);
+    return result;
+  }
 
-	/**
-	 * Dispose of the proxy that is no longer needed
-	 *
-	 * @param proxy
-	 *            The proxy to close
-	 */
-	public void closeProxy(final Object proxy) {
-		proxyMap.remove(proxy);
-	}
+  /**
+   * Dispose of the proxy that is no longer needed
+   *
+   * @param proxy The proxy to close
+   */
+  public void closeProxy(final Object proxy) {
+    proxyMap.remove(proxy);
+  }
 
-	/**
-	 * Allow access to the serializer
-	 *
-	 * @return The serializer for this class
-	 */
-	public JSONSerializer getSerializer() {
-		return serializer;
-	}
+  /**
+   * Allow access to the serializer
+   *
+   * @return The serializer for this class
+   */
+  public JSONSerializer getSerializer() {
+    return serializer;
+  }
 }

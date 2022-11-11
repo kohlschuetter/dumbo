@@ -37,11 +37,9 @@ import org.jabsorb.serializer.request.fixups.FixupsCircularReferenceHandler;
 import org.jabsorb.serializer.response.fixups.FixupCircRefAndNonPrimitiveDupes;
 import org.json.JSONObject;
 
-public class TestSerializer extends TestCase
-{
+public class TestSerializer extends TestCase {
   static final Map<Integer, String> TEST_MAP1 = new HashMap<Integer, String>();
-  static
-  {
+  static {
     TEST_MAP1.put(new Integer(1), "1");
     TEST_MAP1.put(new Integer(2), "2");
   }
@@ -51,52 +49,43 @@ public class TestSerializer extends TestCase
   SerializerState marshallerState;
 
   @Override
-  protected void setUp() throws Exception
-  {
-    ser = new JSONSerializer(FixupCircRefAndNonPrimitiveDupes.class, new FixupsCircularReferenceHandler());
+  protected void setUp() throws Exception {
+    ser = new JSONSerializer(FixupCircRefAndNonPrimitiveDupes.class,
+        new FixupsCircularReferenceHandler());
     ser.registerDefaultSerializers();
     ser.setMarshallClassHints(true);
   }
 
-  public void dontTestExtendedMaps() throws Exception
-  {
-    JSONObject json = (JSONObject) ser.marshall(marshallerState, null,
-        TEST_MAP1, "testMap1");
+  public void dontTestExtendedMaps() throws Exception {
+    JSONObject json = (JSONObject) ser.marshall(marshallerState, null, TEST_MAP1, "testMap1");
     System.out.println("Serialized: ");
     System.out.println(json.toString(2));
-    HashMap<Integer, String> unmarshalled = (HashMap<Integer, String>) ser
-        .unmarshall(HashMap.class, json);
+    HashMap<Integer, String> unmarshalled = (HashMap<Integer, String>) ser.unmarshall(HashMap.class,
+        json);
     assertEquals(TEST_MAP1, unmarshalled);
   }
 
   static final HashMap<Integer, String> TEST_MAP2 = new HashMap<Integer, String>();
-  static
-  {
+  static {
     TEST_MAP2.put(new Integer(1), "1");
     TEST_MAP2.put(new Integer(2), "2");
   }
 
-  public void dontTestMaps() throws Exception
-  {
-    JSONObject json = (JSONObject) ser.marshall(marshallerState, null,
-        TEST_MAP2, "testMap2");
+  public void dontTestMaps() throws Exception {
+    JSONObject json = (JSONObject) ser.marshall(marshallerState, null, TEST_MAP2, "testMap2");
     System.out.println("Serialized: ");
     System.out.println(json.toString(2));
-    HashMap<Integer, String> unmarshalled = (HashMap<Integer, String>) ser
-        .unmarshall(HashMap.class, json);
+    HashMap<Integer, String> unmarshalled = (HashMap<Integer, String>) ser.unmarshall(HashMap.class,
+        json);
     assertEquals(TEST_MAP2, unmarshalled);
   }
 
-  public void testWaggle() throws Exception
-  {
+  public void testWaggle() throws Exception {
     ITest.Waggle waggle = new ITest.Waggle(1);
-    JSONObject json1 = (JSONObject) ser.marshall(null,
-        waggle, "waggle");
-    ITest.Waggle unmarshalled = (ITest.Waggle) ser.unmarshall(
-        ITest.Waggle.class, json1);
+    JSONObject json1 = (JSONObject) ser.marshall(null, waggle, "waggle");
+    ITest.Waggle unmarshalled = (ITest.Waggle) ser.unmarshall(ITest.Waggle.class, json1);
     assertEquals(waggle.toString(), unmarshalled.toString());
-    JSONObject json2 = (JSONObject) ser.marshall(null,
-        unmarshalled, "waggle");
+    JSONObject json2 = (JSONObject) ser.marshall(null, unmarshalled, "waggle");
     assertEquals(json1.toString(), json2.toString());
   }
 }

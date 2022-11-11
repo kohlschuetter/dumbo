@@ -48,110 +48,88 @@ import org.slf4j.LoggerFactory;
 /**
  * Controls registration and lookup of LocalArgResolver classes.
  */
-public class LocalArgController
-{
+public class LocalArgController {
   /**
    * The logger for this class
    */
-  private final static Logger log = LoggerFactory
-      .getLogger(LocalArgController.class);
+  private final static Logger log = LoggerFactory.getLogger(LocalArgController.class);
 
   /**
    * Key: argClazz (ie Class), Value: HashSet<LocalArgResolverData>
    */
   private static Map<Class<?>, Set<LocalArgResolverData>> localArgResolverMap;
 
-  static
-  {
+  static {
     localArgResolverMap = new HashMap<Class<?>, Set<LocalArgResolverData>>();
-    //Make sure this doesn't happen until after the variables are assigned!
-    LocalArgController.registerLocalArgResolver(HttpServletRequest.class,
-        HttpServletRequest.class, new HttpServletRequestArgResolver());
+    // Make sure this doesn't happen until after the variables are assigned!
+    LocalArgController.registerLocalArgResolver(HttpServletRequest.class, HttpServletRequest.class,
+        new HttpServletRequestArgResolver());
     LocalArgController.registerLocalArgResolver(HttpServletResponse.class,
         HttpServletResponse.class, new HttpServletResponseArgResolver());
-    LocalArgController.registerLocalArgResolver(HttpSession.class,
-        HttpServletRequest.class, new HttpSessionArgResolver());
-    LocalArgController.registerLocalArgResolver(JSONRPCBridge.class,
-        HttpServletRequest.class, new JSONRPCBridgeServletArgResolver());
+    LocalArgController.registerLocalArgResolver(HttpSession.class, HttpServletRequest.class,
+        new HttpSessionArgResolver());
+    LocalArgController.registerLocalArgResolver(JSONRPCBridge.class, HttpServletRequest.class,
+        new JSONRPCBridgeServletArgResolver());
   }
 
   /**
-   * Determine if an argument of the specified class type can be resolved to a
-   * local argument that is filled in on the server prior to being invoked.
+   * Determine if an argument of the specified class type can be resolved to a local argument that
+   * is filled in on the server prior to being invoked.
    * 
    * @param param local argument class.
    * @return true if the class can be resolved to a local argument.
    */
-  public static boolean isLocalArg(Class<?> param)
-  {
-    synchronized (localArgResolverMap)
-    {
+  public static boolean isLocalArg(Class<?> param) {
+    synchronized (localArgResolverMap) {
       return localArgResolverMap.containsKey(param);
     }
   }
 
   /**
-   * Registers a Class to be removed from the exported method signatures and
-   * instead be resolved locally using context information from the transport.
-   * TODO: make the order that the variables are given to this function the same
-   * as the variables are given to LocalArgResolverData
+   * Registers a Class to be removed from the exported method signatures and instead be resolved
+   * locally using context information from the transport. TODO: make the order that the variables
+   * are given to this function the same as the variables are given to LocalArgResolverData
    * 
    * @param argClazz The class to be resolved locally
-   * @param argResolver The user defined class that resolves the and returns the
-   *          method argument using transport context information
-   * @param contextInterface The type of transport Context object the callback
-   *          is interested in eg. HttpServletRequest.class for the servlet
-   *          transport
+   * @param argResolver The user defined class that resolves the and returns the method argument
+   *          using transport context information
+   * @param contextInterface The type of transport Context object the callback is interested in eg.
+   *          HttpServletRequest.class for the servlet transport
    */
-  public static void registerLocalArgResolver(Class<?> argClazz,
-      Class<?> contextInterface, LocalArgResolver argResolver)
-  {
-    synchronized (localArgResolverMap)
-    {
+  public static void registerLocalArgResolver(Class<?> argClazz, Class<?> contextInterface,
+      LocalArgResolver argResolver) {
+    synchronized (localArgResolverMap) {
       Set<LocalArgResolverData> resolverSet = localArgResolverMap.get(argClazz);
-      if (resolverSet == null)
-      {
+      if (resolverSet == null) {
         resolverSet = new HashSet<LocalArgResolverData>();
         localArgResolverMap.put(argClazz, resolverSet);
       }
-      resolverSet.add(new LocalArgResolverData(argResolver, argClazz,
-          contextInterface));
+      resolverSet.add(new LocalArgResolverData(argResolver, argClazz, contextInterface));
       ClassAnalyzer.invalidateCache();
     }
-    log.info("registered local arg resolver "
-        + argResolver.getClass().getName() + " for local class "
-        + argClazz.getName() + " with context " + contextInterface.getName());
+    log.info("registered local arg resolver " + argResolver.getClass().getName()
+        + " for local class " + argClazz.getName() + " with context " + contextInterface.getName());
   }
 
   /**
-   * Using the caller's context, resolve a given method call parameter to a
-   * local argument.
+   * Using the caller's context, resolve a given method call parameter to a local argument.
    * 
-   * @param context callers context. In an http servlet environment, this will
-   *          contain the servlet request and response objects.
+   * @param context callers context. In an http servlet environment, this will contain the servlet
+   *          request and response objects.
    * @param param class type parameter to resolve to a local argument.
-   * @return the run time instance that is resolved, to be used when calling the
-   *         method.
+   * @return the run time instance that is resolved, to be used when calling the method.
    * @throws UnmarshallException if there if a failure during resolution.
    */
   public static Object resolveLocalArg(Object context[], Class<?> param)
-      throws UnmarshallException
-  {
+      throws UnmarshallException {
     Set<LocalArgResolverData> resolverSet = localArgResolverMap.get(param);
-    for (LocalArgResolverData resolverData : resolverSet)
-    {
-      for (int j = 0; j < context.length; j++)
-      {
-        if (resolverData.understands(context[j]))
-        {
-          try
-          {
+    for (LocalArgResolverData resolverData : resolverSet) {
+      for (int j = 0; j < context.length; j++) {
+        if (resolverData.understands(context[j])) {
+          try {
             return resolverData.getArgResolver().resolveArg(context[j]);
-          }
-          catch (LocalArgResolveException e)
-          {
-            throw new UnmarshallException("error resolving local argument: "
-                + e, e);
+          } catch (LocalArgResolveException e) {
+            throw new UnmarshallException("error resolving local argument: " + e, e);
           }
         }
       }
@@ -164,32 +142,25 @@ public class LocalArgController
    * 
    * @param argClazz The previously registered local class
    * @param argResolver The previously registered LocalArgResolver object
-   * @param contextInterface The previously registered transport Context
-   *          interface.
+   * @param contextInterface The previously registered transport Context interface.
    */
-  public static void unregisterLocalArgResolver(Class<?> argClazz,
-      Class<?> contextInterface, LocalArgResolver argResolver)
-  {
-    synchronized (localArgResolverMap)
-    {
+  public static void unregisterLocalArgResolver(Class<?> argClazz, Class<?> contextInterface,
+      LocalArgResolver argResolver) {
+    synchronized (localArgResolverMap) {
       Set<LocalArgResolverData> resolverSet = localArgResolverMap.get(argClazz);
-      if (resolverSet == null
-          || !resolverSet.remove(new LocalArgResolverData(argResolver,
-              argClazz, contextInterface)))
-      {
+      if (resolverSet == null || !resolverSet.remove(new LocalArgResolverData(argResolver, argClazz,
+          contextInterface))) {
         log.warn("local arg resolver " + argResolver.getClass().getName()
-            + " not registered for local class " + argClazz.getName()
-            + " with context " + contextInterface.getName());
+            + " not registered for local class " + argClazz.getName() + " with context "
+            + contextInterface.getName());
         return;
       }
-      if (resolverSet.isEmpty())
-      {
+      if (resolverSet.isEmpty()) {
         localArgResolverMap.remove(argClazz);
       }
       ClassAnalyzer.invalidateCache();
     }
-    log.info("unregistered local arg resolver "
-        + argResolver.getClass().getName() + " for local class "
-        + argClazz.getName() + " with context " + contextInterface.getName());
+    log.info("unregistered local arg resolver " + argResolver.getClass().getName()
+        + " for local class " + argClazz.getName() + " with context " + contextInterface.getName());
   }
 }

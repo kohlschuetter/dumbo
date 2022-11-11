@@ -30,20 +30,18 @@ import java.io.Serializable;
 import java.lang.reflect.AccessibleObject;
 
 /**
- * Interface to be implemented by objects registered for invocation callbacks
- * with the JSONRPCBridge.
+ * Interface to be implemented by objects registered for invocation callbacks with the
+ * JSONRPCBridge.
  * 
- * Any registered InvocationCallback can optionally throw an Exception to cause
- * any given invocation to fail. This could be used as a simpe security
- * mechanism.
+ * Any registered InvocationCallback can optionally throw an Exception to cause any given invocation
+ * to fail. This could be used as a simpe security mechanism.
  */
-public interface InvocationCallback extends Serializable
-{
+public interface InvocationCallback extends Serializable {
   /**
    * Callback before invocation of an RPC method.
    * 
-   * @param context The transport context (the HttpServletRequest object in the
-   *          case of the HTTP transport).
+   * @param context The transport context (the HttpServletRequest object in the case of the HTTP
+   *          transport).
    * @param instance The object instance or null if it is a static method.
    * @param accessibleObject Method/constructor that failed the invocation.
    * @param arguments The arguments passed to the method
@@ -55,8 +53,8 @@ public interface InvocationCallback extends Serializable
   /**
    * Callback after invocation of an RPC method.
    * 
-   * @param context The transport context (the HttpServletRequest object in the
-   *          case of the HTTP transport).
+   * @param context The transport context (the HttpServletRequest object in the case of the HTTP
+   *          transport).
    * @param instance The object instance or null if it is a static method.
    * @param accessibleObject Method/constructor that failed the invocation.
    * @param result The returned result from the method

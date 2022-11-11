@@ -44,11 +44,9 @@ import org.json.JSONObject;
 /**
  * Serialises Sets
  * 
- * TODO: if this serialises a superclass does it need to also specify the
- * subclasses?
+ * TODO: if this serialises a superclass does it need to also specify the subclasses?
  */
-public class SetSerializer extends AbstractSerializer
-{
+public class SetSerializer extends AbstractSerializer {
   /**
    * Unique serialisation id.
    */
@@ -57,113 +55,85 @@ public class SetSerializer extends AbstractSerializer
   /**
    * Classes that this can serialise.
    */
-  private static Class<?>[] _serializableClasses = new Class[] { Set.class,
-      HashSet.class, TreeSet.class, LinkedHashSet.class };
+  private static Class<?>[] _serializableClasses = new Class[] {
+      Set.class, HashSet.class, TreeSet.class, LinkedHashSet.class};
 
   /**
    * Classes that this can serialise to.
    */
-  private static Class<?>[] _JSONClasses = new Class[] { JSONObject.class };
+  private static Class<?>[] _JSONClasses = new Class[] {JSONObject.class};
 
   @Override
-  public boolean canSerialize(Class<?> clazz, Class<?> jsonClazz)
-  {
-    return (super.canSerialize(clazz, jsonClazz) || ((jsonClazz == null || jsonClazz == JSONObject.class) && Set.class
-        .isAssignableFrom(clazz)));
+  public boolean canSerialize(Class<?> clazz, Class<?> jsonClazz) {
+    return (super.canSerialize(clazz, jsonClazz) || ((jsonClazz == null
+        || jsonClazz == JSONObject.class) && Set.class.isAssignableFrom(clazz)));
   }
 
-  public Class<?>[] getJSONClasses()
-  {
+  public Class<?>[] getJSONClasses() {
     return _JSONClasses;
   }
 
-  public Class<?>[] getSerializableClasses()
-  {
+  public Class<?>[] getSerializableClasses() {
     return _serializableClasses;
   }
 
-  public Object marshall(SerializerState state, Object p, Object o)
-      throws MarshallException
-  {
+  public Object marshall(SerializerState state, Object p, Object o) throws MarshallException {
     Set<?> set = (Set<?>) o;
 
     JSONObject obj = new JSONObject();
     JSONObject setdata = new JSONObject();
-    marshallHints(obj,o);
-    try
-    {
-      obj.put("set", state.push(o, setdata,"set"));
+    marshallHints(obj, o);
+    try {
+      obj.put("set", state.push(o, setdata, "set"));
       state.getProcessedObject(setdata).setSerialized(setdata);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new MarshallException("Could not set 'set': " + e.getMessage(), e);
     }
     Object key = null;
     Iterator<?> i = set.iterator();
 
-    try
-    {
-      while (i.hasNext())
-      {
+    try {
+      while (i.hasNext()) {
         key = i.next();
-        String keyString = key.toString();  // only support String keys
+        String keyString = key.toString(); // only support String keys
         Object json = ser.marshall(state, setdata, key, keyString);
         setdata.put(keyString, json);
       }
-    }
-    catch (MarshallException e)
-    {
+    } catch (MarshallException e) {
       throw new MarshallException("set key " + key + e.getMessage(), e);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new MarshallException("set key " + key + e.getMessage(), e);
-    }
-    finally
-    {
+    } finally {
       state.pop();
     }
     return obj;
   }
 
   public ObjectMatch tryUnmarshall(SerializerState state, Class<?> clazz, Object o)
-      throws UnmarshallException
-  {
+      throws UnmarshallException {
     JSONObject jso = (JSONObject) o;
     String java_class;
-    try
-    {
+    try {
       java_class = jso.getString(JSONSerializer.JAVA_CLASS_FIELD);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("Could not read javaClass", e);
     }
-    if (java_class == null)
-    {
+    if (java_class == null) {
       throw new UnmarshallException("no type hint");
     }
-    if (!(java_class.equals("java.util.Set")
-        || java_class.equals("java.util.AbstractSet")
-        || java_class.equals("java.util.LinkedHashSet")
-        || java_class.equals("java.util.TreeSet") || java_class
-        .equals("java.util.HashSet")))
-    {
+    if (!(java_class.equals("java.util.Set") || java_class.equals("java.util.AbstractSet")
+        || java_class.equals("java.util.LinkedHashSet") || java_class.equals("java.util.TreeSet")
+        || java_class.equals("java.util.HashSet"))) {
       throw new UnmarshallException("not a Set");
     }
     JSONObject jsonset;
-    try
-    {
+    try {
       jsonset = jso.getJSONObject("set");
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("set missing", e);
     }
 
-    if (jsonset == null)
-    {
+    if (jsonset == null) {
       throw new UnmarshallException("set missing");
     }
 
@@ -172,94 +142,65 @@ public class SetSerializer extends AbstractSerializer
     Iterator<?> i = jsonset.keys();
     String key = null;
 
-    try
-    {
-      while (i.hasNext())
-      {
+    try {
+      while (i.hasNext()) {
         key = (String) i.next();
         m.setMismatch(ser.tryUnmarshall(state, null, jsonset.get(key)).max(m).getMismatch());
       }
-    }
-    catch (UnmarshallException e)
-    {
+    } catch (UnmarshallException e) {
       throw new UnmarshallException("key " + key + " " + e.getMessage(), e);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("key " + key + " " + e.getMessage(), e);
     }
     return m;
   }
 
   public Object unmarshall(SerializerState state, Class<?> clazz, Object o)
-      throws UnmarshallException
-  {
+      throws UnmarshallException {
     JSONObject jso = (JSONObject) o;
     String java_class;
-    try
-    {
+    try {
       java_class = jso.getString(JSONSerializer.JAVA_CLASS_FIELD);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("Could not read javaClass", e);
     }
-    if (java_class == null)
-    {
+    if (java_class == null) {
       throw new UnmarshallException("no type hint");
     }
     Set<Object> abset = null;
-    if (java_class.equals("java.util.Set")
-        || java_class.equals("java.util.AbstractSet")
-        || java_class.equals("java.util.HashSet"))
-    {
+    if (java_class.equals("java.util.Set") || java_class.equals("java.util.AbstractSet")
+        || java_class.equals("java.util.HashSet")) {
       abset = new HashSet<Object>();
-    }
-    else if (java_class.equals("java.util.TreeSet"))
-    {
+    } else if (java_class.equals("java.util.TreeSet")) {
       abset = new TreeSet<Object>();
-    }
-    else if (java_class.equals("java.util.LinkedHashSet"))
-    {
+    } else if (java_class.equals("java.util.LinkedHashSet")) {
       abset = new LinkedHashSet<Object>();
-    }
-    else
-    {
+    } else {
       throw new UnmarshallException("not a Set");
     }
     JSONObject jsonset;
-    try
-    {
+    try {
       jsonset = jso.getJSONObject("set");
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("set missing", e);
     }
 
-    if (jsonset == null)
-    {
+    if (jsonset == null) {
       throw new UnmarshallException("set missing");
     }
 
     Iterator<String> i = jsonset.keys();
     String key = null;
     state.setSerialized(o, abset);
-    try
-    {
-      while (i.hasNext())
-      {
+    try {
+      while (i.hasNext()) {
         key = i.next();
         Object setElement = jsonset.get(key);
         abset.add(ser.unmarshall(state, null, setElement));
       }
-    }
-    catch (UnmarshallException e)
-    {
+    } catch (UnmarshallException e) {
       throw new UnmarshallException("key " + i + e.getMessage(), e);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("key " + key + " " + e.getMessage(), e);
     }
     return abset;

@@ -38,12 +38,10 @@ import org.json.JSONObject;
  * 
  * @author William Becker
  */
-public class FixupsResult extends SuccessfulResult
-{
+public class FixupsResult extends SuccessfulResult {
   /**
-   * Optional fixup entries to run against the result in order to reconstitute
-   * duplicate and / or circular references that were detected. This is a List
-   * of FixUp objects.
+   * Optional fixup entries to run against the result in order to reconstitute duplicate and / or
+   * circular references that were detected. This is a List of FixUp objects.
    * 
    * @see FixUp
    */
@@ -56,17 +54,15 @@ public class FixupsResult extends SuccessfulResult
    * @param o The main data to return.
    * @param fixups The fixups to return.
    */
-  public FixupsResult(Object id, Object o, Collection<FixUp> fixups)
-  {
+  public FixupsResult(Object id, Object o, Collection<FixUp> fixups) {
     super(id, o);
     this.fixUps = fixups;
   }
 
   @Override
-  public JSONObject createOutput() throws JSONException
-  {
+  public JSONObject createOutput() throws JSONException {
     JSONObject o = super.createOutput();
-    UsingFixups.addFixups(o,this.fixUps);
+    UsingFixups.addFixups(o, this.fixUps);
     return o;
   }
 }

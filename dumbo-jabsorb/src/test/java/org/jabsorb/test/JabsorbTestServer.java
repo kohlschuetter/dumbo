@@ -36,8 +36,7 @@ import org.mortbay.jetty.servlet.ServletHolder;
 /**
  * A basic embedded jetty implementation which runs the jabsorb webapp
  */
-public class JabsorbTestServer
-{
+public class JabsorbTestServer {
   /**
    * The directory on which the webapp is found
    */
@@ -48,15 +47,11 @@ public class JabsorbTestServer
    *
    * @param args Not used
    */
-  public static void main(String args[])
-  {
+  public static void main(String args[]) {
     int port;
-    try
-    {
+    try {
       port = Integer.parseInt(args[0]);
-    }
-    catch (Exception e)
-    {
+    } catch (Exception e) {
       port = 8084;
     }
     new JabsorbTestServer(port);
@@ -72,16 +67,12 @@ public class JabsorbTestServer
    *
    * @param port The port the server runs on
    */
-  public JabsorbTestServer(int port)
-  {
-    try
-    {
+  public JabsorbTestServer(int port) {
+    try {
       this.server = new Server(port);
       createBaseContext();
       this.server.start();
-    }
-    catch (Exception e)
-    {
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
@@ -89,8 +80,7 @@ public class JabsorbTestServer
   /**
    * Puts the necessary servlets on the server
    */
-  private void createBaseContext()
-  {
+  private void createBaseContext() {
     Context context = new Context(this.server, BASE_CONTEXT, Context.SESSIONS);
     context.setContextPath(BASE_CONTEXT);
     context.setResourceBase("webapps/jsonrpc/");
@@ -105,8 +95,7 @@ public class JabsorbTestServer
 
     // do static content
     {
-      ServletHolder jsonRpcServlet = new ServletHolder(new JSONRPCServlet(
-          "JSONRPCBridge_Default"));
+      ServletHolder jsonRpcServlet = new ServletHolder(new JSONRPCServlet("JSONRPCBridge_Default"));
       jsonRpcServlet.setInitParameter("auto-session-bridge", "0");
       context.addServlet(jsonRpcServlet, "/JSON-RPC-Default/*");
 
@@ -118,8 +107,7 @@ public class JabsorbTestServer
       context.addServlet(jsonRpcServlet, "/JSON-RPC/*");
     }
     {
-      ServletHolder jsonRpcServlet = new ServletHolder(new JSONRPCServlet(
-          "JSONRPCBridge_Flat"));
+      ServletHolder jsonRpcServlet = new ServletHolder(new JSONRPCServlet("JSONRPCBridge_Flat"));
       jsonRpcServlet.setInitParameter("auto-session-bridge", "0");
       context.addServlet(jsonRpcServlet, "/JSON-RPC-Flat/*");
     }
@@ -130,8 +118,7 @@ public class JabsorbTestServer
    *
    * @throws Exception if jetty has issues stopping
    */
-  public void stop() throws Exception
-  {
+  public void stop() throws Exception {
     this.server.stop();
   }
 

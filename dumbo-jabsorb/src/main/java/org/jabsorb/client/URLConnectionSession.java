@@ -40,31 +40,27 @@ import org.json.JSONTokener;
  * Transport based on URLConnection
  *
  */
-public class URLConnectionSession implements Session
-{
+public class URLConnectionSession implements Session {
   URL url;
 
   /**
    * Create a URLConnection transport
-   * @param url 
+   * 
+   * @param url
    */
-  URLConnectionSession(URL url)
-  {
+  URLConnectionSession(URL url) {
     this.url = url;
   }
 
   @Override
-  public void close()
-  {
-    //Nothing to do
+  public void close() {
+    // Nothing to do
   }
 
   @Override
-  public JSONObject sendAndReceive(JSONObject message)
-  {
-    try
-    {
-      URLConnection connection= url.openConnection();
+  public JSONObject sendAndReceive(JSONObject message) {
+    try {
+      URLConnection connection = url.openConnection();
       connection.setDoOutput(true);
       // As per http://java.sun.com/docs/books/tutorial/networking/urls/readingWriting.html
       try (Writer request = new OutputStreamWriter(connection.getOutputStream(),
@@ -88,16 +84,11 @@ public class URLConnectionSession implements Session
       Object rawResponseMessage = tokener.nextValue();
       JSONObject responseMessage = (JSONObject) rawResponseMessage;
       if (responseMessage == null)
-        throw new ClientError("Invalid response type - "
-            + rawResponseMessage.getClass());
+        throw new ClientError("Invalid response type - " + rawResponseMessage.getClass());
       return responseMessage;
-    }
-    catch (IOException ex)
-    {
+    } catch (IOException ex) {
       throw new ClientError(ex);
-    }
-    catch (JSONException ex)
-    {
+    } catch (JSONException ex) {
       throw new ClientError(ex);
     }
   }

@@ -31,31 +31,27 @@ import java.io.Serializable;
 /**
  * Simple Java Dict Client (RFC2229)
  */
-public class Match implements Serializable
-{
+public class Match implements Serializable {
   private final static long serialVersionUID = 2;
 
   private String word;
   private String database;
 
-  public String getDatabase()
-  {
+  public String getDatabase() {
     return database;
   }
 
-  public String getWord()
-  {
+  public String getWord() {
     return word;
   }
 
-  public Match(String database, String word)
-  {
+  public Match(String database, String word) {
     this.database = database;
     this.word = word;
   }
+
   @Override
-  public String toString()
-  {
+  public String toString() {
     return "match: " + word + " \"" + database + "\"";
   }
 }

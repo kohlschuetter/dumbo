@@ -13,21 +13,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Reads a "flattened" json message, in which all objects exist as seperate keys
- * on the main object, to allow circular references, eg:
- * {"result":"_1","_1":{"circRef":"_1"}}.
+ * Reads a "flattened" json message, in which all objects exist as seperate keys on the main object,
+ * to allow circular references, eg: {"result":"_1","_1":{"circRef":"_1"}}.
  * 
  * @author William Becker
  */
-public class FlatRequestParser extends RequestParser
-{
+public class FlatRequestParser extends RequestParser {
   /**
    * Parses an array
    * 
    * @author William Becker
    */
-  private class FlatParser
-  {
+  private class FlatParser {
     /**
      * The indexes of objects that have been read already mapped to the objects
      */
@@ -36,8 +33,7 @@ public class FlatRequestParser extends RequestParser
     /**
      * Creates a new ArrayParser
      */
-    public FlatParser()
-    {
+    public FlatParser() {
       parsedObjects = new HashMap<String, JSONObject>();
     }
 
@@ -49,42 +45,32 @@ public class FlatRequestParser extends RequestParser
      * @return The object requested
      * @throws JSONException If the json cannot be read
      */
-    public JSONObject getObject(String index, JSONObject jsonReq)
-        throws JSONException
-    {
-      if (this.parsedObjects.containsKey(index))
-      {
+    public JSONObject getObject(String index, JSONObject jsonReq) throws JSONException {
+      if (this.parsedObjects.containsKey(index)) {
         return this.parsedObjects.get(index);
       }
       Object o = jsonReq.get(index);
-      if (isObjectIndex(o))
-      {
+      if (isObjectIndex(o)) {
         return _getObject((String) o, jsonReq);
       }
       return _getObject(index, jsonReq);
     }
 
     /**
-     * Reads an array with (potentially) indexes which point to objects and
-     * returns a properly constructed array;
+     * Reads an array with (potentially) indexes which point to objects and returns a properly
+     * constructed array;
      * 
      * @param array The array to parse
      * @param jsonReq The main object that contains indexes mapped to objects
      * @return An array that has all objects constructed
      * @throws JSONException If the json is improperly constructed
      */
-    public JSONArray parseArray(JSONArray array, JSONObject jsonReq)
-        throws JSONException
-    {
-      for (int i = 0; i < array.length(); i++)
-      {
+    public JSONArray parseArray(JSONArray array, JSONObject jsonReq) throws JSONException {
+      for (int i = 0; i < array.length(); i++) {
         Object o = array.get(i);
-        if (isObjectIndex(o))
-        {
+        if (isObjectIndex(o)) {
           array.put(i, getObject((String) o, jsonReq));
-        }
-        else if (o instanceof JSONArray)
-        {
+        } else if (o instanceof JSONArray) {
           array.put(i, parseArray((JSONArray) o, jsonReq));
         }
       }
@@ -99,32 +85,24 @@ public class FlatRequestParser extends RequestParser
      * @return The object requested
      * @throws JSONException If the json cannot be read
      */
-    private JSONObject _getObject(String index, JSONObject jsonReq)
-        throws JSONException
-    {
-      if (this.parsedObjects.containsKey(index))
-      {
+    private JSONObject _getObject(String index, JSONObject jsonReq) throws JSONException {
+      if (this.parsedObjects.containsKey(index)) {
         return this.parsedObjects.get(index);
       }
       JSONObject o = jsonReq.getJSONObject(index);
       this.parsedObjects.put(index, o);
       Map<String, Object> newObjects = new TreeMap<String, Object>();
-      for (Iterator<?> i = o.keys(); i.hasNext();)
-      {
+      for (Iterator<?> i = o.keys(); i.hasNext();) {
         String k = (String) i.next();
         Object v = o.get(k);
-        if (isObjectIndex(v))
-        {
+        if (isObjectIndex(v)) {
           Object ob = getObject((String) v, jsonReq);
           newObjects.put(k, ob);
-        }
-        else if (v instanceof JSONArray)
-        {
+        } else if (v instanceof JSONArray) {
           newObjects.put(k, parseArray((JSONArray) v, jsonReq));
         }
       }
-      for (Entry<String, Object> e : newObjects.entrySet())
-      {
+      for (Entry<String, Object> e : newObjects.entrySet()) {
         o.put(e.getKey(), e.getValue());
       }
       return o;
@@ -138,13 +116,10 @@ public class FlatRequestParser extends RequestParser
    * @param o The object to test
    * @return Whether the object is an index
    */
-  public static boolean isObjectIndex(Object o)
-  {
-    if (o instanceof String)
-    {
+  public static boolean isObjectIndex(Object o) {
+    if (o instanceof String) {
       String s = (String) o;
-      if (s.startsWith(FlatSerializerState.INDEX_PREFIX))
-      {
+      if (s.startsWith(FlatSerializerState.INDEX_PREFIX)) {
         return true;
       }
     }
@@ -152,12 +127,9 @@ public class FlatRequestParser extends RequestParser
   }
 
   @Override
-  public Object unmarshall(final JSONObject object, final String key)
-      throws JSONException
-  {
+  public Object unmarshall(final JSONObject object, final String key) throws JSONException {
     Object value = object.get(key);
-    if (isObjectIndex(value))
-    {
+    if (isObjectIndex(value)) {
       return this.unmarshallObject(object, (String) value);
     }
     return super.unmarshall(object, key);
@@ -165,15 +137,12 @@ public class FlatRequestParser extends RequestParser
 
   @Override
   public JSONArray unmarshallArray(final JSONObject jsonReq, final String key)
-      throws JSONException
-  {
+      throws JSONException {
     return new FlatParser().parseArray(jsonReq.getJSONArray(key), jsonReq);
   }
 
   @Override
-  public JSONObject unmarshallObject(JSONObject jsonReq, String key)
-      throws JSONException
-  {
+  public JSONObject unmarshallObject(JSONObject jsonReq, String key) throws JSONException {
     return new FlatParser().getObject(key, jsonReq);
   }
 }

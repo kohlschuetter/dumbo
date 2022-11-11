@@ -12,9 +12,10 @@ import org.json.JSONObject;
  *
  */
 public interface AsyncSession {
-	public Future<JSONObject> send(JSONObject request);
+  public Future<JSONObject> send(JSONObject request);
 
-	public Future<JSONObject> send(JSONObject request, AsyncResultCallback<AsyncSession, JSONObject, JSONObject> callback);
+  public Future<JSONObject> send(JSONObject request,
+      AsyncResultCallback<AsyncSession, JSONObject, JSONObject> callback);
 
-	public void close();
+  public void close();
 }

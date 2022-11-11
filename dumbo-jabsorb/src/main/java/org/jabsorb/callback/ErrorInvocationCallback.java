@@ -29,16 +29,15 @@ package org.jabsorb.callback;
 import java.lang.reflect.AccessibleObject;
 
 /**
- * Interface to be implemented by objects registered for invocation callbacks
- * that include error information.
+ * Interface to be implemented by objects registered for invocation callbacks that include error
+ * information.
  */
-public interface ErrorInvocationCallback extends InvocationCallback
-{
+public interface ErrorInvocationCallback extends InvocationCallback {
   /**
    * Listener for exceptions thrown from an RPC service.
    * 
-   * @param context The transport context (the HttpServletRequest object in the
-   *          case of the HTTP transport).
+   * @param context The transport context (the HttpServletRequest object in the case of the HTTP
+   *          transport).
    * @param instance The object instance or null if it is a static method.
    * @param accessibleObject Method/constructor that failed the invocation.
    * @param error Error resulting from the invocation.

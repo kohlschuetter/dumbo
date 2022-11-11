@@ -39,8 +39,7 @@ import java.util.List;
 /**
  * Simple Java Dict Client (RFC2229)
  */
-public class DictClient implements Serializable
-{
+public class DictClient implements Serializable {
   private final static long serialVersionUID = 2;
 
   private final static boolean debug = false;
@@ -59,99 +58,76 @@ public class DictClient implements Serializable
   private transient PrintWriter out = null;
   private transient BufferedReader in = null;
 
-  public DictClient()
-  {
+  public DictClient() {
     this.host = DEFAULT_HOST;
     this.port = DEFAULT_PORT;
   }
 
-  public DictClient(String host)
-  {
+  public DictClient(String host) {
     this.host = host;
     this.port = DEFAULT_PORT;
   }
 
-  public DictClient(String host, int port)
-  {
+  public DictClient(String host, int port) {
     this.host = host;
     this.port = port;
   }
 
-  public void setHost(String host)
-  {
-    if (sock != null && !this.host.equals(host))
-    {
+  public void setHost(String host) {
+    if (sock != null && !this.host.equals(host)) {
       close();
     }
     this.host = host;
   }
 
-  public void setPort(int port)
-  {
-    if (sock != null && this.port != port)
-    {
+  public void setPort(int port) {
+    if (sock != null && this.port != port) {
       close();
     }
     this.port = port;
   }
 
-  private synchronized void connect() throws IOException, DictClientException
-  {
-    System.out.println("DictClient.connect: opening connection to " + host
-      + ":" + port);
+  private synchronized void connect() throws IOException, DictClientException {
+    System.out.println("DictClient.connect: opening connection to " + host + ":" + port);
     sock = new Socket(host, port);
-    in = new BufferedReader(new InputStreamReader(sock.getInputStream(),
-      "UTF-8"));
-    out = new PrintWriter(new OutputStreamWriter(sock.getOutputStream(),
-      "UTF-8"));
+    in = new BufferedReader(new InputStreamReader(sock.getInputStream(), "UTF-8"));
+    out = new PrintWriter(new OutputStreamWriter(sock.getOutputStream(), "UTF-8"));
     DictCommandResult r = new DictCommandResult(in.readLine());
-    if (r.code != DictCommandResult.BANNER)
-    {
+    if (r.code != DictCommandResult.BANNER) {
       close();
       throw new DictClientException(r);
     }
     ident = r.msg;
-    System.out.println("DictClient.connect: connected to " + host + ":"
-      + port + " ident=\"" + ident + "\"");
+    System.out.println("DictClient.connect: connected to " + host + ":" + port + " ident=\"" + ident
+        + "\"");
   }
 
   @Override
-  public void finalize()
-  {
+  public void finalize() {
     close();
   }
 
-  private synchronized String status() throws IOException,
-    DictClientException
-  {
+  private synchronized String status() throws IOException, DictClientException {
     out.print("STATUS\n");
     out.flush();
     DictCommandResult r = new DictCommandResult(in.readLine());
-    if (r.code != DictCommandResult.STATUS)
-    {
+    if (r.code != DictCommandResult.STATUS) {
       throw new DictClientException(r);
     }
-    if (debug)
-    {
+    if (debug) {
       System.out.println("DictClient.status: " + r.msg);
     }
     return r.msg;
   }
 
-  public synchronized String checkConnection() throws IOException,
-    DictClientException
-  {
-    if (sock == null)
-    {
+  public synchronized String checkConnection() throws IOException, DictClientException {
+    if (sock == null) {
       connect();
       return status();
     }
-    try
-    {
+    try {
       return status();
-    }
-    catch (Exception e)
-    {
+    } catch (Exception e) {
       System.out.println("DictClient.status: Exception " + e);
       close();
       connect();
@@ -159,41 +135,28 @@ public class DictClient implements Serializable
     }
   }
 
-  public synchronized void close()
-  {
-    if (sock == null)
-    {
+  public synchronized void close() {
+    if (sock == null) {
       return;
     }
 
-    try
-    {
+    try {
       out.print("QUIT\n");
       out.flush();
       String line = in.readLine();
-      if (line != null /* EOF */)
-      {
+      if (line != null /* EOF */) {
         DictCommandResult r = new DictCommandResult(line);
-        if (r.code != DictCommandResult.CLOSING_CONNECTION)
-        {
+        if (r.code != DictCommandResult.CLOSING_CONNECTION) {
           System.out.println("DictClient.close: Exception: " + r);
         }
       }
-    }
-    catch (IOException e)
-    {
-      System.out.println("DictClient.close: IOException while closing: "
-        + e);
-    }
-    finally
-    {
-      try
-      {
+    } catch (IOException e) {
+      System.out.println("DictClient.close: IOException while closing: " + e);
+    } finally {
+      try {
         sock.close();
-      }
-      catch (IOException e)
-      {
-        //Do nothing
+      } catch (IOException e) {
+        // Do nothing
       }
       sock = null;
       in = null;
@@ -202,105 +165,83 @@ public class DictClient implements Serializable
     }
   }
 
-  public synchronized List<Database> getDatabases() throws IOException,
-    DictClientException
-  {
-    if (databases == null)
-    {
+  public synchronized List<Database> getDatabases() throws IOException, DictClientException {
+    if (databases == null) {
       fetchDatabases();
     }
     return databases;
   }
 
-  private synchronized void fetchDatabases() throws IOException,
-    DictClientException
-  {
+  private synchronized void fetchDatabases() throws IOException, DictClientException {
     checkConnection();
 
     out.print("SHOW DATABASES\n");
     out.flush();
     DictCommandResult r = new DictCommandResult(in.readLine());
-    if (r.code != DictCommandResult.DATABASES_PRESENT)
-    {
+    if (r.code != DictCommandResult.DATABASES_PRESENT) {
       throw new DictClientException(r);
     }
 
     databases = new ArrayList<Database>();
     String line;
-    while (true)
-    {
+    while (true) {
       line = in.readLine();
-      if (line.equals("."))
-      {
+      if (line.equals(".")) {
         break;
       }
       String database = line.substring(0, line.indexOf(' '));
-      String description = line.substring(line.indexOf('"') + 1, line
-        .lastIndexOf('"'));
+      String description = line.substring(line.indexOf('"') + 1, line.lastIndexOf('"'));
       databases.add(new Database(database, description));
     }
 
     r = new DictCommandResult(in.readLine());
-    if (r.code != DictCommandResult.OKAY)
-    {
+    if (r.code != DictCommandResult.OKAY) {
       throw new DictClientException(r);
     }
   }
 
-  public synchronized List<Strategy> getStrategies() throws IOException,
-    DictClientException
-  {
-    if (strategies == null)
-    {
+  public synchronized List<Strategy> getStrategies() throws IOException, DictClientException {
+    if (strategies == null) {
       fetchStrategies();
     }
     return strategies;
   }
 
-  private synchronized void fetchStrategies() throws IOException,
-    DictClientException
-  {
+  private synchronized void fetchStrategies() throws IOException, DictClientException {
     checkConnection();
 
     out.print("SHOW STRATEGIES\n");
     out.flush();
     DictCommandResult r = new DictCommandResult(in.readLine());
-    if (r.code != DictCommandResult.STRATEGIES_PRESENT)
-    {
+    if (r.code != DictCommandResult.STRATEGIES_PRESENT) {
       throw new DictClientException(r);
     }
 
     strategies = new ArrayList<Strategy>();
     String line;
-    while (true)
-    {
+    while (true) {
       line = in.readLine();
-      if (line.equals("."))
-      {
+      if (line.equals(".")) {
         break;
       }
       String strategy = line.substring(0, line.indexOf(' '));
-      String description = line.substring(line.indexOf('"') + 1, line
-        .lastIndexOf('"'));
+      String description = line.substring(line.indexOf('"') + 1, line.lastIndexOf('"'));
       strategies.add(new Strategy(strategy, description));
     }
 
     r = new DictCommandResult(in.readLine());
-    if (r.code != DictCommandResult.OKAY)
-    {
+    if (r.code != DictCommandResult.OKAY) {
       throw new DictClientException(r);
     }
   }
 
-  public synchronized List<Match> matchWord(String db, String strategy,
-                                          String word) throws IOException, DictClientException
-  {
+  public synchronized List<Match> matchWord(String db, String strategy, String word)
+      throws IOException, DictClientException {
     checkConnection();
 
-    if (debug)
-    {
-      System.out.println("DictClient.matchWord(\"" + db + "\", \""
-        + strategy + "\", \"" + word + "\")");
+    if (debug) {
+      System.out.println("DictClient.matchWord(\"" + db + "\", \"" + strategy + "\", \"" + word
+          + "\")");
     }
 
     List<Match> matches = new ArrayList<Match>();
@@ -308,44 +249,34 @@ public class DictClient implements Serializable
     out.print("MATCH " + db + " " + strategy + " \"" + word + "\"\n");
     out.flush();
     DictCommandResult r = new DictCommandResult(in.readLine());
-    if (r.code == DictCommandResult.NO_MATCH)
-    {
+    if (r.code == DictCommandResult.NO_MATCH) {
       return matches;
-    }
-    else if (r.code != DictCommandResult.MATCH_NUM_RECIEVED)
-    {
+    } else if (r.code != DictCommandResult.MATCH_NUM_RECIEVED) {
       throw new DictClientException(r);
     }
 
-    while (true)
-    {
+    while (true) {
       String line = in.readLine();
-      if (line.equals("."))
-      {
+      if (line.equals(".")) {
         break;
       }
       String rDb = line.substring(0, line.indexOf(' '));
-      String rWord = line.substring(line.indexOf('"') + 1, line
-        .lastIndexOf('"'));
+      String rWord = line.substring(line.indexOf('"') + 1, line.lastIndexOf('"'));
       matches.add(new Match(rDb, rWord));
     }
     r = new DictCommandResult(in.readLine());
-    if (r.code == DictCommandResult.OKAY)
-    {
+    if (r.code == DictCommandResult.OKAY) {
       return matches;
     }
     throw new DictClientException(r);
   }
 
-  public synchronized List<Definition> defineWord(String db, String word)
-    throws IOException, DictClientException
-  {
+  public synchronized List<Definition> defineWord(String db, String word) throws IOException,
+      DictClientException {
     checkConnection();
 
-    if (debug)
-    {
-      System.out.println("DictClient.defineWord(\"" + db + "\", \""
-        + word + "\")");
+    if (debug) {
+      System.out.println("DictClient.defineWord(\"" + db + "\", \"" + word + "\")");
     }
 
     List<Definition> definitions = new ArrayList<Definition>();
@@ -353,34 +284,27 @@ public class DictClient implements Serializable
     out.print("DEFINE " + db + " \"" + word + "\"\n");
     out.flush();
     DictCommandResult r = new DictCommandResult(in.readLine());
-    if (r.code == DictCommandResult.NO_MATCH)
-    {
+    if (r.code == DictCommandResult.NO_MATCH) {
       return definitions;
-    }
-    else if (r.code != DictCommandResult.DEFINE_NUM_RECIEVED)
-    {
+    } else if (r.code != DictCommandResult.DEFINE_NUM_RECIEVED) {
       throw new DictClientException(r);
     }
 
-    while (true)
-    {
+    while (true) {
       r = new DictCommandResult(in.readLine());
-      if (r.code == DictCommandResult.OKAY)
-      {
+      if (r.code == DictCommandResult.OKAY) {
         return definitions;
       }
 
       int qoff;
       String line = r.msg;
-      String rWord = line.substring((qoff = line.indexOf('"') + 1),
-        (qoff = line.indexOf('"', qoff + 1)));
+      String rWord = line.substring((qoff = line.indexOf('"') + 1), (qoff = line.indexOf('"', qoff
+          + 1)));
       String rDb = line.substring(qoff + 2, line.indexOf(' ', qoff + 2));
       StringBuffer def = new StringBuffer();
-      while (true)
-      {
+      while (true) {
         line = in.readLine();
-        if (line.equals("."))
-        {
+        if (line.equals(".")) {
           break;
         }
         def.append(line);

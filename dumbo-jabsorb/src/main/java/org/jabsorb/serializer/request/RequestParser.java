@@ -33,25 +33,20 @@ import org.json.JSONObject;
 /**
  * Parent class for handing circular references in different ways.
  */
-public abstract class RequestParser
-{
+public abstract class RequestParser {
   /**
    * Unmarshalls an value from a JSONObject stored under a specific key.
+   * 
    * @param object The object which contains the value to unmarshall.
    * @param key The key under which the object stores the value to unmarshall.
    * @return An unmarshalled Object
    * @throws JSONException if an exception occurs while parsing.
    */
-  public Object unmarshall(final JSONObject object, final String key)
-      throws JSONException
-  {
+  public Object unmarshall(final JSONObject object, final String key) throws JSONException {
     Object value = object.get(key);
-    if (value instanceof JSONObject)
-    {
+    if (value instanceof JSONObject) {
       return this.unmarshallObject(object, key);
-    }
-    else if (value instanceof JSONArray)
-    {
+    } else if (value instanceof JSONArray) {
       return this.unmarshallArray(object, key);
     }
     return value;
@@ -62,22 +57,22 @@ public abstract class RequestParser
    * 
    * @param object The object to unmarshall
    * @param key The key in which the array exists within the JSONObject
-   * @return An array of values which may contian circular references. Warning:
-   *         do not call toString on this object!
+   * @return An array of values which may contian circular references. Warning: do not call toString
+   *         on this object!
    * @throws JSONException If an exception occurs parsing jsonReq.
    */
-  public abstract JSONArray unmarshallArray(final JSONObject object,
-      final String key) throws JSONException;
+  public abstract JSONArray unmarshallArray(final JSONObject object, final String key)
+      throws JSONException;
 
   /**
    * Unmarshalls an inner JSONObject from within another JSONObject
    * 
    * @param object The request from the client may contain circular references
    * @param key The key in which the object exists within the JSONObject
-   * @return An object which may contian circular references. Warning: do not
-   *         call toString on this object!
+   * @return An object which may contian circular references. Warning: do not call toString on this
+   *         object!
    * @throws JSONException If an exception occurs parsing object.
    */
-  public abstract JSONObject unmarshallObject(final JSONObject object,
-      final String key) throws JSONException;
+  public abstract JSONObject unmarshallObject(final JSONObject object, final String key)
+      throws JSONException;
 }

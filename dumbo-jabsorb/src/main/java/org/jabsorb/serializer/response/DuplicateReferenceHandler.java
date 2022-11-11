@@ -35,20 +35,17 @@ import org.jabsorb.serializer.MarshallException;
  * 
  * @author William Becker
  */
-public interface DuplicateReferenceHandler
-{
+public interface DuplicateReferenceHandler {
   /**
    * Signals that a duplicate reference was found.
    * 
    * @param originalLocation The location where it first appeared
-   * @param ref The reference of from the current location where it next
-   *          appeared
+   * @param ref The reference of from the current location where it next appeared
    * @param java The object which appears twice
-   * @return The object to put in the place of the duplicate reference in the
-   *         JSONObject
+   * @return The object to put in the place of the duplicate reference in the JSONObject
    * @throws MarshallException Thrown if the given object cannot be marshalled
    */
-  public Object duplicateFound(List<Object> originalLocation,
-      Object ref, Object java) throws MarshallException;
+  public Object duplicateFound(List<Object> originalLocation, Object ref, Object java)
+      throws MarshallException;
 
 }

@@ -27,11 +27,9 @@
 package org.jabsorb.reflect;
 
 /**
- * A key for identifying a method and the number of arguments to that method
- * uniquely.
+ * A key for identifying a method and the number of arguments to that method uniquely.
  */
-public class AccessibleObjectKey
-{
+public class AccessibleObjectKey {
   /**
    * The name of the method
    */
@@ -43,31 +41,28 @@ public class AccessibleObjectKey
   private int numArgs;
 
   /**
-   * Create a MethodKey for a given method name and the number of arguments that
-   * that method takes.
+   * Create a MethodKey for a given method name and the number of arguments that that method takes.
    * 
    * @param methodName Method name.
    * @param numArgs The number of arguments the method takes.
    */
-  public AccessibleObjectKey(String methodName, int numArgs)
-  {
+  public AccessibleObjectKey(String methodName, int numArgs) {
     this.methodName = methodName;
     this.numArgs = numArgs;
   }
 
   @Override
-  public String toString()
-  {
-    return methodName+"("+numArgs+")";
+  public String toString() {
+    return methodName + "(" + numArgs + ")";
   }
+
   @Override
-  public boolean equals(Object o)
-  {
-    if (!(o instanceof AccessibleObjectKey))
-    {
+  public boolean equals(Object o) {
+    if (!(o instanceof AccessibleObjectKey)) {
       return false;
     }
-    return (methodName.equals(((AccessibleObjectKey) o).methodName) && numArgs == ((AccessibleObjectKey) o).numArgs);
+    return (methodName.equals(((AccessibleObjectKey) o).methodName)
+        && numArgs == ((AccessibleObjectKey) o).numArgs);
   }
 
   /**
@@ -75,8 +70,7 @@ public class AccessibleObjectKey
    * 
    * @return the method name.
    */
-  public String getMethodName()
-  {
+  public String getMethodName() {
     return methodName;
   }
 
@@ -85,14 +79,12 @@ public class AccessibleObjectKey
    * 
    * @return the number of arguments that the method takes.
    */
-  public int getNumArgs()
-  {
+  public int getNumArgs() {
     return numArgs;
   }
 
   @Override
-  public int hashCode()
-  {
+  public int hashCode() {
     return methodName.hashCode() * numArgs;
   }
 

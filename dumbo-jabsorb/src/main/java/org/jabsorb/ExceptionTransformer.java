@@ -31,16 +31,14 @@ import java.io.Serializable;
 /**
  * Used to transform the exception to some object in JSONRPCResults
  */
-public interface ExceptionTransformer extends Serializable
-{
+public interface ExceptionTransformer extends Serializable {
 
   /**
-   * Transform the exception to the format desired for transport to the client.
-   * This method should not itself throw an exception.
+   * Transform the exception to the format desired for transport to the client. This method should
+   * not itself throw an exception.
    * 
    * @param t The exception to be transformed
-   * @return one of the JSON-compatible types (JSONObject, String, Boolean
-   *         etc.), or a Throwable
+   * @return one of the JSON-compatible types (JSONObject, String, Boolean etc.), or a Throwable
    */
   public Object transform(Throwable t);
 

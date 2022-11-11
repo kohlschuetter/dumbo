@@ -31,32 +31,28 @@ import java.io.Serializable;
 /**
  * Simple Java Dict Client (RFC2229)
  */
-public class Database implements Serializable
-{
+public class Database implements Serializable {
   private final static long serialVersionUID = 2;
 
   private String database;
 
   private String description;
 
-  public String getDatabase()
-  {
+  public String getDatabase() {
     return database;
   }
 
-  public String getDescription()
-  {
+  public String getDescription() {
     return description;
   }
 
-  public Database(String database, String description)
-  {
+  public Database(String database, String description) {
     this.database = database;
     this.description = description;
   }
+
   @Override
-  public String toString()
-  {
+  public String toString() {
     return "database: " + database + " \"" + description + "\"";
   }
 }

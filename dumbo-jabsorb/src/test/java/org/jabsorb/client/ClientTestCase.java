@@ -37,37 +37,33 @@ import org.jabsorb.test.ITest;
 /**
  * This test implements some of Jabsorb tests.
  */
-public class ClientTestCase extends ServerTestBase
-{
+public class ClientTestCase extends ServerTestBase {
 
   HttpState state;
 
   TransportRegistry registry;
 
   @Override
-  protected void setUp() throws Exception
-  {
+  protected void setUp() throws Exception {
     super.setUp(); // Makes sure jabsorb server tests are running at this URL
 
     registry = new TransportRegistry();
   }
 
-  TransportRegistry getRegistry()
-  {
+  TransportRegistry getRegistry() {
     if (registry == null)
       registry = new TransportRegistry(); // Standard registry by default
     return registry;
   }
 
   /**
-   * JSON-RPC tests need this setup to operate propely. This call invokes
-   * registerObject("test", ...) from the JSP
+   * JSON-RPC tests need this setup to operate propely. This call invokes registerObject("test",
+   * ...) from the JSP
    * 
    * @deprecated since we are running the server in-process
    */
   @Deprecated
-  void setupServerTestEnvironment(String url) throws HttpException, IOException
-  {
+  void setupServerTestEnvironment(String url) throws HttpException, IOException {
     HttpClient client = new HttpClient();
     state = new HttpState();
     client.setState(state);
@@ -82,65 +78,52 @@ public class ClientTestCase extends ServerTestBase
   /**
    * Test for invalid URL
    */
-  public void testBadClient()
-  {
-    Client badClient = new Client(registry
-        .createSession("http://non-existing-server:99"));
-    try
-    {
+  public void testBadClient() {
+    Client badClient = new Client(registry.createSession("http://non-existing-server:99"));
+    try {
       ITest badTest = (ITest) badClient.openProxy("test", ITest.class);
       badTest.voidFunction();
       fail();
-    }
-    catch (ClientError err)
-    {
+    } catch (ClientError err) {
       // Cool, we got error!
     }
   }
 
-  public void testStandardSession()
-  {
-    Client client = new Client(getRegistry().createSession(
-        getServiceRootURL() + "/JSON-RPC"));
+  public void testStandardSession() {
+    Client client = new Client(getRegistry().createSession(getServiceRootURL() + "/JSON-RPC"));
     ITest test = (ITest) client.openProxy("test", ITest.class);
     basicClientTest(test);
   }
 
-  HTTPSession newHTTPSession(String url)
-  {
-    try
-    {
+  HTTPSession newHTTPSession(String url) {
+    try {
       TransportRegistry reg = getRegistry();
       // Note: HTTPSession is not registered by default. Normally you would
       // register during initialization. In this test, we are testing different
       // states of the registry, hence we register it here and clean up afterwards
       HTTPSession.register(reg);
-      // Note: will not work without registering HTTPSession, see #setUp() 
+      // Note: will not work without registering HTTPSession, see #setUp()
       return (HTTPSession) getRegistry().createSession(url);
-    }
-    finally
-    {
+    } finally {
       // Modified the registry; let's clean up after ourselves. Next call
       // to getRegistry will create a new one
       registry = null;
     }
   }
 
-  public void testHTTPSession()
-  {
+  public void testHTTPSession() {
     Client client = new Client(newHTTPSession(getServiceURL()));
     ITest test = (ITest) client.openProxy("test", ITest.class);
     basicClientTest(test);
   }
 
-  void basicClientTest(ITest test)
-  {
+  void basicClientTest(ITest test) {
     test.voidFunction();
     assertEquals("hello", test.echo("hello"));
     assertEquals(1234, test.echo(1234));
-    int[] ints = { 1, 2, 3 };
+    int[] ints = {1, 2, 3};
     assertTrue(Arrays.equals(ints, test.echo(ints)));
-    String[] strs = { "foo", "bar", "baz" };
+    String[] strs = {"foo", "bar", "baz"};
     assertTrue(Arrays.equals(strs, test.echo(strs)));
     ITest.Wiggle wiggle = new ITest.Wiggle();
     assertEquals(wiggle.toString(), test.echo(wiggle).toString());
@@ -157,29 +140,24 @@ public class ClientTestCase extends ServerTestBase
     assertEquals(doublo, test.echoDoubleObject(doublo));
   }
 
-  // TODO run embedded proxy server (is  Jetty capable of working like a proxy?) to really test proxy.
+  // TODO run embedded proxy server (is Jetty capable of working like a proxy?) to really test
+  // proxy.
   // Right now, we are just testing that the proxy parameters are being set
-  public void testProxyConfiguration()
-  {
+  public void testProxyConfiguration() {
     HTTPSession proxiedSession = newHTTPSession(getServiceURL());
     int proxyPort = 40888; // hopefully, the port is unused
     proxiedSession.getHostConfiguration().setProxy("localhost", proxyPort);
     Client client = new Client(proxiedSession);
     ITest proxyObject = (ITest) client.openProxy("test", ITest.class);
-    try
-    {
+    try {
       proxyObject.voidFunction();
-    }
-    catch (ClientError ex)
-    {
+    } catch (ClientError ex) {
       if (!(ex.getCause() instanceof ConnectException))
-        fail("expected ConnectException, got "
-            + ex.getCause().getClass().getName());
+        fail("expected ConnectException, got " + ex.getCause().getClass().getName());
     }
   }
 
-  String getServiceURL()
-  {
+  String getServiceURL() {
     return getServiceRootURL() + "/JSON-RPC";
   }
 }

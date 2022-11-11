@@ -34,15 +34,13 @@ import org.json.JSONObject;
  * 
  * @author William Becker
  */
-public class FailedResult extends JSONRPCResult
-{
+public class FailedResult extends JSONRPCResult {
   /**
    * Gets the error that caused the failure.
    * 
    * @return The error object
    */
-  public Object getError()
-  {
+  public Object getError() {
     return error;
   }
 
@@ -52,14 +50,13 @@ public class FailedResult extends JSONRPCResult
   public final static int CODE_ERR_PARSE = 590;
 
   /**
-   * Denotes (when calling a constructor) that no method was found with the
-   * given name/arguments.
+   * Denotes (when calling a constructor) that no method was found with the given name/arguments.
    */
   public final static int CODE_ERR_NOCONSTRUCTOR = 594;
 
   /**
-   * Denotes (when using a callable reference) that no method was found with the
-   * given name and number of arguments.
+   * Denotes (when using a callable reference) that no method was found with the given name and
+   * number of arguments.
    */
   public final static int CODE_ERR_NOMETHOD = 591;
 
@@ -74,8 +71,7 @@ public class FailedResult extends JSONRPCResult
   public final static int CODE_ERR_MARSHALL = 593;
 
   /**
-   * Denotes that an error occured while applying the fixup data for circular
-   * references/duplicates.
+   * Denotes that an error occured while applying the fixup data for circular references/duplicates.
    */
   public final static int CODE_ERR_FIXUP = 594;
 
@@ -90,11 +86,10 @@ public class FailedResult extends JSONRPCResult
   public static final String MSG_ERR_NOCONSTRUCTOR = "constructor not found";
 
   /**
-   * The error method shown when no method was found with the given name and
-   * number of arguments.
+   * The error method shown when no method was found with the given name and number of arguments.
    */
-  public final static String MSG_ERR_NOMETHOD = "method with the requested number of arguments not found (session may"
-      + " have timed out)";
+  public final static String MSG_ERR_NOMETHOD =
+      "method with the requested number of arguments not found (session may" + " have timed out)";
 
   /**
    * The error method shown when something in the fixups was amiss.
@@ -114,21 +109,18 @@ public class FailedResult extends JSONRPCResult
   /**
    * Creates a new FailedResult.
    * 
-   * @param errorCode The error code. This should be one of the error codes
-   *          defined in this class.
+   * @param errorCode The error code. This should be one of the error codes defined in this class.
    * @param id The id of the response.
    * @param error The error that caused the failure.
    */
-  public FailedResult(int errorCode, Object id, Object error)
-  {
+  public FailedResult(int errorCode, Object id, Object error) {
     super(id);
     this.errorCode = errorCode;
     this.error = error;
   }
 
   @Override
-  protected JSONObject createOutput() throws JSONException
-  {
+  protected JSONObject createOutput() throws JSONException {
     JSONObject o = super._createOutput();
     JSONObject err = new JSONObject();
     err.put("code", new Integer(errorCode));

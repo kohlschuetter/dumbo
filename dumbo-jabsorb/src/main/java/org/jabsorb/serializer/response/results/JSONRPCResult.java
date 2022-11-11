@@ -31,11 +31,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Container for a JSON-RPC result message. This includes successful results,
- * error results, and remote exceptions results.
+ * Container for a JSON-RPC result message. This includes successful results, error results, and
+ * remote exceptions results.
  */
-public abstract class JSONRPCResult
-{
+public abstract class JSONRPCResult {
 
   /**
    * The id of the response.
@@ -43,13 +42,12 @@ public abstract class JSONRPCResult
   private Object id;
 
   /**
-   * Creates a new JSONRPCResult without fixups (for backward compatibility to
-   * json-rpc and json-rpc-java.
+   * Creates a new JSONRPCResult without fixups (for backward compatibility to json-rpc and
+   * json-rpc-java.
    * 
    * @param id The id of the response.
    */
-  public JSONRPCResult(Object id)
-  {
+  public JSONRPCResult(Object id) {
     this.id = id;
   }
 
@@ -67,8 +65,7 @@ public abstract class JSONRPCResult
    * @return An object which will be sent to the client.
    * @throws JSONException If a problem occurs creating the object.
    */
-  protected JSONObject _createOutput() throws JSONException
-  {
+  protected JSONObject _createOutput() throws JSONException {
     JSONObject o = new JSONObject();
     o.put(JSONSerializer.ID_FIELD, id);
     return o;
@@ -79,24 +76,18 @@ public abstract class JSONRPCResult
    * 
    * @return the id of the response.
    */
-  public Object getId()
-  {
+  public Object getId() {
     return id;
   }
 
   @Override
-  public String toString()
-  {
+  public String toString() {
 
-    try
-    {
+    try {
       return createOutput().toString();
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       // this would have been a null pointer exception in the previous json.org library.
-      throw (RuntimeException) new RuntimeException(e.getMessage())
-          .initCause(e);
+      throw (RuntimeException) new RuntimeException(e.getMessage()).initCause(e);
     }
   }
 }

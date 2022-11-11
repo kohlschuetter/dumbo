@@ -31,13 +31,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Use this for all successful results to be returned from the server to the
- * client.
+ * Use this for all successful results to be returned from the server to the client.
  * 
  * @author William Becker
  */
-public class SuccessfulResult extends JSONRPCResult
-{
+public class SuccessfulResult extends JSONRPCResult {
   /**
    * The result of the call
    */
@@ -49,8 +47,7 @@ public class SuccessfulResult extends JSONRPCResult
    * @param id The id of the response
    * @param result The result of the call
    */
-  public SuccessfulResult(Object id, Object result)
-  {
+  public SuccessfulResult(Object id, Object result) {
     super(id);
     this.result = result;
   }
@@ -60,14 +57,12 @@ public class SuccessfulResult extends JSONRPCResult
    * 
    * @return The result of the call
    */
-  protected Object getResult()
-  {
+  protected Object getResult() {
     return this.result;
   }
 
   @Override
-  public JSONObject createOutput() throws JSONException
-  {
+  public JSONObject createOutput() throws JSONException {
     JSONObject o = this._createOutput();
     o.put(JSONSerializer.RESULT_FIELD, this.result);
     return o;

@@ -31,8 +31,7 @@ import java.io.Serializable;
 /**
  * Used for constructor unit tests
  */
-public class ConstructorTest implements Serializable
-{
+public class ConstructorTest implements Serializable {
   /**
    * Generated Id
    */
@@ -46,8 +45,7 @@ public class ConstructorTest implements Serializable
   /**
    * A default constructor
    */
-  public ConstructorTest()
-  {
+  public ConstructorTest() {
     message = "default";
   }
 
@@ -56,8 +54,7 @@ public class ConstructorTest implements Serializable
    * 
    * @param b unused
    */
-  public ConstructorTest(boolean b)
-  {
+  public ConstructorTest(boolean b) {
     message = "boolean";
   }
 
@@ -66,8 +63,7 @@ public class ConstructorTest implements Serializable
    * 
    * @param l unused
    */
-  public ConstructorTest(double l)
-  {
+  public ConstructorTest(double l) {
     message = "double";
   }
 
@@ -76,8 +72,7 @@ public class ConstructorTest implements Serializable
    * 
    * @param l unused
    */
-  public ConstructorTest(float l)
-  {
+  public ConstructorTest(float l) {
     message = "float";
   }
 
@@ -87,8 +82,7 @@ public class ConstructorTest implements Serializable
    * @param i not used
    */
 
-  public ConstructorTest(int i)
-  {
+  public ConstructorTest(int i) {
     message = "int";
   }
 
@@ -98,8 +92,7 @@ public class ConstructorTest implements Serializable
    * @param i not used
    * @param j not used
    */
-  public ConstructorTest(int i, int j)
-  {
+  public ConstructorTest(int i, int j) {
     message = "int,int";
   }
 
@@ -109,12 +102,11 @@ public class ConstructorTest implements Serializable
    * @param i not used
    * @param s not used
    */
-  public ConstructorTest(int i, String s)
-  {
+  public ConstructorTest(int i, String s) {
     message = "int,String";
   }
 
-  //TODO: adding this makes it fail many tests!
+  // TODO: adding this makes it fail many tests!
   /*
    * public ConstructorTest(Integer i) { message="int"; }
    */
@@ -124,8 +116,7 @@ public class ConstructorTest implements Serializable
    * 
    * @param l unused
    */
-  public ConstructorTest(long l)
-  {
+  public ConstructorTest(long l) {
     message = "long";
   }
 
@@ -134,8 +125,7 @@ public class ConstructorTest implements Serializable
    * 
    * @param o unused
    */
-  public ConstructorTest(Object o)
-  {
+  public ConstructorTest(Object o) {
     message = "Object";
   }
 
@@ -144,19 +134,16 @@ public class ConstructorTest implements Serializable
    * 
    * @param s unused
    */
-  public ConstructorTest(String s)
-  {
+  public ConstructorTest(String s) {
     message = "String";
   }
 
   /**
    * Gets the message produced by the constructor
    * 
-   * @return A message that specifies what the arguments were that were given to
-   *         the constructor
+   * @return A message that specifies what the arguments were that were given to the constructor
    */
-  public String getMessage()
-  {
+  public String getMessage() {
     return message;
   }
 }

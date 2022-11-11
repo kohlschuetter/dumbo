@@ -40,8 +40,7 @@ import org.json.JSONObject;
 /**
  * A factory to create proxies for access to remote Jabsorb services.
  */
-public class Client implements InvocationHandler
-{
+public class Client implements InvocationHandler {
   /**
    * Maintain a unique id for each message
    */
@@ -52,8 +51,7 @@ public class Client implements InvocationHandler
    * 
    * @return The id for the next message.
    */
-  private synchronized int getId()
-  {
+  private synchronized int getId() {
     return id++;
   }
 
@@ -77,20 +75,15 @@ public class Client implements InvocationHandler
    * 
    * @param session transport session to use for this connection
    */
-  public Client(Session session)
-  {
-    try
-    {
+  public Client(Session session) {
+    try {
       this.session = session;
       this.proxyMap = new HashMap<Object, String>();
-      //TODO: this might need a better way of initialising it
-      this.serializer = new JSONSerializer(
-          FixupCircRefAndNonPrimitiveDupes.class,
+      // TODO: this might need a better way of initialising it
+      this.serializer = new JSONSerializer(FixupCircRefAndNonPrimitiveDupes.class,
           new FixupsCircularReferenceHandler());
       this.serializer.registerDefaultSerializers();
-    }
-    catch (Exception e)
-    {
+    } catch (Exception e) {
       throw new ClientError(e);
     }
   }
@@ -100,8 +93,7 @@ public class Client implements InvocationHandler
    * 
    * @param proxy The proxy to close
    */
-  public void closeProxy(Object proxy)
-  {
+  public void closeProxy(Object proxy) {
     proxyMap.remove(proxy);
   }
 
@@ -110,32 +102,22 @@ public class Client implements InvocationHandler
    * 
    * @return The serializer for this class
    */
-  public JSONSerializer getSerializer()
-  {
+  public JSONSerializer getSerializer() {
     return serializer;
   }
 
-  //This method is public because of the inheritance from the InvokationHandler.
-  //It should never be called directly.
-  public Object invoke(Object proxyObj, Method method, Object[] args)
-      throws Exception
-  {
+  // This method is public because of the inheritance from the InvokationHandler.
+  // It should never be called directly.
+  public Object invoke(Object proxyObj, Method method, Object[] args) throws Exception {
     String methodName = method.getName();
-    if (methodName.equals("hashCode"))
-    {
+    if (methodName.equals("hashCode")) {
       return new Integer(System.identityHashCode(proxyObj));
-    }
-    else if (methodName.equals("equals"))
-    {
+    } else if (methodName.equals("equals")) {
       return (proxyObj == args[0] ? Boolean.TRUE : Boolean.FALSE);
+    } else if (methodName.equals("toString")) {
+      return proxyObj.getClass().getName() + '@' + Integer.toHexString(proxyObj.hashCode());
     }
-    else if (methodName.equals("toString"))
-    {
-      return proxyObj.getClass().getName() + '@'
-          + Integer.toHexString(proxyObj.hashCode());
-    }
-    return invoke(proxyMap.get(proxyObj), method.getName(), args, method
-        .getReturnType());
+    return invoke(proxyMap.get(proxyObj), method.getName(), args, method.getReturnType());
   }
 
   /**
@@ -145,10 +127,9 @@ public class Client implements InvocationHandler
    * @param klass the class of the interface the remote object should adhere to
    * @return created proxy
    */
-  public Object openProxy(String key, Class<?> klass)
-  {
-    Object result = java.lang.reflect.Proxy.newProxyInstance(klass
-        .getClassLoader(), new Class[] { klass }, this);
+  public Object openProxy(String key, Class<?> klass) {
+    Object result = java.lang.reflect.Proxy.newProxyInstance(klass.getClassLoader(), new Class[] {
+        klass}, this);
     proxyMap.put(result, key);
     return result;
   }
@@ -159,50 +140,42 @@ public class Client implements InvocationHandler
    * @param responseMessage The error message
    * @throws JSONException Rethrows the exception in the repsonse.
    */
-  protected void processException(JSONObject responseMessage)
-      throws JSONException
-  {
+  protected void processException(JSONObject responseMessage) throws JSONException {
     JSONObject error = (JSONObject) responseMessage.get("error");
-    if (error != null)
-    {
+    if (error != null) {
       Integer code = new Integer(error.has("code") ? error.getInt("code") : 0);
       String trace = error.has("trace") ? error.getString("trace") : null;
       String msg = error.has("msg") ? error.getString("msg") : null;
       throw new ErrorResponse(code, msg, trace);
     }
-    throw new ErrorResponse(new Integer(FailedResult.CODE_ERR_PARSE),
-        "Unknown response:" + responseMessage.toString(2), null);
+    throw new ErrorResponse(new Integer(FailedResult.CODE_ERR_PARSE), "Unknown response:"
+        + responseMessage.toString(2), null);
   }
 
   /**
    * Invokes a method for the ciient.
    * 
-   * @param objectTag (optional) the name of the object to invoke the method on.
-   *          May be null.
+   * @param objectTag (optional) the name of the object to invoke the method on. May be null.
    * @param methodName The name of the method to call.
    * @param args The arguments to the method.
    * @param returnType What should be returned
    * @return The result of the call.
-   * @throws Exception JSONObject, UnmarshallExceptions or Exceptions from
-   *           invoking the method may be thrown.
+   * @throws Exception JSONObject, UnmarshallExceptions or Exceptions from invoking the method may
+   *           be thrown.
    */
-  private Object invoke(String objectTag, String methodName, Object[] args,
-      Class<?> returnType) throws Exception
-  {
+  private Object invoke(String objectTag, String methodName, Object[] args, Class<?> returnType)
+      throws Exception {
     JSONObject message;
     String methodTag = objectTag == null ? "" : objectTag + ".";
     methodTag += methodName;
 
     {
-      if (args != null)
-      {
+      if (args != null) {
         SerializerState state = this.serializer.createSerializerState();
         Object params = serializer.marshall(state, /* parent */
-        null, args, JSONSerializer.PARAMETER_FIELD);
+            null, args, JSONSerializer.PARAMETER_FIELD);
         message = state.createObject(JSONSerializer.PARAMETER_FIELD, params);
-      }
-      else
-      {
+      } else {
         message = new JSONObject();
         message.put(JSONSerializer.PARAMETER_FIELD, new JSONArray());
       }
@@ -214,14 +187,11 @@ public class Client implements InvocationHandler
 
     if (!responseMessage.has(JSONSerializer.RESULT_FIELD))
       processException(responseMessage);
-    Object rawResult = this.serializer.getRequestParser().unmarshall(
-        responseMessage, JSONSerializer.RESULT_FIELD);
-    if (returnType.equals(Void.TYPE))
-    {
+    Object rawResult = this.serializer.getRequestParser().unmarshall(responseMessage,
+        JSONSerializer.RESULT_FIELD);
+    if (returnType.equals(Void.TYPE)) {
       return null;
-    }
-    else if (rawResult == null)
-    {
+    } else if (rawResult == null) {
       processException(responseMessage);
     }
     {

@@ -29,19 +29,16 @@ package org.jabsorb.dict;
 /**
  * Simple Java Dict Client (RFC2229)
  */
-public class DictCommandResult
-{
+public class DictCommandResult {
   protected int code;
 
   protected String msg;
 
-  public int getCode()
-  {
+  public int getCode() {
     return code;
   }
 
-  public String getMessage()
-  {
+  public String getMessage() {
     return msg;
   }
 
@@ -61,28 +58,23 @@ public class DictCommandResult
   public static int INVALID_STRATEGY = 551;
   public static int NO_MATCH = 552;
 
-  protected DictCommandResult(String s)
-  {
-    if (s == null)
-    {
+  protected DictCommandResult(String s) {
+    if (s == null) {
       code = INTERNAL_SOCKET_EOF;
       msg = "Connection closed";
       return;
     }
-    try
-    {
+    try {
       code = Integer.parseInt(s.substring(0, 3));
       msg = s.substring(4, s.length());
-    }
-    catch (Exception e)
-    {
+    } catch (Exception e) {
       code = INTERNAL_STATUS_PARSE_ERROR;
       msg = "Can't parse status line";
     }
   }
+
   @Override
-  public String toString()
-  {
+  public String toString() {
     return "code=" + code + " msg=\"" + msg + "\"";
   }
 }

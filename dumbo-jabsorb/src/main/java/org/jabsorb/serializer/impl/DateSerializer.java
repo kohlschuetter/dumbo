@@ -42,8 +42,7 @@ import org.json.JSONObject;
 /**
  * Serialises date and time values
  */
-public class DateSerializer extends AbstractSerializer
-{
+public class DateSerializer extends AbstractSerializer {
   /**
    * Unique serialisation id.
    */
@@ -52,72 +51,53 @@ public class DateSerializer extends AbstractSerializer
   /**
    * Classes that this can serialise.
    */
-  private static Class<?>[] _serializableClasses = new Class[] { Date.class,
-      Timestamp.class, java.sql.Date.class, Time.class };
+  private static Class<?>[] _serializableClasses = new Class[] {
+      Date.class, Timestamp.class, java.sql.Date.class, Time.class};
 
   /**
    * Classes that this can serialise to.
    */
-  private static Class<?>[] _JSONClasses = new Class[] { JSONObject.class };
+  private static Class<?>[] _JSONClasses = new Class[] {JSONObject.class};
 
-  public Class<?>[] getJSONClasses()
-  {
+  public Class<?>[] getJSONClasses() {
     return _JSONClasses;
   }
 
-  public Class<?>[] getSerializableClasses()
-  {
+  public Class<?>[] getSerializableClasses() {
     return _serializableClasses;
   }
 
-  public Object marshall(SerializerState state, Object p, Object o)
-      throws MarshallException
-  {
+  public Object marshall(SerializerState state, Object p, Object o) throws MarshallException {
     long time;
-    if (o instanceof Date)
-    {
+    if (o instanceof Date) {
       time = ((Date) o).getTime();
-    }
-    else
-    {
-      throw new MarshallException("cannot marshall date using class "
-          + o.getClass());
+    } else {
+      throw new MarshallException("cannot marshall date using class " + o.getClass());
     }
     JSONObject obj = new JSONObject();
-    marshallHints(obj,o);
-    try
-    {
+    marshallHints(obj, o);
+    try {
       obj.put("time", time);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new MarshallException(e.getMessage(), e);
     }
     return obj;
   }
 
   public ObjectMatch tryUnmarshall(SerializerState state, Class<?> clazz, Object o)
-      throws UnmarshallException
-  {
+      throws UnmarshallException {
     JSONObject jso = (JSONObject) o;
     String java_class;
-    try
-    {
+    try {
       java_class = jso.getString(JSONSerializer.JAVA_CLASS_FIELD);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("no type hint", e);
     }
-    if (java_class == null)
-    {
+    if (java_class == null) {
       throw new UnmarshallException("no type hint");
     }
-    if (!(java_class.equals("java.util.Date")) && 
-        !(java_class.equals("java.sql.Timestamp")) &&
-        !(java_class.equals("java.sql.Time")) &&
-        !(java_class.equals("java.sql.Date")) )
-    {
+    if (!(java_class.equals("java.util.Date")) && !(java_class.equals("java.sql.Timestamp"))
+        && !(java_class.equals("java.sql.Time")) && !(java_class.equals("java.sql.Date"))) {
       throw new UnmarshallException("not a Date");
     }
     state.setSerialized(o, ObjectMatch.OKAY);
@@ -125,58 +105,40 @@ public class DateSerializer extends AbstractSerializer
   }
 
   public Object unmarshall(SerializerState state, Class<?> clazz, Object o)
-      throws UnmarshallException
-  {
+      throws UnmarshallException {
     Class<?> realClazz = clazz;
     JSONObject jso = (JSONObject) o;
     long time;
-    try
-    {
+    try {
       time = jso.getLong("time");
-    }
-    catch(JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("Could not get the time in date serialiser", e);
     }
-    if (jso.has(JSONSerializer.JAVA_CLASS_FIELD))
-    {
-      try
-      {
+    if (jso.has(JSONSerializer.JAVA_CLASS_FIELD)) {
+      try {
         realClazz = Class.forName(jso.getString(JSONSerializer.JAVA_CLASS_FIELD));
-      }
-      catch (ClassNotFoundException e)
-      {
+      } catch (ClassNotFoundException e) {
         throw new UnmarshallException(e.getMessage(), e);
-      }
-      catch(JSONException e)
-      {
+      } catch (JSONException e) {
         throw new UnmarshallException("Could not find javaClass", e);
       }
     }
     Object returnValue = null;
-    if (Date.class.equals(realClazz))
-    {
+    if (Date.class.equals(realClazz)) {
       returnValue = new Date(time);
-    }
-    else if (Timestamp.class.equals(realClazz))
-    {
+    } else if (Timestamp.class.equals(realClazz)) {
       returnValue = new Timestamp(time);
-    }
-    else if (java.sql.Date.class.equals(realClazz))
-    {
+    } else if (java.sql.Date.class.equals(realClazz)) {
       returnValue = new java.sql.Date(time);
-    }
-    else if (Time.class.equals(realClazz))
-    {
+    } else if (Time.class.equals(realClazz)) {
       returnValue = new Time(time);
     }
 
-    if (returnValue == null)
-    {
+    if (returnValue == null) {
       throw new UnmarshallException("invalid class " + realClazz);
     }
     state.setSerialized(o, returnValue);
     return returnValue;
-   }
+  }
 
 }

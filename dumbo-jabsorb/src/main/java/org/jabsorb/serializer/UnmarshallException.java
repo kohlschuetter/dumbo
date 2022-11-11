@@ -27,12 +27,11 @@
 package org.jabsorb.serializer;
 
 /**
- * Thrown by Serializer objects when they are unable to Unmarshall the JSON
- * objects into Java objects.
+ * Thrown by Serializer objects when they are unable to Unmarshall the JSON objects into Java
+ * objects.
  */
 
-public class UnmarshallException extends Exception
-{
+public class UnmarshallException extends Exception {
   /**
    * Unique serialisation id.
    */
@@ -43,21 +42,19 @@ public class UnmarshallException extends Exception
    * 
    * @param msg The string to display
    */
-  public UnmarshallException(String msg)
-  {
+  public UnmarshallException(String msg) {
     super(msg);
   }
-  
+
   /**
    * Creates a new UnmarshallException.
    * 
-   * @param msg   the message to be displayed
-   * @param cause the cause.  (A <tt>null</tt> value is permitted, and indicates
-   *              that the cause is nonexistent or unknown.)
+   * @param msg the message to be displayed
+   * @param cause the cause. (A <tt>null</tt> value is permitted, and indicates that the cause is
+   *          nonexistent or unknown.)
    */
-  public UnmarshallException(String msg, Throwable cause)
-  {
-    super(msg,cause);
+  public UnmarshallException(String msg, Throwable cause) {
+    super(msg, cause);
   }
 
 }

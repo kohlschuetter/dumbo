@@ -12,8 +12,7 @@ import org.json.JSONObject;
  * 
  * @author William Becker
  */
-class FlatResult extends SuccessfulResult
-{
+class FlatResult extends SuccessfulResult {
   /**
    * Maps the hash codes of objects to results
    */
@@ -26,22 +25,17 @@ class FlatResult extends SuccessfulResult
    * @param jsonResult The main message to send
    * @param map Contains the other objects to put in the result
    */
-  public FlatResult(Object id, Object jsonResult,
-      Map<Integer, FlatProcessedObject> map)
-  {
+  public FlatResult(Object id, Object jsonResult, Map<Integer, FlatProcessedObject> map) {
     super(id, jsonResult);
     this.map = map;
   }
 
   @Override
-  public JSONObject createOutput() throws JSONException
-  {
+  public JSONObject createOutput() throws JSONException {
     JSONObject o = this._createOutput();
     Object result = getResult();
-    if (result != null)
-    {
-      FlatSerializerState.addValuesToObject(o, result, JSONSerializer.RESULT_FIELD, 
-          this.map);
+    if (result != null) {
+      FlatSerializerState.addValuesToObject(o, result, JSONSerializer.RESULT_FIELD, this.map);
     }
     return o;
   }

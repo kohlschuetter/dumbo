@@ -45,8 +45,7 @@ import org.json.JSONObject;
  * 
  * TODO: why not use a map serialiser?
  */
-public class DictionarySerializer extends AbstractSerializer
-{
+public class DictionarySerializer extends AbstractSerializer {
   /**
    * Unique serialisation id.
    */
@@ -55,71 +54,55 @@ public class DictionarySerializer extends AbstractSerializer
   /**
    * Classes that this can serialise.
    */
-  private static Class<?>[] _serializableClasses = new Class[] { Hashtable.class };
+  private static Class<?>[] _serializableClasses = new Class[] {Hashtable.class};
 
   /**
    * Classes that this can serialise to.
    */
-  private static Class<?>[] _JSONClasses = new Class[] { JSONObject.class };
+  private static Class<?>[] _JSONClasses = new Class[] {JSONObject.class};
 
   @Override
-  public boolean canSerialize(Class<?> clazz, Class<?> jsonClazz)
-  {
-    return (super.canSerialize(clazz, jsonClazz) || ((jsonClazz == null || jsonClazz == JSONObject.class) && Dictionary.class
-        .isAssignableFrom(clazz)));
+  public boolean canSerialize(Class<?> clazz, Class<?> jsonClazz) {
+    return (super.canSerialize(clazz, jsonClazz) || ((jsonClazz == null
+        || jsonClazz == JSONObject.class) && Dictionary.class.isAssignableFrom(clazz)));
   }
 
-  public Class<?>[] getJSONClasses()
-  {
+  public Class<?>[] getJSONClasses() {
     return _JSONClasses;
   }
 
-  public Class<?>[] getSerializableClasses()
-  {
+  public Class<?>[] getSerializableClasses() {
     return _serializableClasses;
   }
 
-  public Object marshall(SerializerState state, Object p, Object o)
-      throws MarshallException
-  {
-    Dictionary<?,?> ht = (Dictionary<?,?>) o;
+  public Object marshall(SerializerState state, Object p, Object o) throws MarshallException {
+    Dictionary<?, ?> ht = (Dictionary<?, ?>) o;
     JSONObject obj = new JSONObject();
     JSONObject mapdata = new JSONObject();
 
-    marshallHints(obj,o);
-    try
-    {
-      obj.put("map", state.push(o,mapdata,"map"));
+    marshallHints(obj, o);
+    try {
+      obj.put("map", state.push(o, mapdata, "map"));
       state.getProcessedObject(mapdata).setSerialized(mapdata);
-    }
-    catch (JSONException e)
-    {
-      throw new MarshallException("Could not put data"+ e.getMessage(), e);
+    } catch (JSONException e) {
+      throw new MarshallException("Could not put data" + e.getMessage(), e);
     }
     Object key = null;
 
-    try
-    {
+    try {
       Enumeration<?> en = ht.keys();
-      while (en.hasMoreElements())
-      {
+      while (en.hasMoreElements()) {
         key = en.nextElement();
-        String keyString = key.toString();  // only support String keys
+        String keyString = key.toString(); // only support String keys
 
         Object json = ser.marshall(state, mapdata, ht.get(key), keyString);
-        mapdata.put(keyString,json );
+        mapdata.put(keyString, json);
       }
-    }
-    catch (MarshallException e)
-    {
+    } catch (MarshallException e) {
       throw new MarshallException("map key " + key + " " + e.getMessage(), e);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new MarshallException("map key " + key + " " + e.getMessage(), e);
-    }
-    finally
-    {
+    } finally {
       state.pop();
     }
     return obj;
@@ -130,38 +113,27 @@ public class DictionarySerializer extends AbstractSerializer
   // TODO: Also cache the result somehow so that an unmarshall
   // following a tryUnmarshall doesn't do the same work twice!
   public ObjectMatch tryUnmarshall(SerializerState state, Class<?> clazz, Object o)
-      throws UnmarshallException
-  {
+      throws UnmarshallException {
     JSONObject jso = (JSONObject) o;
     String java_class;
-    try
-    {
+    try {
       java_class = jso.getString(JSONSerializer.JAVA_CLASS_FIELD);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("Could not read javaClass", e);
     }
-    if (java_class == null)
-    {
+    if (java_class == null) {
       throw new UnmarshallException("no type hint");
     }
-    if (!(java_class.equals("java.util.Dictionary") || java_class
-        .equals("java.util.Hashtable")))
-    {
+    if (!(java_class.equals("java.util.Dictionary") || java_class.equals("java.util.Hashtable"))) {
       throw new UnmarshallException("not a Dictionary");
     }
     JSONObject jsonmap;
-    try
-    {
+    try {
       jsonmap = jso.getJSONObject("map");
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("map missing", e);
     }
-    if (jsonmap == null)
-    {
+    if (jsonmap == null) {
       throw new UnmarshallException("map missing");
     }
     ObjectMatch m = new ObjectMatch(-1);
@@ -169,20 +141,14 @@ public class DictionarySerializer extends AbstractSerializer
 
     Iterator<String> i = jsonmap.keys();
     String key = null;
-    try
-    {
-      while (i.hasNext())
-      {
+    try {
+      while (i.hasNext()) {
         key = i.next();
         m.setMismatch(ser.tryUnmarshall(state, null, jsonmap.get(key)).max(m).getMismatch());
       }
-    }
-    catch (UnmarshallException e)
-    {
+    } catch (UnmarshallException e) {
       throw new UnmarshallException("key " + key + " " + e.getMessage(), e);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("key " + key + " " + e.getMessage(), e);
     }
 
@@ -190,43 +156,30 @@ public class DictionarySerializer extends AbstractSerializer
   }
 
   public Object unmarshall(SerializerState state, Class<?> clazz, Object o)
-      throws UnmarshallException
-  {
+      throws UnmarshallException {
     JSONObject jso = (JSONObject) o;
     String java_class;
-    try
-    {
+    try {
       java_class = jso.getString(JSONSerializer.JAVA_CLASS_FIELD);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("Could not read javaClass", e);
     }
-    if (java_class == null)
-    {
+    if (java_class == null) {
       throw new UnmarshallException("no type hint");
     }
-    Hashtable<String,Object> ht;
-    if (java_class.equals("java.util.Dictionary")
-        || java_class.equals("java.util.Hashtable"))
-    {
-      ht = new Hashtable<String,Object>();
-    }
-    else
-    {
+    Hashtable<String, Object> ht;
+    if (java_class.equals("java.util.Dictionary") || java_class.equals("java.util.Hashtable")) {
+      ht = new Hashtable<String, Object>();
+    } else {
       throw new UnmarshallException("not a Dictionary");
     }
     JSONObject jsonmap;
-    try
-    {
+    try {
       jsonmap = jso.getJSONObject("map");
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("map missing", e);
     }
-    if (jsonmap == null)
-    {
+    if (jsonmap == null) {
       throw new UnmarshallException("map missing");
     }
 
@@ -234,20 +187,14 @@ public class DictionarySerializer extends AbstractSerializer
 
     Iterator<String> i = jsonmap.keys();
     String key = null;
-    try
-    {
-      while (i.hasNext())
-      {
+    try {
+      while (i.hasNext()) {
         key = i.next();
         ht.put(key, ser.unmarshall(state, null, jsonmap.get(key)));
       }
-    }
-    catch (UnmarshallException e)
-    {
+    } catch (UnmarshallException e) {
       throw new UnmarshallException("key " + key + " " + e.getMessage(), e);
-    }
-    catch (JSONException e)
-    {
+    } catch (JSONException e) {
       throw new UnmarshallException("key " + key + " " + e.getMessage(), e);
     }
     return ht;

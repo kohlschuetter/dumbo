@@ -12,14 +12,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Serializes objects into a flat style. This means that all JSONObjects exist
- * at the top level. This prevents duplication and circular references from
- * occuring.
+ * Serializes objects into a flat style. This means that all JSONObjects exist at the top level.
+ * This prevents duplication and circular references from occuring.
  * 
  * @author William Becker
  */
-public class FlatSerializerState implements SerializerState
-{
+public class FlatSerializerState implements SerializerState {
   /**
    * The start indentifier of an index
    */
@@ -33,16 +31,12 @@ public class FlatSerializerState implements SerializerState
    * @param key The key under which the primary value is to be stored
    * @param map The values to store in the object
    * @return The object o, which was passed in.
-   * @throws JSONException If an error happens when the values in map are added
-   *           to the object
+   * @throws JSONException If an error happens when the values in map are added to the object
    */
-  public static JSONObject addValuesToObject(JSONObject o, final Object result,
-      final String key, final Map<Integer, FlatProcessedObject> map)
-      throws JSONException
-  {
+  public static JSONObject addValuesToObject(JSONObject o, final Object result, final String key,
+      final Map<Integer, FlatProcessedObject> map) throws JSONException {
     o.put(key, result);
-    for (FlatProcessedObject p : map.values())
-    {
+    for (FlatProcessedObject p : map.values()) {
       o.put(p.getIndex().getIndex(), p.getActualSerialized());
     }
     return o;
@@ -59,46 +53,39 @@ public class FlatSerializerState implements SerializerState
   private final Map<Integer, FlatProcessedObject> marshalledObjects;
 
   /**
-   * All values which either aren't to be marshalled to JSONObjects or it is
-   * unknown to what they will be unmarshalled
+   * All values which either aren't to be marshalled to JSONObjects or it is unknown to what they
+   * will be unmarshalled
    */
   private final Map<Integer, FlatProcessedObject> nonMarshalledObjects;
 
   /**
    * Creates a new FlatSerializerState
    */
-  public FlatSerializerState()
-  {
+  public FlatSerializerState() {
     this.marshalledObjects = new HashMap<Integer, FlatProcessedObject>();
     this.nonMarshalledObjects = new HashMap<Integer, FlatProcessedObject>();
     this.index = 1;
   }
 
   public Object checkObject(Object parent, Object currentObject, Object ref)
-      throws MarshallException
-  {
+      throws MarshallException {
     FlatProcessedObject o = getProcessedObject(currentObject);
-    if (o != null)
-    {
+    if (o != null) {
       return o.getSerialized();
     }
     push(null, currentObject, null);
     return null;
   }
 
-  public JSONObject createObject(String key, Object json) throws JSONException
-  {
+  public JSONObject createObject(String key, Object json) throws JSONException {
     final JSONObject toReturn = new JSONObject();
-    if (json != null)
-    {
-      FlatSerializerState.addValuesToObject(toReturn, json, key,
-          this.marshalledObjects);
+    if (json != null) {
+      FlatSerializerState.addValuesToObject(toReturn, json, key, this.marshalledObjects);
     }
     return toReturn;
   }
 
-  public SuccessfulResult createResult(Object requestId, Object json)
-  {
+  public SuccessfulResult createResult(Object requestId, Object json) {
     return new FlatResult(requestId, json, this.marshalledObjects);
   }
 
@@ -108,90 +95,71 @@ public class FlatSerializerState implements SerializerState
    * @param o The java object
    * @return A JSON object for the java object.
    */
-  public JSONObject getJSONObject(Object o)
-  {
-    JSONObject j = (JSONObject) marshalledObjects.get(
-        new Integer(System.identityHashCode(o))).getObject();
+  public JSONObject getJSONObject(Object o) {
+    JSONObject j = (JSONObject) marshalledObjects.get(new Integer(System.identityHashCode(o)))
+        .getObject();
     return j;
   }
 
-  public FlatProcessedObject getProcessedObject(Object object)
-  {
+  public FlatProcessedObject getProcessedObject(Object object) {
     final int key = System.identityHashCode(object);
-    if (this.marshalledObjects.containsKey(key))
-    {
+    if (this.marshalledObjects.containsKey(key)) {
       return this.marshalledObjects.get(key);
     }
     return this.nonMarshalledObjects.get(key);
   }
 
-  public void pop() throws MarshallException
-  {
-    //Nothing to do
+  public void pop() throws MarshallException {
+    // Nothing to do
   }
 
-  public Object push(Object parent, Object obj, Object ref)
-  {
+  public Object push(Object parent, Object obj, Object ref) {
     final int identity = new Integer(System.identityHashCode(obj));
     final Object toReturn;
     final FlatProcessedObject po;
-    if (obj instanceof JSONObject)
-    {
+    if (obj instanceof JSONObject) {
       JSONObject val = new JSONObject();
       String _index = nextIndex();
       po = new FlatProcessedObject(val, _index);
 
       toReturn = _index;
-      if (!this.marshalledObjects.containsKey(identity))
-      {
+      if (!this.marshalledObjects.containsKey(identity)) {
         this.marshalledObjects.put(identity, po);
       }
-    }
-    else
-    {
+    } else {
       po = new FlatProcessedObject(obj);
       toReturn = obj;
-      if (!this.nonMarshalledObjects.containsKey(identity))
-      {
+      if (!this.nonMarshalledObjects.containsKey(identity)) {
         this.nonMarshalledObjects.put(identity, po);
       }
     }
     return toReturn;
-    //throw new MarshallException("Object already marshalled.");
+    // throw new MarshallException("Object already marshalled.");
   }
 
-  public void setMarshalled(Object marshalledObject, Object java)
-  {
-    if (marshalledObject instanceof JSONObject)
-    {
+  public void setMarshalled(Object marshalledObject, Object java) {
+    if (marshalledObject instanceof JSONObject) {
       FlatProcessedObject o = getProcessedObject(java);
       o.setIndexValue(nextIndex());
       final int key = System.identityHashCode(java);
-      if (this.nonMarshalledObjects.containsKey(key))
-      {
+      if (this.nonMarshalledObjects.containsKey(key)) {
         this.marshalledObjects.put(key, this.nonMarshalledObjects.remove(key));
       }
     }
   }
 
-  public void setSerialized(Object source, Object target)
-      throws UnmarshallException
-  {
+  public void setSerialized(Object source, Object target) throws UnmarshallException {
     final ProcessedObject po = this.getProcessedObject(source);
-    if (po != null)
-    {
+    if (po != null) {
       po.setSerialized(target);
     }
   }
 
-  public void store(Object object)
-  {
-    if (object instanceof JSONObject)
-    {
+  public void store(Object object) {
+    if (object instanceof JSONObject) {
       FlatProcessedObject p = new FlatProcessedObject(object, nextIndex());
       final int identity = System.identityHashCode(object);
-      if (!marshalledObjects.containsKey(identity))
-      {
+      if (!marshalledObjects.containsKey(identity)) {
         marshalledObjects.put(identity, p);
       }
     }
@@ -202,8 +170,7 @@ public class FlatSerializerState implements SerializerState
    * 
    * @return The next index value
    */
-  private String nextIndex()
-  {
+  private String nextIndex() {
     return FlatSerializerState.INDEX_PREFIX + index++;
   }
 }
