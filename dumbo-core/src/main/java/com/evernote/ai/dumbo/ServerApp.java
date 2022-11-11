@@ -44,8 +44,7 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
   protected abstract void initRPC(final RPCRegistry registry);
 
   /**
-   * Initializes internal {@link Extension} components that are usually required for any
-   * app.
+   * Initializes internal {@link Extension} components that are usually required for any app.
    */
   protected void initExtensionsInternal() {
     registerExtension(new BaseSupport());
@@ -62,8 +61,7 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
     DEPENDENCY_LOOP : do {
       registeredExtension = false;
 
-      List<Extension> extCopy =
-          Collections.unmodifiableList(new ArrayList<Extension>(extensions));
+      List<Extension> extCopy = Collections.unmodifiableList(new ArrayList<Extension>(extensions));
       for (Extension ext : extCopy) {
         ext.resolveDependencies(this, extCopy);
         if (registeredExtension) {
@@ -85,8 +83,8 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
    * Registers an {@link Extension} to be used with this app.
    * 
    * @param ext The extension to register.
-   * @throws IllegalStateException if the call was made outside of
-   *           {@link #initExtensions()}, or if an extension was already registered.
+   * @throws IllegalStateException if the call was made outside of {@link #initExtensions()}, or if
+   *           an extension was already registered.
    */
   public final void registerExtension(final Extension ext) {
     if (initExtensionsDone) {
@@ -97,8 +95,8 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
     }
   }
 
-  private final List<Closeable> closeables = Collections
-      .synchronizedList(new ArrayList<Closeable>());
+  private final List<Closeable> closeables = Collections.synchronizedList(
+      new ArrayList<Closeable>());
 
   private String mostRecentAppId = null;
 
@@ -115,8 +113,8 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
   private boolean staticDesignMode = false;
 
   /**
-   * Registers a {@link Closeable} instance that should be closed automatically when the
-   * application shuts down.
+   * Registers a {@link Closeable} instance that should be closed automatically when the application
+   * shuts down.
    * 
    * @param cl The {@link Closeable} to add.
    * @return The {@link Closeable} itself.
@@ -156,8 +154,8 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
   }
 
   /**
-   * Called when an instance of this app (e.g., a browser window) is being unloaded/closed
-   * or reloaded.
+   * Called when an instance of this app (e.g., a browser window) is being unloaded/closed or
+   * reloaded.
    * 
    * @param appId The app ID for this instance.
    */
@@ -215,8 +213,8 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
   }
 
   /**
-   * Called when the application has been quit, for example when all browser windows have
-   * been closed.
+   * Called when the application has been quit, for example when all browser windows have been
+   * closed.
    */
   protected void onQuit() {
     try {
@@ -247,12 +245,18 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
     return mostRecentAppId == null || mostRecentAppId.equals(appId);
   }
 
+  public void checkValid(String appId) throws InvalidCredentialsException {
+    if (!isValid(appId)) {
+      throw new InvalidCredentialsException("appId:"+appId);
+    }
+  }
+
   /**
    * Returns the extensions registered with this app.
    * 
    * @return The collection of extensions.
    */
-  Collection<Extension> getExtensions() {
+  public Collection<Extension> getExtensions() {
     return extensions;
   }
 

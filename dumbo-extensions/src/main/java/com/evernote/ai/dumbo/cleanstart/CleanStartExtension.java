@@ -15,7 +15,6 @@
  */
 package com.evernote.ai.dumbo.cleanstart;
 
-import com.evernote.ai.dumbo.AppHTTPServer;
 import com.evernote.ai.dumbo.Extension;
 
 /**
@@ -23,14 +22,8 @@ import com.evernote.ai.dumbo.Extension;
  */
 public final class CleanStartExtension extends Extension {
   @Override
-  public void init(final AppHTTPServer server) {
-    server.registerContext("/_app_cleanstart", CleanStartExtension.class
-        .getResource("webapp/"));
-  }
-
-  @Override
   protected void initResources() {
-    registerCSS("/_app_cleanstart/css/cleanstart.css");
-    registerAsyncJavaScript("/_app_cleanstart/js/cleanstart.js");
+    registerCSS("css/cleanstart.css");
+    registerAsyncJavaScript("js/cleanstart.js");
   }
 }

@@ -15,7 +15,8 @@
  */
 package com.evernote.ai.dumbo.ext;
 
-import com.evernote.ai.dumbo.AppHTTPServer;
+import java.net.URL;
+
 import com.evernote.ai.dumbo.Extension;
 
 /**
@@ -23,15 +24,19 @@ import com.evernote.ai.dumbo.Extension;
  */
 public final class BaseSupport extends Extension {
   @Override
-  public void init(final AppHTTPServer server) {
-    server.registerContext("/_app_base", AppHTTPServer.class
-        .getResource("/com/evernote/ai/dumbo/appbase/"));
+  protected void initResources() {
+    registerJavaScript("js/jquery.min.js");
+    registerJavaScript("js/jsonrpc.js");
+    registerJavaScript("js/app.js");
   }
 
   @Override
-  protected void initResources() {
-    registerJavaScript("/_app_base/js/jquery.min.js");
-    registerJavaScript("/_app_base/js/jsonrpc.js");
-    registerJavaScript("/_app_base/js/app.js");
+  protected String initExtensionPath() {
+    return "/_app_base";
+  }
+
+  @Override
+  protected URL initExtensionResourceURL() {
+    return BaseSupport.class.getResource("/com/evernote/ai/dumbo/appbase/");
   }
 }

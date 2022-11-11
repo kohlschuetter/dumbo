@@ -15,7 +15,6 @@
  */
 package com.evernote.ai.dumbo.chartjs;
 
-import com.evernote.ai.dumbo.AppHTTPServer;
 import com.evernote.ai.dumbo.Extension;
 
 /**
@@ -26,13 +25,8 @@ import com.evernote.ai.dumbo.Extension;
  */
 public final class ChartjsSupport extends Extension {
   @Override
-  public void init(final AppHTTPServer server) {
-    server.registerContext("/_app_chartjs", ChartjsSupport.class.getResource("webapp/"));
-  }
-
-  @Override
   protected void initResources() {
-    registerJavaScript("/_app_chartjs/js/Chart.min.js");
-    registerJavaScript("/_app_chartjs/js/chartjs-extras.js");
+    registerJavaScript("js/Chart.min.js");
+    registerJavaScript("js/chartjs-extras.js");
   }
 }

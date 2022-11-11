@@ -32,10 +32,8 @@ public final class BootstrapSupport extends Extension {
   private final boolean extras;
 
   static {
-    HTML_NO_LONGER_CURRENT =
-        new Scanner(BootstrapSupport.class
-            .getResourceAsStream("include/noLongerCurrent.html"), "UTF-8").useDelimiter(
-            "\\Z").next();
+    HTML_NO_LONGER_CURRENT = new Scanner(BootstrapSupport.class.getResourceAsStream(
+        "include/noLongerCurrent.html"), "UTF-8").useDelimiter("\\Z").next();
   }
 
   /**
@@ -48,25 +46,19 @@ public final class BootstrapSupport extends Extension {
   /**
    * Initializes bootstrap support.
    * 
-   * @param extras If {@code true}, custom additions will be enabled. If {@code false},
-   *          only the library is provided.
+   * @param extras If {@code true}, custom additions will be enabled. If {@code false}, only the
+   *          library is provided.
    */
   public BootstrapSupport(boolean extras) {
     this.extras = extras;
   }
 
   @Override
-  public void init(final AppHTTPServer server) {
-    server.registerContext("/_app_bootstrap", BootstrapSupport.class
-        .getResource("webapp/"));
-  }
-
-  @Override
   protected void initResources() {
-    registerCSS("/_app_bootstrap/css/bootstrap.min.css");
-    registerCSS("/_app_bootstrap/css/bootstrap-extras.css");
-    registerJavaScript("/_app_bootstrap/js/bootstrap.min.js");
-    registerJavaScript("/_app_bootstrap/js/bootstrap-extras.js");
+    registerCSS("css/bootstrap.min.css");
+    registerCSS("css/bootstrap-extras.css");
+    registerJavaScript("js/bootstrap.min.js");
+    registerJavaScript("js/bootstrap-extras.js");
   }
 
   @Override

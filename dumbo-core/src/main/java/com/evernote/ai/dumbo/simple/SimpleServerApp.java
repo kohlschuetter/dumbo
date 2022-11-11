@@ -30,8 +30,8 @@ import com.evernote.ai.dumbo.console.ConsoleSupport;
 import com.evernote.ai.dumbo.ext.AppDefaultsSupport;
 
 /**
- * A simplified {@link ServerApp}, which allows extensions and services to be specified
- * using Java annotations.
+ * A simplified {@link ServerApp}, which allows extensions and services to be specified using Java
+ * annotations.
  */
 @Extensions({ConsoleSupport.class, AppDefaultsSupport.class})
 public abstract class SimpleServerApp extends ServerApp {
@@ -44,8 +44,7 @@ public abstract class SimpleServerApp extends ServerApp {
   protected SimpleServerApp() {
     super();
 
-    this.annotatedExtensions =
-        getClassesFromAnnotation(Extensions.class, Extension.class);
+    this.annotatedExtensions = getClassesFromAnnotation(Extensions.class, Extension.class);
     this.annotatedServices = getClassesFromAnnotation(Services.class, Object.class);
   }
 
@@ -104,8 +103,7 @@ public abstract class SimpleServerApp extends ServerApp {
         } else if (annotation instanceof Extensions) {
           value = ((Extensions) annotation).value();
         } else {
-          throw new IllegalStateException("Unsupported annotation type: "
-              + annotationClass);
+          throw new IllegalStateException("Unsupported annotation type: " + annotationClass);
         }
 
         for (Class<?> en : value) {
@@ -125,6 +123,7 @@ public abstract class SimpleServerApp extends ServerApp {
 
   @Override
   protected final void onStart() {
+    super.onStart();
     new Thread() {
       @Override
       public void run() {
@@ -141,9 +140,17 @@ public abstract class SimpleServerApp extends ServerApp {
   /**
    * This method will be called upon application start.
    * 
-   * @param consoleOut Will log to the browser, either to its console or a dedicated
-   *          element.
+   * @param consoleOut Will log to the browser, either to its console or a dedicated element.
    */
   protected void onAppStart() {
+  }
+
+  /**
+   * Returns the {@link Console} for this app.
+   * 
+   * @return The console.
+   */
+  public Console getConsole() {
+    return console;
   }
 }

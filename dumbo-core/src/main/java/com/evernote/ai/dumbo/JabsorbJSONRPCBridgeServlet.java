@@ -23,6 +23,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
+import java.util.Objects;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -31,6 +32,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jabsorb.ExceptionTransformer;
 import org.jabsorb.JSONRPCBridge;
 import org.jabsorb.serializer.response.results.FailedResult;
 import org.jabsorb.serializer.response.results.JSONRPCResult;
@@ -43,10 +45,11 @@ import com.evernote.ai.dumbo.console.ConsoleService;
  * A Jabsorb-based JSON-RPC Servlet.
  */
 public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
+  private static final long serialVersionUID = 1L;
   private static final Charset UTF_8 = Charset.forName("UTF-8");
   private JSONRPCBridge bridge;
-
   private JSONRPCRegistryImpl registry;
+  private final ThreadLocal<String> tlMethod = new ThreadLocal<>();
 
   @Override
   public void init(ServletConfig config) throws ServletException {
@@ -56,6 +59,16 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
     ServerApp app = (ServerApp) ctx.getAttribute("app");
 
     bridge = new JSONRPCBridge();
+    bridge.setExceptionTransformer(new ExceptionTransformer() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public Object transform(Throwable t) {
+        System.err.println("Error during JSON method call: " + tlMethod.get());
+        t.printStackTrace();
+        return t;
+      }
+    });
 
     registry = new JSONRPCRegistryImpl(bridge);
     app.initRPCInternal(registry);
@@ -79,6 +92,8 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
 
     @Override
     public <T> void registerRPCService(Class<T> interfaze, T instance) {
+      Objects.requireNonNull(interfaze, "Interface class must not be null");
+      Objects.requireNonNull(instance, "Instance must not be null");
       if (ConsoleService.class == interfaze && console == null) {
         this.console = (ConsoleService) instance;
       }
@@ -111,7 +126,8 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       JSONObject jsonRequest = new JSONObject(jt);
 
       String method = jsonRequest.getString("method");
-      if (method != null && registry.console != null) {
+      tlMethod.set(method);
+      if (registry.console != null) {
         if (!method.startsWith("ConsoleService.") && !method.startsWith("system.")) {
           synchronized (registry.console) {
             registry.console.notifyAll();
@@ -121,9 +137,9 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
 
       result = bridge.call(new Object[] {request, response}, jsonRequest);
     } catch (UnsupportedEncodingException | RuntimeException e) {
-      result =
-          new FailedResult(FailedResult.CODE_ERR_PARSE, null,
-              FailedResult.MSG_ERR_PARSE);
+      result = new FailedResult(FailedResult.CODE_ERR_PARSE, null, FailedResult.MSG_ERR_PARSE);
+    } finally {
+      tlMethod.set(null);
     }
 
     ByteBuffer byteBuffer = UTF_8.encode(result.toString());

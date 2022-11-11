@@ -18,10 +18,13 @@ package com.evernote.ai.dumbo;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -48,9 +51,9 @@ public class AppHTTPServer {
       return u;
     }
 
-    u =
-        AppHTTPServer.class.getResource("/"
-            + app.getClass().getPackage().getName().replace('.', '/') + "/webapp/");
+    u = AppHTTPServer.class.getResource("/" + app.getClass().getPackage().getName().replace('.',
+        '/') + "/webapp/");
+    Objects.requireNonNull(u);
 
     return u;
   }
@@ -67,8 +70,8 @@ public class AppHTTPServer {
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web
-   * resources from the given URL path.
+   * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
+   * from the given URL path.
    * 
    * @throws ExtensionDependencyException
    */
@@ -77,14 +80,24 @@ public class AppHTTPServer {
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web
-   * resources from the given URL path.
+   * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
+   * from the given URL path.
+   * 
+   * @throws ExtensionDependencyException
+   */
+  public AppHTTPServer(final ServerApp app, final String path) throws IOException {
+    this(app, path, (URL) null);
+  }
+
+  /**
+   * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
+   * from the given URL path.
    * 
    * @throws ExtensionDependencyException
    */
   public AppHTTPServer(final ServerApp app, final String path, final URL webappBaseURL)
       throws IOException {
-    this(app, path, 0, webappBaseURL);
+    this(app, path, 0, webappBaseURL != null ? webappBaseURL : getWebappBaseURL(app));
   }
 
   private final ContextHandlerCollection contextHandlers;
@@ -94,16 +107,16 @@ public class AppHTTPServer {
   private final ServerApp app;
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp} on the given port, using
-   * web resources from the given URL path.
+   * Creates a new HTTP server for the given {@link ServerApp} on the given port, using web
+   * resources from the given URL path.
    * 
    * @throws ExtensionDependencyException
    */
   private AppHTTPServer(final ServerApp app, final String path, final int port,
       final URL webappBaseURL) throws IOException {
     this.app = app;
-    this.server = port <= 0 ? new Server(0) : new Server(port);
-    this.path = path;
+    this.server = new Server();
+    this.path = path.replaceFirst("^/", "");
     app.registerCloseable(new Closeable() {
       @Override
       public void close() throws IOException {
@@ -125,12 +138,21 @@ public class AppHTTPServer {
     }
 
     server.setHandler(contextHandlers);
+
+    // from Server constructor -- only open connector after initialization
+    ServerConnector connector = new ServerConnector(server);
+    connector.setPort(port <= 0 ? 0 : port);
+    connector.setHost("127.0.0.1"); // listen on localhost only
+    server.setConnectors(new Connector[] {connector});
   }
 
-  public void registerContext(final String contextPrefix, final URL pathToWebApp) {
-    final WebAppContext wac =
-        new WebAppContext(pathToWebApp.toExternalForm(), contextPrefix);
+  public WebAppContext registerContext(final String contextPrefix, final URL pathToWebApp) {
+    return registerContext(new WebAppContext(pathToWebApp.toExternalForm(), contextPrefix));
+  }
+
+  WebAppContext registerContext(WebAppContext wac) {
     contextHandlers.addHandler(wac);
+    return wac;
   }
 
   /**
@@ -168,8 +190,8 @@ public class AppHTTPServer {
   }
 
   /**
-   * Starts the HTTP Server, runs it in a separate thread. The call will only return when
-   * the server has been shut down.
+   * Starts the HTTP Server, runs it in a separate thread. The call will only return when the server
+   * has been shut down.
    */
   public void startAndWait() {
     start();

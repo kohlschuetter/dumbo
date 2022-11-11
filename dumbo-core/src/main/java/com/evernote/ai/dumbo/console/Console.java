@@ -29,9 +29,8 @@ import com.evernote.ai.dumbo.ServerApp;
 /**
  * An object-oriented console ("System.out"), which can be controlled via RPC.
  * 
- * Content can be sent directly as a series objects (which must be marshallable via RPC),
- * or through a {@link PrintWriter} -- in the latter case output will be sent as chunks of
- * strings.
+ * Content can be sent directly as a series objects (which must be marshallable via RPC), or through
+ * a {@link PrintWriter} -- in the latter case output will be sent as chunks of strings.
  */
 public final class Console implements Closeable {
   private final StringWriter sw = new StringWriter() {
@@ -47,7 +46,12 @@ public final class Console implements Closeable {
       }
     }
   };
-  private final PrintWriter consoleOut = new PrintWriter(sw, true);
+  private final PrintWriter consoleOut = new PrintWriter(sw, true) {
+    @Override
+    public final void close() {
+    }
+  };
+
   private final ServerApp app;
   private volatile boolean closed = false;
   private volatile ShutdownNotice shutdownRequested = null;
@@ -71,8 +75,8 @@ public final class Console implements Closeable {
   };
 
   /**
-   * Creates a new {@link Console} for the given {@link ServerApp}, and registers it with
-   * the given {@link RPCRegistry}.
+   * Creates a new {@link Console} for the given {@link ServerApp}, and registers it with the given
+   * {@link RPCRegistry}.
    * 
    * @param app The app.
    * @param registry The registry.
@@ -92,9 +96,7 @@ public final class Console implements Closeable {
     }
 
     private Object requestNextChunk(String pageId, final long maxWait) {
-      if (!app.isValid(pageId)) {
-        return null;
-      }
+      app.checkValid(pageId);
 
       if (closed) {
         return null;
@@ -117,9 +119,8 @@ public final class Console implements Closeable {
             case 1:
               return cachedChunks.remove(0);
             default:
-              List<Object> head =
-                  cachedChunks.subList(0, Math.min(MAX_CHUNKS_AT_ONCE, cachedChunks
-                      .size()));
+              List<Object> head = cachedChunks.subList(0, Math.min(MAX_CHUNKS_AT_ONCE, cachedChunks
+                  .size()));
               Object[] chunks = head.toArray();
               head.clear();
               return new MultipleChunks(chunks);
@@ -132,8 +133,7 @@ public final class Console implements Closeable {
   };
 
   // FIXME this should be a circular buffer of some large maximum size to prevent OOMEs
-  private final List<Object> cachedChunks = Collections
-      .synchronizedList(new LinkedList<>());
+  private final List<Object> cachedChunks = Collections.synchronizedList(new LinkedList<>());
 
   private boolean markedDontFlush = false;
 
@@ -167,8 +167,7 @@ public final class Console implements Closeable {
   }
 
   /**
-   * Suspends flushing any chunks to the client, until {@link #resumeFlushing()} is called
-   * again.
+   * Suspends flushing any chunks to the client, until {@link #resumeFlushing()} is called again.
    * 
    * This can be used to logically group content before sending it to the client.
    * 
@@ -250,8 +249,7 @@ public final class Console implements Closeable {
   }
 
   /**
-   * Returns a {@link PrintWriter} that allows the textual data to be sent as String
-   * objects.
+   * Returns a {@link PrintWriter} that allows the textual data to be sent as String objects.
    * 
    * @return This console's {@link PrintWriter}.
    */
@@ -269,8 +267,8 @@ public final class Console implements Closeable {
   }
 
   /**
-   * Checks whether this {@link Console} has been closed. An {@link IOException} is thrown
-   * in this case.
+   * Checks whether this {@link Console} has been closed. An {@link IOException} is thrown in this
+   * case.
    * 
    * @throws IOException if closed.
    */
@@ -320,8 +318,7 @@ public final class Console implements Closeable {
     }
 
     /**
-     * If {@code true}, consider this shutdown "clean". If {@code false}, assume there was
-     * an error.
+     * If {@code true}, consider this shutdown "clean". If {@code false}, assume there was an error.
      * 
      * @return The "clean" state.
      */

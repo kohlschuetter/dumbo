@@ -15,25 +15,18 @@
  */
 package com.evernote.ai.dumbo.disableoverscroll;
 
-import com.evernote.ai.dumbo.AppHTTPServer;
 import com.evernote.ai.dumbo.Extension;
 
 /**
- * Disable the "rubber band" / "overscrolling" annoyance in Google Chrome on OS X when
- * scrolling over the top of a page (e.g., two-finger touch-and-drag downwards).
+ * Disable the "rubber band" / "overscrolling" annoyance in Google Chrome on OS X when scrolling
+ * over the top of a page (e.g., two-finger touch-and-drag downwards).
  * 
- * For improved smoothness, you may want to add the CSS style {@code overflow: hidden;} to
- * the {@code BODY} tag.
+ * For improved smoothness, you may want to add the CSS style {@code overflow: hidden;} to the
+ * {@code BODY} tag.
  */
 public final class DisableOverScrollFeature extends Extension {
   @Override
-  public void init(final AppHTTPServer server) {
-    server.registerContext("/_app_disableoverscroll", DisableOverScrollFeature.class
-        .getResource("webapp/"));
-  }
-
-  @Override
   protected void initResources() {
-    registerAsyncJavaScript("/_app_disableoverscroll/js/disableoverscroll.js");
+    registerAsyncJavaScript("js/disableoverscroll.js");
   }
 }

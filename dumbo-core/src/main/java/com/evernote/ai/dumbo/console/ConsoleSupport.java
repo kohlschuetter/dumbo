@@ -23,7 +23,6 @@ import com.evernote.ai.dumbo.Extension;
  * @see dumbo-helloworld
  */
 public class ConsoleSupport extends Extension {
-
   @Override
   protected void initResources() {
     registerCSS("/_app_base/css/app-console.css");

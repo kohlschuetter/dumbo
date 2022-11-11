@@ -15,26 +15,63 @@
  */
 package com.evernote.ai.dumbo;
 
+import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 
 import javax.servlet.http.HttpSession;
 
 /**
- * Provides support for HTML/CSS/JavaScript-based extensions that simplify app
- * development.
+ * Provides support for HTML/CSS/JavaScript-based extensions that simplify app development.
  */
 public abstract class Extension {
+  private final String extensionPath;
+
   private Collection<String> resJavaScript = new LinkedHashSet<>();
   private Collection<String> resAsyncJavaScript = new LinkedHashSet<>();
   private Collection<String> resCSS = new LinkedHashSet<>();
 
   private boolean initResourcesDone = false;
 
+  protected Extension() {
+    this.extensionPath = initPath();
+  }
+
+  private String initPath() {
+    String path = initExtensionPath();
+    if (path == null) {
+      path = "";
+    } else {
+      path = path.trim().replaceAll("[/ ]+$", "");
+    }
+    if (path.isEmpty()) {
+      return null;
+    } else {
+      return path;
+    }
+  }
+
+  public String getExtensionPath() {
+    return extensionPath;
+  }
+
+  protected String initExtensionPath() {
+    return "/_app_extension_" + getClass().getName();
+  }
+
+  private String toAbsolutePath(String path) {
+    Objects.requireNonNull(path);
+    if (path.startsWith("/")) {
+      return path;
+    } else {
+      return extensionPath + "/" + path;
+    }
+  }
+
   /**
-   * Called by the app to initialize the {@link Extension} for the given
-   * {@link AppHTTPServer}.
+   * Called by the app to initialize the {@link Extension} for the given {@link AppHTTPServer}.
    */
   final void doInit(AppHTTPServer app) {
     if (!initResourcesDone) {
@@ -45,13 +82,19 @@ public abstract class Extension {
   }
 
   /**
-   * Called to register any JavaScript and/or CSS resources that should be used by this
-   * app.
+   * Called to register any JavaScript and/or CSS resources that should be used by this app.
    * 
    * @see #registerCSS(String)
    * @see #registerJavaScript(String)
    */
   protected abstract void initResources();
+
+  private void register(Collection<String> targetCollection, String path) {
+    if (initResourcesDone) {
+      throw new IllegalStateException("Cannot register resource at this point.");
+    }
+    targetCollection.add(toAbsolutePath(path));
+  }
 
   /**
    * Registers a JavaScript resource by its HTTP path.
@@ -59,10 +102,7 @@ public abstract class Extension {
    * @param path The path.
    */
   protected final void registerJavaScript(final String path) {
-    if (initResourcesDone) {
-      throw new IllegalStateException("Cannot register resource at this point.");
-    }
-    resJavaScript.add(path);
+    register(resJavaScript, path);
   }
 
   /**
@@ -71,10 +111,7 @@ public abstract class Extension {
    * @param path The path.
    */
   protected final void registerAsyncJavaScript(final String path) {
-    if (initResourcesDone) {
-      throw new IllegalStateException("Cannot register resource at this point.");
-    }
-    resAsyncJavaScript.add(path);
+    register(resAsyncJavaScript, toAbsolutePath(path));
   }
 
   /**
@@ -83,10 +120,7 @@ public abstract class Extension {
    * @param path The path.
    */
   protected final void registerCSS(final String path) {
-    if (initResourcesDone) {
-      throw new IllegalStateException("Cannot register resource at this point.");
-    }
-    resCSS.add(path);
+    register(resCSS, toAbsolutePath(path));
   }
 
   /**
@@ -95,14 +129,29 @@ public abstract class Extension {
    * @param server The server instance to work with.
    */
   public void init(final AppHTTPServer server) {
+    if (extensionPath != null) {
+      URL webappUrl = initExtensionResourceURL();
+      if (webappUrl != null) {
+        server.registerContext(extensionPath, webappUrl);
+      }
+    }
   }
 
   /**
-   * Returns an HTML string that may be added to the HTML HEAD section of a web page to
-   * initialize this extension.
+   * Returns the resource URL containing the web content for this extension.
    * 
-   * By default, this returns a set of {@code <LINK>} and/or {@code SCRIPT} HTML elements,
-   * pointing to the resources registered in {@link #initResources()}.
+   * @return The URL (default to the "webapp/" folder relative to the extension's class name)
+   */
+  protected URL initExtensionResourceURL() {
+    return getClass().getResource("webapp/");
+  }
+
+  /**
+   * Returns an HTML string that may be added to the HTML HEAD section of a web page to initialize
+   * this extension.
+   * 
+   * By default, this returns a set of {@code <LINK>} and/or {@code SCRIPT} HTML elements, pointing
+   * to the resources registered in {@link #initResources()}.
    * 
    * @param context The context of the page.
    * @return The HTML string.
@@ -115,20 +164,19 @@ public abstract class Extension {
     }
 
     for (String path : resJavaScript) {
-      sb.append("<script type=\"text/javascript\" src=\"" + xmlEntities(path)
-          + "\"></script>\n");
+      sb.append("<script type=\"text/javascript\" src=\"" + xmlEntities(path) + "\"></script>\n");
     }
     for (String path : resAsyncJavaScript) {
-      sb.append("<script type=\"text/javascript\" async=\"async\" src=\""
-          + xmlEntities(path) + "\"></script>\n");
+      sb.append("<script type=\"text/javascript\" async=\"async\" src=\"" + xmlEntities(path)
+          + "\"></script>\n");
     }
 
     return sb.toString();
   }
 
   /**
-   * Returns an HTML string that may be added to the top of the HTML BODY section of a web
-   * page to initialize this extension.
+   * Returns an HTML string that may be added to the top of the HTML BODY section of a web page to
+   * initialize this extension.
    * 
    * @param context The context of the page.
    * @return The HTML string.

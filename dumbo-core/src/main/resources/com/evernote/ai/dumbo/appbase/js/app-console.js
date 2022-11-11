@@ -1,9 +1,10 @@
 (function($) {
+  $.app.console = new Object();
+
   if (location.search == "?static") {
+    $.app.console.whenLoaded = function(f) { $.app.whenReady(f); };
     return;
   }
-
-  $.app.console = new Object();
 
   $.app.console.templates = new Object();
   $.app.console.templates.exception = $($
@@ -68,6 +69,13 @@
   $.app.console.onClose = function() {
 
   };
+  $.app.console._onClose = function() {
+    if ($.app.console.worker) {
+        $.app.console.worker.terminate();
+        $.app.console.worker = null;
+    }
+    $.app.console.onClose();
+  };
   
   $.app.console.objConverter = $.app.console.defaultObjConverter;
   $.app.console.target = null;
@@ -88,7 +96,7 @@
   var processChunk = function(chunk) {
     if (chunk == null) {
       // console was closed
-      $.app.console.onClose();
+      $.app.console._onClose();
       return false;
     } else if (chunk == "") {
       // no-op, continue
@@ -102,7 +110,7 @@
       }
       $.rpc.AppControlService.notifyAppUnload($.app.ASYNC_IGNORE_RESPONSE,
           $.app.id);
-      $.app.console.onClose();
+      $.app.console._onClose();
       return false;
     } else if (chunk.javaClass == "com.evernote.ai.dumbo.console.Console$MultipleChunks") {
       $.each(chunk.chunks, function(key, value) {
@@ -139,9 +147,23 @@
   $.app.whenReady(function() {
     if ($.rpc.ConsoleService) {
       $.rpc.dontQueueCalls = true;
-
+      
       setTimeout(function(){
-        $.rpc.ConsoleService.requestNextChunk(chunkJob, $.app.id);
+        if(!window.Worker) {
+            $.rpc.ConsoleService.requestNextChunk(chunkJob, $.app.id);
+            return;
+        }
+        var worker = $.app.console.worker = new Worker("/_app_base/js/app-console-webworker.js");
+        worker.onmessage = function(e) {
+            if (e && e.data && e.data.command == "chunk") {
+                if (processChunk(e.data.chunk)) {
+                    worker.postMessage({command:"next"});
+                } else {
+                    console.log("Console service stopped");
+                }
+            }
+        };
+        worker.postMessage({command:"init", appId:$.app.id});
       },0);
     }
   });

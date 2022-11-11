@@ -15,10 +15,11 @@
  */
 package com.evernote.ai.dumbo.dygraphs;
 
-import com.evernote.ai.dumbo.AppHTTPServer;
 import com.evernote.ai.dumbo.Extension;
 
-/**
+import com.evernote.ai.dumbo.Extension;
+
+/*
  * Helper class to add dygraphs support to the demo server.
  * 
  * @see dumbo-helloworld
@@ -26,13 +27,8 @@ import com.evernote.ai.dumbo.Extension;
  */
 public final class DygraphsSupport extends Extension {
   @Override
-  public void init(final AppHTTPServer server) {
-    server.registerContext("/_app_dygraphs", DygraphsSupport.class.getResource("webapp/"));
-  }
-
-  @Override
   protected void initResources() {
-    registerJavaScript("/_app_dygraphs/js/dygraph-combined.js");
-    registerJavaScript("/_app_dygraphs/js/dygraph-extras.js");
+    registerJavaScript("js/dygraph-combined.js");
+    registerJavaScript("js/dygraph-extras.js");
   }
 }

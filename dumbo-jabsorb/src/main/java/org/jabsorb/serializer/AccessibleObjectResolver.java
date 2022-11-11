@@ -187,6 +187,7 @@ public class AccessibleObjectResolver
     }
     catch (UnmarshallException e)
     {
+      log.error(e.getMessage());
       if (cbc != null)
       {
         for (int i = 0; i < context.length; i++)
@@ -199,6 +200,7 @@ public class AccessibleObjectResolver
     }
     catch (MarshallException e)
     {
+      log.error(e.getMessage());
       if (cbc != null)
       {
         for (int i = 0; i < context.length; i++)

@@ -18,7 +18,7 @@ package com.evernote.ai.dumbo;
 import javax.servlet.http.HttpSession;
 
 /**
- * {@link Extension}-hooks to be called from within a JSP page. 
+ * {@link Extension}-hooks to be called from within a JSP page.
  */
 public final class Extensions {
   private Extensions() {
@@ -26,8 +26,8 @@ public final class Extensions {
   }
 
   /**
-   * Returns an HTML string that may be added to the HTML HEAD section of a web page to
-   * initialize all extensions registered with the app.
+   * Returns an HTML string that may be added to the HTML HEAD section of a web page to initialize
+   * all extensions registered with the app.
    * 
    * @param session The HTTP session associated with the page.
    * @return The HTML string.
@@ -47,8 +47,8 @@ public final class Extensions {
   }
 
   /**
-   * Returns an HTML string that may be added to the top of the HTML BODY section of a web
-   * page to initialize all extensions registered with the app.
+   * Returns an HTML string that may be added to the top of the HTML BODY section of a web page to
+   * initialize all extensions registered with the app.
    * 
    * @param session The HTTP session associated with the page.
    * @return The HTML string.
@@ -73,7 +73,7 @@ public final class Extensions {
    * @param session The session to check.
    * @return The instance.
    */
-  private static ServerApp getApp(final HttpSession session) {
+  public static ServerApp getApp(final HttpSession session) {
     return (ServerApp) session.getServletContext().getAttribute("app");
   }
 }
