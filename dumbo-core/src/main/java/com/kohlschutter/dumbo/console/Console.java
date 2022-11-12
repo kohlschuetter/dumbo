@@ -109,7 +109,7 @@ public final class Console implements Closeable {
           switch (numChunks) {
             case 0:
               Object chunk = Console.this.getChunkFromBuffer();
-              if (chunk == "" && maxWait > 0) {
+              if ("".equals(chunk) && maxWait > 0) {
                 try {
                   consoleService.wait(maxWait);
                   chunk = requestNextChunk(pageId, 0);
@@ -309,8 +309,8 @@ public final class Console implements Closeable {
    * The "shutdown notice" that is sent to the client.
    */
   public static final class ShutdownNotice {
-    public static ShutdownNotice CLEAN = new ShutdownNotice(true);
-    public static ShutdownNotice NOT_CLEAN = new ShutdownNotice(false);
+    public static final ShutdownNotice CLEAN = new ShutdownNotice(true);
+    public static final ShutdownNotice NOT_CLEAN = new ShutdownNotice(false);
 
     private boolean clean;
 
