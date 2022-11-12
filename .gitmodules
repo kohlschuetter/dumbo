@@ -1,0 +1,3 @@
+[submodule "dumbo-jabsorb"]
+	path = dumbo-jabsorb
+	url = https://github.com/kohlschuetter/jabsorb.git

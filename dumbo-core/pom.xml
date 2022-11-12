@@ -54,8 +54,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.kohlschutter.dumbo</groupId>
-            <artifactId>dumbo-jabsorb</artifactId>
+            <groupId>com.kohlschutter</groupId>
+            <artifactId>jabsorb</artifactId>
             <version>1.3.2-SNAPSHOT</version>
         </dependency>
     </dependencies>
