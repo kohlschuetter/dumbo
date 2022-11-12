@@ -20,6 +20,8 @@ package com.kohlschutter.dumbo.helloworld.console;
  * Sent (not thrown) to the JavaScript client when you reload the browser app.
  */
 public final class PageReloadException extends Exception {
+  private static final long serialVersionUID = 1L;
+
   public PageReloadException(String message) {
     super(message);
   }

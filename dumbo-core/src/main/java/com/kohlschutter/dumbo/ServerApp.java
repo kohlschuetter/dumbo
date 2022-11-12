@@ -203,6 +203,7 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
     }
     for (ListIterator<Closeable> lit = closeables.listIterator(closeables.size()); lit
         .hasPrevious();) {
+      @SuppressWarnings("resource")
       Closeable cl = lit.previous();
       try {
         cl.close();

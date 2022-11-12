@@ -28,4 +28,6 @@ public interface DemoService {
    * @throws Exception
    */
   String hello(boolean error) throws Exception;
+
+  float echoFloat(float f);
 }

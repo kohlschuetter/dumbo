@@ -20,6 +20,8 @@ package com.kohlschutter.dumbo.helloworld.console;
  * Sent (not thrown) to the JavaScript client when there was no or bad user input.
  */
 public final class UserInputException extends Exception {
+  private static final long serialVersionUID = 1L;
+
   public UserInputException(String message) {
     super(message);
   }

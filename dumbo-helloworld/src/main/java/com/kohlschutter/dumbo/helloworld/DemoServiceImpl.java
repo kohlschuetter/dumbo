@@ -29,4 +29,9 @@ public class DemoServiceImpl implements DemoService {
     }
     return "world";
   }
+
+  @Override
+  public float echoFloat(float f) {
+    return f;
+  }
 }
