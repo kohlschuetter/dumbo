@@ -28,17 +28,6 @@ import com.kohlschutter.dumbo.simple.SimpleServerApp;
 @Services({DemoServiceImpl.class})
 public class HelloWorldSimpleApp extends SimpleServerApp {
   public static void main(String[] args) throws IOException {
-    final HelloWorldSimpleApp app = new HelloWorldSimpleApp();
-    new AppHTTPServer(app).start();
-  }
-
-  @Override
-  protected void onAppStart() {
-    console.println("Hello World -- App started");
-  }
-
-  @Override
-  protected void onAppLoaded(String appId) {
-    console.println("Hello World -- Opened browser window, id=" + appId);
+    new AppHTTPServer(new HelloWorldSimpleApp()).start();
   }
 }

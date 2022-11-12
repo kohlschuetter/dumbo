@@ -17,9 +17,9 @@
 package com.kohlschutter.dumbo.helloworld.console;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import com.kohlschutter.dumbo.AppHTTPServer;
+import com.kohlschutter.dumbo.DumboSession;
 import com.kohlschutter.dumbo.RPCRegistry;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
@@ -42,34 +42,40 @@ public class ConsoleDemoApp extends ServerApp {
     registerExtension(new ConsoleSupport());
   }
 
-  private int n = -1;
-  private Console console;
-  private boolean enteredCommand = false;
+  /**
+   * This is some state that is not shared across pages.
+   */
+  private static final class State {
+    boolean enteredCommand = false;
+    int n = -1;
+  }
 
   @Override
   protected void initRPC(final RPCRegistry registry) {
     registry.registerRPCService(CommandLineService.class, new CommandLineService() {
       final String[] colors = new String[] {"red", "coral", "gold", "green", "blue", "fuchsia"};
 
-      int count = 0;
+      int count = 0; // this is an application-level state (i.e., shared across pages!)
 
       @Override
       public void sendLine(String line) {
-        enteredCommand = true;
+        DumboSession session = DumboSession.getSession();
+        session.getOrCreatePageAttribute(State.class, State::new).enteredCommand = true;
         final String color = colors[count++ % colors.length];
-        console.add(new ColorMessage(line, color));
+
+        session.getConsole().add(new ColorMessage(line, color));
       }
     });
-
-    console = registerCloseable(new Console(this, registry));
   }
 
   @Override
-  protected void onStart() {
-    final PrintWriter consoleOut = console.getPrintWriter();
+  protected void onAppLoaded(DumboSession session) {
+    Console console = session.getConsole();
 
-    consoleOut.println("Please enter some text into the >> text box << above!");
-    consoleOut.println("Java version: " + System.getProperty("java.version"));
+    console.println("Please enter some text into the >> text box << above!");
+    console.println("Java version: " + System.getProperty("java.version"));
+
+    State state = session.getOrCreatePageAttribute(State.class, State::new);
 
     new Thread() {
       {
@@ -83,26 +89,27 @@ public class ConsoleDemoApp extends ServerApp {
             Thread.sleep(5000);
           } catch (InterruptedException e) {
           }
-          if (enteredCommand) {
-            n = 0;
-            enteredCommand = false;
+
+          if (state.enteredCommand) {
+            state.n = 0;
+            state.enteredCommand = false;
           }
-          switch (n) {
+          switch (state.n) {
             case -1:
-              consoleOut.println("Hello World from the server. Please enter some text!");
-              n = 0;
+              console.println("Hello World from the server. Please enter some text!");
+              state.n = 0;
               break;
             case 0:
-              consoleOut.println("Thank you for entering some text");
+              console.println("Thank you for entering some text");
               break;
             case 1:
-              consoleOut.println("Please enter some text");
+              console.println("Please enter some text");
               break;
             case 2:
-              consoleOut.println("Come on, please enter _anything_");
+              console.println("Come on, please enter _anything_");
               break;
             case 3:
-              consoleOut.println("Last chance!");
+              console.println("Last chance!");
               break;
             case 4:
               console.add(new UserInputException("Too late!"));
@@ -111,15 +118,9 @@ public class ConsoleDemoApp extends ServerApp {
               // silence
           }
 
-          n++;
+          state.n++;
         }
       }
     }.start();
-  }
-
-  @Override
-  protected void onAppReloaded(final String pageId) {
-    console.add(new PageReloadException("Page was reloaded"));
-    n = -1;
   }
 }

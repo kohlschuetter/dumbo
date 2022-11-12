@@ -30,9 +30,9 @@ import jakarta.servlet.http.HttpSession;
 public abstract class Extension {
   private final String extensionPath;
 
-  private Collection<String> resJavaScript = new LinkedHashSet<>();
-  private Collection<String> resAsyncJavaScript = new LinkedHashSet<>();
-  private Collection<String> resCSS = new LinkedHashSet<>();
+  private final Collection<String> resJavaScript = new LinkedHashSet<>();
+  private final Collection<String> resAsyncJavaScript = new LinkedHashSet<>();
+  private final Collection<String> resCSS = new LinkedHashSet<>();
 
   private boolean initResourcesDone = false;
 

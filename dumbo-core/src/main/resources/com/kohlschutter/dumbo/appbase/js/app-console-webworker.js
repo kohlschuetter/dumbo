@@ -1,19 +1,33 @@
 var appId = null;
 var rpc = null;
+var pageId = null;
 
 self.importScripts("/_app_base/js/jsonrpc.js?");
 
-var commands = { };
+var commands = {};
+
+const delayStepInitial = 8;
+var delayStep = delayStepInitial;
 
 var chunkJob = function(chunk, err) {
     if (err != null) {
         console.error("requestNextChunk error", err);
-        chunk = null;
-    } else if (chunk == null || chunk == "") {
-        commands["next"]();
+        self.postMessage({ command: "error", error: err });
+
+        // console.log("try again", 2**delayStep);
+        setTimeout(commands["next"], 2 ** (delayStep));
+        if (++delayStep >= 12) {
+            delayStep = 12;
+        }
         return;
+    } else {
+        delayStep = delayStepInitial;
+        if (chunk == null || chunk == "") {
+            commands["next"]();
+            return;
+        }
     }
-    self.postMessage({command:"chunk", chunk: chunk});
+    self.postMessage({ command: "chunk", chunk: chunk });
 };
 
 commands["next"] = function(data) {
@@ -22,12 +36,14 @@ commands["next"] = function(data) {
 
 commands["init"] = function(data) {
     appId = data.appId;
+    pageId = data.pageId;
     rpc = new JSONRpcClient(function(res, err) {
         if (!res || err) {
             console.error("JSONRpcClient error", res, err);
+            self.postMessage({ command: "error", error: err });
         }
         commands["next"]();
-    }, "/json");
+    }, "/json?pageId=" + pageId);
 };
 
 self.onmessage = function(ev) {

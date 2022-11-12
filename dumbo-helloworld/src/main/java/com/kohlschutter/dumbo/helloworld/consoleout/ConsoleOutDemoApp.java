@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.kohlschutter.dumbo.AppHTTPServer;
-import com.kohlschutter.dumbo.RPCRegistry;
+import com.kohlschutter.dumbo.DumboSession;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 import com.kohlschutter.dumbo.console.Console;
@@ -42,15 +42,9 @@ public class ConsoleOutDemoApp extends ServerApp {
     registerExtension(new ConsoleSupport());
   }
 
-  private Console console;
-
   @Override
-  protected void initRPC(final RPCRegistry registry) {
-    console = registerCloseable(new Console(this, registry));
-  }
-
-  @Override
-  protected void onStart() {
+  protected void onAppLoaded(DumboSession session) {
+    Console console = session.getConsole();
     PrintWriter pw = console.getPrintWriter();
     pw.println("Printing a couple of lines");
     for (int i = 0; i < 10000; i++) {

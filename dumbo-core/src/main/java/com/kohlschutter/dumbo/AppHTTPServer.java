@@ -147,6 +147,16 @@ public class AppHTTPServer {
       wac.getServletContext().setAttribute("app", app);
       wac.addServlet(JabsorbJSONRPCBridgeServlet.class, "/json");
       contextHandlers.addHandler(wac);
+      // wac.getSessionHandler().addEventListener(new HttpSessionListener() {
+      //
+      // @Override
+      // public void sessionCreated(HttpSessionEvent se) {
+      // }
+      //
+      // @Override
+      // public void sessionDestroyed(HttpSessionEvent se) {
+      // }
+      // });
     }
     for (Extension ext : app.getExtensions()) {
       ext.doInit(this);

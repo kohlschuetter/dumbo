@@ -41,6 +41,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * A Jabsorb-based JSON-RPC Servlet.
@@ -85,7 +86,7 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
 
   private static final class JSONRPCRegistryImpl implements RPCRegistry {
     private final JSONRPCBridge bridge;
-    private ConsoleService console;
+    private ConsoleService consoleService;
 
     public JSONRPCRegistryImpl(final JSONRPCBridge bridge) {
       this.bridge = bridge;
@@ -95,8 +96,8 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
     public <T> void registerRPCService(Class<T> interfaze, T instance) {
       Objects.requireNonNull(interfaze, "Interface class must not be null");
       Objects.requireNonNull(instance, "Instance must not be null");
-      if (ConsoleService.class == interfaze && console == null) {
-        this.console = (ConsoleService) instance;
+      if (ConsoleService.class == interfaze && consoleService == null) {
+        this.consoleService = (ConsoleService) instance;
       }
       bridge.registerObject(interfaze.getSimpleName(), instance, interfaze);
     }
@@ -121,6 +122,23 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
     request.setCharacterEncoding("UTF-8");
     response.setCharacterEncoding("UTF-8");
 
+    HttpSession session = request.getSession(false);
+    if (session == null) {
+      response.sendError(HttpServletResponse.SC_FORBIDDEN, "No session");
+      return;
+    }
+    String pageId = request.getParameter("pageId");
+    if (pageId == null) {
+      response.sendError(HttpServletResponse.SC_FORBIDDEN, "No pageId");
+      return;
+    }
+    DumboSession dumboSession = DumboSession.getDumboSession(session, pageId);
+    if (dumboSession == null) {
+      response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid pageId");
+      return;
+    }
+
+    DumboSession.setSessionTL(dumboSession);
     JSONRPCResult result;
     try {
       JSONTokener jt = new JSONTokener(request.getReader());
@@ -128,10 +146,11 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
 
       String method = jsonRequest.getString("method");
       tlMethod.set(method);
-      if (registry.console != null) {
+      if (registry.consoleService != null) {
         if (!method.startsWith("ConsoleService.") && !method.startsWith("system.")) {
-          synchronized (registry.console) {
-            registry.console.notifyAll();
+          ConsoleService service = ((ConsoleImpl) dumboSession.getConsole()).getConsoleService();
+          synchronized (service) {
+            service.notifyAll();
           }
         }
       }
@@ -141,6 +160,7 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       result = new FailedResult(FailedResult.CODE_ERR_PARSE, null, FailedResult.MSG_ERR_PARSE);
     } finally {
       tlMethod.set(null);
+      DumboSession.removeSessionTL();
     }
 
     ByteBuffer byteBuffer = UTF_8.encode(result.toString());

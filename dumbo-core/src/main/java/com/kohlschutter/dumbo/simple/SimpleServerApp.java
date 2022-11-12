@@ -26,7 +26,6 @@ import org.apache.log4j.Logger;
 import com.kohlschutter.dumbo.Extension;
 import com.kohlschutter.dumbo.RPCRegistry;
 import com.kohlschutter.dumbo.ServerApp;
-import com.kohlschutter.dumbo.console.Console;
 import com.kohlschutter.dumbo.console.ConsoleSupport;
 import com.kohlschutter.dumbo.ext.AppDefaultsSupport;
 
@@ -38,7 +37,6 @@ import com.kohlschutter.dumbo.ext.AppDefaultsSupport;
 public abstract class SimpleServerApp extends ServerApp {
   private static final Logger LOG = Logger.getLogger(SimpleServerApp.class);
 
-  protected Console console;
   private final List<Class<Extension>> annotatedExtensions;
   private final List<Class<Object>> annotatedServices;
 
@@ -52,8 +50,6 @@ public abstract class SimpleServerApp extends ServerApp {
   @SuppressWarnings("unchecked")
   @Override
   protected void initRPC(final RPCRegistry registry) {
-    this.console = new Console(this, registry);
-
     for (Class<Object> extClass : annotatedServices) {
       Class<?>[] interfaces = extClass.getInterfaces();
       registry.registerRPCService((Class<Object>) interfaces[0], newInstance(extClass));
@@ -132,7 +128,6 @@ public abstract class SimpleServerApp extends ServerApp {
           onAppStart();
         } catch (Exception e) {
           LOG.error(e);
-          console.add(e);
         }
       };
     }.start();
@@ -142,14 +137,5 @@ public abstract class SimpleServerApp extends ServerApp {
    * This method will be called upon application start.
    */
   protected void onAppStart() {
-  }
-
-  /**
-   * Returns the {@link Console} for this app.
-   * 
-   * @return The console.
-   */
-  public Console getConsole() {
-    return console;
   }
 }

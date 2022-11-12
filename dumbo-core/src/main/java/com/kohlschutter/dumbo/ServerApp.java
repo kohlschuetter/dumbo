@@ -25,12 +25,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
-import com.kohlschutter.dumbo.ext.BaseSupport;
+import com.kohlschutter.dumbo.console.ConsoleService;
 
 /**
  * Base class for a lightweight Server-based application.
@@ -41,8 +39,10 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
   private boolean initExtensionsDone = false;
   private volatile boolean registeredExtension = false;
   private volatile boolean closed = false;
+  private RPCRegistry rpcRegistry;
 
-  protected abstract void initRPC(final RPCRegistry registry);
+  protected void initRPC(final RPCRegistry registry) {
+  }
 
   /**
    * Initializes internal {@link Extension} components that are usually required for any app.
@@ -99,18 +99,29 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
   private final List<Closeable> closeables = Collections.synchronizedList(
       new ArrayList<Closeable>());
 
-  private String mostRecentAppId = null;
-
   /**
    * Registers the default RPC services.
    * 
    * @param registry The target RPC registry.
    */
   final void initRPCInternal(RPCRegistry registry) {
+    this.rpcRegistry = registry;
     registry.registerRPCService(AppControlService.class, this);
+
+    registry.registerRPCService(ConsoleService.class, new ConsoleService() {
+
+      @Override
+      public Object requestNextChunk(String appId) {
+        DumboSession session = DumboSession.getSessionIfExists();
+        if (session == null) {
+          return null;
+        }
+
+        return ((ConsoleImpl) session.getConsole()).getConsoleService().requestNextChunk(appId);
+      }
+    });
   }
 
-  private final AtomicInteger numPagesLoaded = new AtomicInteger(0);
   private boolean staticDesignMode = false;
 
   /**
@@ -127,73 +138,43 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
 
   @Override
   public final String notifyAppLoaded() {
-    numPagesLoaded.incrementAndGet();
-    synchronized (numPagesLoaded) {
-      numPagesLoaded.notifyAll();
+    DumboSession session = DumboSession.getSessionIfExists();
+    if (session == null) {
+      // ignore
+      return null;
     }
+    String pageId = session.getPageId();
 
-    final String pageId = UUID.randomUUID().toString();
-    this.mostRecentAppId = pageId;
-    onAppLoaded(pageId);
+    try {
+      onAppLoaded(session);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return pageId;
   }
 
   /**
    * Called when an instance of this app (e.g., a browser window) has loaded.
    * 
-   * @param appId The app ID for this instance.
+   * @param session The session for this instance.
    */
-  protected void onAppLoaded(final String appId) {
-  }
-
-  /**
-   * Called when an instance of this app (e.g., a browser window) has been reloaded.
-   * 
-   * @param appId The app ID for this instance.
-   */
-  protected void onAppReloaded(final String appId) {
+  protected void onAppLoaded(final DumboSession session) {
   }
 
   /**
    * Called when an instance of this app (e.g., a browser window) is being unloaded/closed or
    * reloaded.
    * 
-   * @param appId The app ID for this instance.
+   * @param pageId The app ID for this instance.
    */
-  protected void onAppUnload(final String appId) {
+  protected void onAppUnload(final String pageId) {
   }
 
   @Override
-  public final void notifyAppUnload(final String appId) {
-    onAppUnload(appId);
+  public final void notifyAppUnload(final String pageId) {
+    onAppUnload(pageId);
 
-    final int numOpen = numPagesLoaded.decrementAndGet();
-
-    // Allow page reloads
-    new Thread() {
-      {
-        setDaemon(true);
-      }
-
-      @Override
-      public void run() {
-        try {
-          synchronized (numPagesLoaded) {
-            numPagesLoaded.wait(1000);
-          }
-        } catch (InterruptedException e) {
-          // ignore
-        }
-
-        final int numOpenNow = numPagesLoaded.get();
-
-        if (numOpenNow <= 0) {
-          onQuit();
-        } else if (numOpenNow == numOpen + 1) {
-          onAppReloaded(appId);
-        }
-      };
-    }.start();
+    DumboSession.removePageIdFromCurrentSession(pageId);
   }
 
   @Override
@@ -236,24 +217,6 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
   }
 
   /**
-   * Checks whether the app instance identified by the given appId is still valid.
-   * 
-   * By default, only the most recently registered appId is considered valid.
-   * 
-   * @param appId The app ID.
-   * @return {@code true} if current.
-   */
-  public boolean isValid(String appId) {
-    return mostRecentAppId == null || mostRecentAppId.equals(appId);
-  }
-
-  public void checkValid(String appId) throws InvalidCredentialsException {
-    if (!isValid(appId)) {
-      throw new InvalidCredentialsException("appId:" + appId);
-    }
-  }
-
-  /**
    * Returns the extensions registered with this app.
    * 
    * @return The collection of extensions.
@@ -264,16 +227,11 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
 
   /**
    * Returns a clone of this app, with all runtime-specific attributes reset.
-   * 
-   * Can be used to implement multi-session support.
    */
   @Override
   public ServerApp clone() {
     try {
       ServerApp clone = (ServerApp) super.clone();
-
-      clone.mostRecentAppId = null;
-      clone.numPagesLoaded.set(0);
 
       return clone;
     } catch (CloneNotSupportedException e) {
@@ -304,5 +262,9 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
    * @see #initRPC(RPCRegistry)
    */
   protected void onStart() {
+  }
+
+  RPCRegistry getRPCRegistry() {
+    return rpcRegistry;
   }
 }

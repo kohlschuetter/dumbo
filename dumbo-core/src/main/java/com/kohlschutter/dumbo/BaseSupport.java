@@ -14,16 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.ext;
+package com.kohlschutter.dumbo;
 
 import java.net.URL;
 
-import com.kohlschutter.dumbo.Extension;
+import jakarta.servlet.http.HttpSession;
 
 /**
- * Adds required base resources to the demo server, such as jQuery and json-rpc.
+ * Adds required base resources, such as jQuery and json-rpc.
  */
-public final class BaseSupport extends Extension {
+final class BaseSupport extends Extension {
   @Override
   protected void initResources() {
     registerJavaScript("js/jquery.min.js");
@@ -39,5 +39,17 @@ public final class BaseSupport extends Extension {
   @Override
   protected URL initExtensionResourceURL() {
     return BaseSupport.class.getResource("/com/kohlschutter/dumbo/appbase/");
+  }
+
+  @Override
+  public String htmlHead(HttpSession context) {
+    String pageId = DumboSession.newPageId(context);
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("<script><!--\n");
+    sb.append("  $dumbo = { pageId:\"" + pageId + "\" };\n");
+    sb.append("// --></script>\n");
+    sb.append(super.htmlHead(context));
+    return sb.toString();
   }
 }

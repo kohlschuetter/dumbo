@@ -6,11 +6,10 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title">Window is no longer current</h4>
+        <h4 class="modal-title">This window is no longer being updated</h4>
       </div>
       <div class="modal-body">
-        <p>This window is no longer being updated; probably because
-          the application terminated, or you have opened another window.</p>
+        <p>The connection to the service has been terminated.</p>
       </div>
       <div class="modal-footer">
         <a
@@ -34,7 +33,7 @@
                   callout.removeClass('bs-callout-danger');
                   callout.addClass('bs-callout-info');
                   callout
-                      .text("The application has been shut down. This window is no longer being updated.");
+                      .text("The connection to the service has been terminated. This window is no longer being updated.");
                   callout.removeClass('hidden');
                 } else {
                   $("#noLongerCurrentModal").modal("show");
