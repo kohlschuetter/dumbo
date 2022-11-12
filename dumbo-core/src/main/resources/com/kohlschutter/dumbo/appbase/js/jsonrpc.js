@@ -347,10 +347,8 @@ function JSONRpcClient()
 {
   var arg_shift = 0,
       req,
-      _function,
       methods,
       self,
-      name,
       arg0type= (typeof arguments[0]),
       doListMethods=true;
 
@@ -417,7 +415,7 @@ function JSONRpcClient()
  */
 JSONRpcClient.prototype.createCallableProxy=function(objectID,javaClass)
 {
-  var cp,req,methodNames,name,i;
+  var cp,name;
 
   cp = new JSONRPCCallableProxy(objectID,javaClass);
   //Then add all the cached methods to it.
@@ -480,7 +478,7 @@ JSONRpcClient.Exception.CODE_ERR_MARSHALL = 593;
 
 JSONRpcClient.Exception.prototype = new Error();
 
-JSONRpcClient.Exception.prototype.toString = function (code, msg)
+JSONRpcClient.Exception.prototype.toString = function (_code, _msg)
 {
   var str="";
   if(this.name)
@@ -648,7 +646,6 @@ JSONRpcClient.prototype._addMethods = function (methodNames,dontAdd)
       method,
       methods=[],
       javaClass,
-      tmpNames,
       startIndex,
       endIndex;
   //Aha! It is a class, so create a entry for it.
@@ -1130,8 +1127,6 @@ JSONRpcClient.prototype.unmarshallResponse=function(data)
 
   // look for circular reference/duplicates fixups and execute them
   // if they are there
-
-  var i,tmp;
 
   /* Handle CallableProxy */
   if (r)

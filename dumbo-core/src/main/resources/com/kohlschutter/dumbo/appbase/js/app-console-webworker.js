@@ -30,7 +30,7 @@ var chunkJob = function(chunk, err) {
     self.postMessage({ command: "chunk", chunk: chunk });
 };
 
-commands["next"] = function(data) {
+commands["next"] = function(_) {
     rpc.ConsoleService.requestNextChunk(chunkJob, appId);
 };
 

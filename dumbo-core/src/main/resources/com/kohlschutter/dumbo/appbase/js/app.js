@@ -41,7 +41,7 @@
             return;
         }
         if (list.condition == null || list.condition()) {
-            $.each(list, function(key, value) {
+            $.each(list, function(_, value) {
                 window.setTimeout(function() {
                     value();
                 }, 0);
@@ -93,8 +93,8 @@
 
     $(document).ready(
         function() {
-            $.rpc = new JSONRpcClient(function(ret, e) {
-                $.rpc.AppControlService.notifyAppLoaded(function(result, e) {
+            $.rpc = new JSONRpcClient(function(_, _) {
+                $.rpc.AppControlService.notifyAppLoaded(function(result, _) {
                     $.app.id = result;
                     $(window).unload(
                         function() {

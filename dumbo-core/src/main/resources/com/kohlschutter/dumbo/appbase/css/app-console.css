@@ -1,61 +1,61 @@
 .app-console-exception.app-default {
-  border: 2pt solid red;
-  padding: 4pt;
-  max-height: 20.4em;
-  overflow: scroll;
-  margin-bottom: 0.3em;
+	border: 2pt solid red;
+	padding: 4pt;
+	max-height: 20.4em;
+	overflow: scroll;
+	margin-bottom: 0.3em;
 }
 
 .app-console-exception.app-default .app-javaClass:before {
-  content: "Exception";
-  display: block;
-  background-color: red;
-  color: white;
-  margin: -4pt -4pt 4pt -4pt;
-  padding: 2pt;
+	content: "Exception";
+	display: block;
+	background-color: red;
+	color: white;
+	margin: -4pt -4pt 4pt -4pt;
+	padding: 2pt;
 }
 
 .app-console-exception.app-default .app-javaClass {
-  font-family: monospace;
-  font-style: italic;
-  display: inline;
-  word-wrap: break-word;
+	font-family: monospace;
+	font-style: italic;
+	display: inline;
+	word-wrap: break-word;
 }
 
 .app-console-exception.app-default .app-javaClass:after {
-  content: ":";
-  padding-right: 10pt;
+	content: ":";
+	padding-right: 10pt;
 }
 
 .app-console-exception.app-default .app-exceptionMessage {
-  font-family: monospace;
-  display: inline;
+	font-family: monospace;
+	display: inline;
 }
 
 .app-console-unknown {
-  font-family: monospace;
-  border: 2pt solid blue;
-  padding: 4pt;
-  max-height: 20.4em;
-  overflow: scroll;
-  margin-bottom: 0.3em;
+	font-family: monospace;
+	border: 2pt solid blue;
+	padding: 4pt;
+	max-height: 20.4em;
+	overflow: scroll;
+	margin-bottom: 0.3em;
 }
 
 .app-console-unknown .app-json:before {
-  content: "Response";
-  display: block;
-  background-color: blue;
-  color: white;
-  margin: -4pt -4pt 4pt -4pt;
-  padding: 2pt;
+	content: "Response";
+	display: block;
+	background-color: blue;
+	color: white;
+	margin: -4pt -4pt 4pt -4pt;
+	padding: 2pt;
 }
 
 .app-console-unknown .app-json {
-  font-family: monospace;
-  white-space: pre-wrap;
+	font-family: monospace;
+	white-space: pre-wrap;
 }
 
 .app-console-plaintext .app-text {
-  font-family: monospace;
-  white-space: pre-wrap;
+	font-family: monospace;
+	white-space: pre-wrap;
 }
