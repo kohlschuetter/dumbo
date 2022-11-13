@@ -1,3 +1,3 @@
 $.app.whenReady(function() {
-  $("BODY").addClass("visible");
+    $("BODY").addClass("visible");
 });

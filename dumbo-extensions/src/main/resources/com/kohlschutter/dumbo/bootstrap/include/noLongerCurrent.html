@@ -23,24 +23,24 @@
 	</div>
 </div>
 <script type="text/javascript">
-	$(document)
-			.ready(
-					function() {
-						if ($.app && $.app.console) {
-							$.app.console.onClose = function() {
-								var callout = $('#noLongerCurrentTopCallout');
-								callout.addClass("hidden");
-								$('BODY').addClass('noLongerCurrent');
-								callout.removeClass('bs-callout-danger');
-								callout.addClass('bs-callout-info');
-								callout
-										.text("The connection to the service has been terminated. This window is no longer being updated.");
-								if ($("#noLongerCurrentModal").size() == 0) {
-									callout.removeClass('hidden');
-								} else {
-									$("#noLongerCurrentModal").modal("show");
-								}
-							};
-						}
-					});
+    $(document)
+            .ready(
+                    function() {
+                        if ($.app && $.app.console) {
+                            $.app.console.onClose = function() {
+                                var callout = $('#noLongerCurrentTopCallout');
+                                callout.addClass("hidden");
+                                $('BODY').addClass('noLongerCurrent');
+                                callout.removeClass('bs-callout-danger');
+                                callout.addClass('bs-callout-info');
+                                callout
+                                        .text("The connection to the service has been terminated. This window is no longer being updated.");
+                                if ($("#noLongerCurrentModal").size() == 0) {
+                                    callout.removeClass('hidden');
+                                } else {
+                                    $("#noLongerCurrentModal").modal("show");
+                                }
+                            };
+                        }
+                    });
 </script>
