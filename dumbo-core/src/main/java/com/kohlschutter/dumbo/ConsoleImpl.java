@@ -93,12 +93,12 @@ final class ConsoleImpl implements Closeable, Console {
 
   private final ConsoleService consoleService = new ConsoleService() {
     @Override
-    public Object requestNextChunk(String pageId) {
-      return requestNextChunk(pageId, MAX_WAIT_NEXT_CHUNK_MILLIS);
+    public Object requestNextChunk() {
+      return requestNextChunk(MAX_WAIT_NEXT_CHUNK_MILLIS);
     }
 
-    private Object requestNextChunk(String pageId, final long maxWait) {
-      if (closed || pageId == null) {
+    private Object requestNextChunk(final long maxWait) {
+      if (closed) {
         return null;
       }
 
@@ -111,7 +111,7 @@ final class ConsoleImpl implements Closeable, Console {
               if ("".equals(chunk) && maxWait > 0) {
                 try {
                   consoleService.wait(maxWait);
-                  chunk = requestNextChunk(pageId, 0);
+                  chunk = requestNextChunk(0);
                 } catch (InterruptedException e) {
                 }
               }

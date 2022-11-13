@@ -25,9 +25,8 @@ public interface ConsoleService {
   /**
    * Requests the next chunk of input readable from the console.
    * 
-   * @param appId The appId.
    * @return The next chunk, or the empty string if no chunk was readable, or {@code null} if the
    *         console has been closed.
    */
-  Object requestNextChunk(String appId);
+  Object requestNextChunk();
 }

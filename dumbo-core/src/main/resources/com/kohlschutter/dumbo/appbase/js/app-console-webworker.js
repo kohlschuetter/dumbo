@@ -31,7 +31,7 @@ var chunkJob = function(chunk, err) {
 };
 
 commands["next"] = function(_) {
-    rpc.ConsoleService.requestNextChunk(chunkJob, appId);
+    rpc.ConsoleService.requestNextChunk(chunkJob);
 };
 
 commands["init"] = function(data) {

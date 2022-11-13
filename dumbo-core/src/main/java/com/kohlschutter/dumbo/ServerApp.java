@@ -111,13 +111,13 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
     registry.registerRPCService(ConsoleService.class, new ConsoleService() {
 
       @Override
-      public Object requestNextChunk(String appId) {
+      public Object requestNextChunk() {
         DumboSession session = DumboSession.getSessionIfExists();
         if (session == null) {
           return null;
         }
 
-        return ((ConsoleImpl) session.getConsole()).getConsoleService().requestNextChunk(appId);
+        return ((ConsoleImpl) session.getConsole()).getConsoleService().requestNextChunk();
       }
     });
   }

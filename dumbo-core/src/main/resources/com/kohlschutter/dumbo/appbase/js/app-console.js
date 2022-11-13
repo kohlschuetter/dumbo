@@ -166,7 +166,7 @@
     }
 
     const noWorkerLoop = window.Worker && false ? null : function() {
-        $.rpc.ConsoleService.requestNextChunk(chunkJob, $.app.id);
+        $.rpc.ConsoleService.requestNextChunk(chunkJob);
     };
     const delayStepInitial = 8;
     var delayStep = delayStepInitial;
@@ -184,7 +184,7 @@
         connProblemsGone();
 
         if (processChunk(chunk)) {
-            $.rpc.ConsoleService.requestNextChunk(chunkJob, $.app.id);
+            $.rpc.ConsoleService.requestNextChunk(chunkJob);
         } else {
             console.log("Console service stopped");
         }
