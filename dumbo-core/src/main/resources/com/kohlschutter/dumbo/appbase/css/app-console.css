@@ -59,3 +59,8 @@
 	font-family: monospace;
 	white-space: pre-wrap;
 }
+
+.hidden {
+	display: none !important;
+	border: thin solid red;
+}

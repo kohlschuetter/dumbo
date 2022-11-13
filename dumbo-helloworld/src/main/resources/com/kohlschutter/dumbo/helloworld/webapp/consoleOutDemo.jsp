@@ -13,7 +13,7 @@
 </head>
 <body>
   <%=com.kohlschutter.dumbo.Extensions.htmlBodyTop(session)%>
-  <div class="container">
+  <div class="container" style="padding-top: 20pt">
 
     <div class="page-header">
       <h1>Console Demo</h1>
