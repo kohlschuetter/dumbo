@@ -5,7 +5,7 @@
 
   $.fn.commandLineIn = function() {
     var target = this;
-    target.change(function(ev) {
+    target.change(function(_ev) {
       var line = target.val();
 
       try {
