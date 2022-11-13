@@ -18,13 +18,13 @@ package com.kohlschutter.dumbo.console;
 
 /**
  * Provides access to an object-oriented console ("System.out")
- * 
+ *
  * @see Console
  */
 public interface ConsoleService {
   /**
    * Requests the next chunk of input readable from the console.
-   * 
+   *
    * @return The next chunk, or the empty string if no chunk was readable, or {@code null} if the
    *         console has been closed.
    */

@@ -36,7 +36,7 @@ public final class AppDefaultsSupport extends Extension {
 
   /**
    * Initializes this instance with the given default app JavaScript and CSS resources.
-   * 
+   *
    * @param js URL relative path to the app.js file
    * @param css URL relative path to the default CSS file
    */

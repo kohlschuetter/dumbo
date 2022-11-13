@@ -75,14 +75,14 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
 
   /**
    * Initializes internal {@link Extension} components that are specific to your app.
-   * 
+   *
    * Use {@link #registerExtension(Extension)} to add an extension.
    */
   protected abstract void initExtensions();
 
   /**
    * Registers an {@link Extension} to be used with this app.
-   * 
+   *
    * @param ext The extension to register.
    * @throws IllegalStateException if the call was made outside of {@link #initExtensions()}, or if
    *           an extension was already registered.
@@ -101,7 +101,7 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
 
   /**
    * Registers the default RPC services.
-   * 
+   *
    * @param registry The target RPC registry.
    */
   final void initRPCInternal(RPCRegistry registry) {
@@ -127,7 +127,7 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
   /**
    * Registers a {@link Closeable} instance that should be closed automatically when the application
    * shuts down.
-   * 
+   *
    * @param cl The {@link Closeable} to add.
    * @return The {@link Closeable} itself.
    */
@@ -155,7 +155,7 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
 
   /**
    * Called when an instance of this app (e.g., a browser window) has loaded.
-   * 
+   *
    * @param session The session for this instance.
    */
   protected void onAppLoaded(final DumboSession session) {
@@ -164,7 +164,7 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
   /**
    * Called when an instance of this app (e.g., a browser window) is being unloaded/closed or
    * reloaded.
-   * 
+   *
    * @param pageId The app ID for this instance.
    */
   protected void onAppUnload(final String pageId) {
@@ -209,7 +209,7 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
 
   /**
    * Checks whether this app has been closed already.
-   * 
+   *
    * @return {@code true} if closed.
    */
   public boolean isClosed() {
@@ -218,7 +218,7 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
 
   /**
    * Returns the extensions registered with this app.
-   * 
+   *
    * @return The collection of extensions.
    */
   public Collection<Extension> getExtensions() {
@@ -241,9 +241,9 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
 
   /**
    * Checks whether static design mode is enabled.
-   * 
+   *
    * If enabled, {@link #onStart()} will not be called.
-   * 
+   *
    * @return {@code true} if static design mode is enabled.
    */
   boolean isStaticDesignMode() {
@@ -256,9 +256,9 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
 
   /**
    * Called after initialization, unless static design mode is enabled.
-   * 
+   *
    * This is the place where you want to start the "main" operations.
-   * 
+   *
    * @see #initRPC(RPCRegistry)
    */
   protected void onStart() {

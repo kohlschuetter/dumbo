@@ -22,14 +22,14 @@ package com.kohlschutter.dumbo;
 public interface AppControlService {
   /**
    * Called by when the app (browser window) has been loaded.
-   * 
+   *
    * @return A unique ID for the current instance of the app.
    */
   String notifyAppLoaded();
 
   /**
    * Called when the app (JavaScript page) is unloading / being closed.
-   * 
+   *
    * @param appId The unique ID that was returned by {@link #notifyAppLoaded()} for this browser
    *          window.
    */

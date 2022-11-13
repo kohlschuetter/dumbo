@@ -20,7 +20,7 @@ import com.kohlschutter.dumbo.Extension;
 
 /*
  * Helper class to add dygraphs support to the demo server.
- * 
+ *
  * @see dumbo-helloworld
  * @see http://dygraphs.com/
  */

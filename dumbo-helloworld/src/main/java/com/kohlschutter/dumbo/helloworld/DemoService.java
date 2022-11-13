@@ -22,7 +22,7 @@ package com.kohlschutter.dumbo.helloworld;
 public interface DemoService {
   /**
    * A simple test method.
-   * 
+   *
    * @param error If true, an exception is thrown; if false, "world" is returned.
    * @return Returns "world", unless error is true.
    * @throws Exception

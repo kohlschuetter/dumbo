@@ -84,7 +84,7 @@ public abstract class Extension {
 
   /**
    * Called to register any JavaScript and/or CSS resources that should be used by this app.
-   * 
+   *
    * @see #registerCSS(String)
    * @see #registerJavaScript(String)
    */
@@ -99,7 +99,7 @@ public abstract class Extension {
 
   /**
    * Registers a JavaScript resource by its HTTP path.
-   * 
+   *
    * @param path The path.
    */
   protected final void registerJavaScript(final String path) {
@@ -108,7 +108,7 @@ public abstract class Extension {
 
   /**
    * Registers an asynchronous JavaScript resource by its HTTP path.
-   * 
+   *
    * @param path The path.
    */
   protected final void registerAsyncJavaScript(final String path) {
@@ -117,7 +117,7 @@ public abstract class Extension {
 
   /**
    * Registers a CSS resource by its HTTP path.
-   * 
+   *
    * @param path The path.
    */
   protected final void registerCSS(final String path) {
@@ -126,7 +126,7 @@ public abstract class Extension {
 
   /**
    * Registers the extension's resources with the {@link AppHTTPServer}.
-   * 
+   *
    * @param server The server instance to work with.
    */
   public void init(final AppHTTPServer server) {
@@ -140,7 +140,7 @@ public abstract class Extension {
 
   /**
    * Returns the resource URL containing the web content for this extension.
-   * 
+   *
    * @return The URL (default to the "webapp/" folder relative to the extension's class name)
    */
   protected URL initExtensionResourceURL() {
@@ -150,10 +150,10 @@ public abstract class Extension {
   /**
    * Returns an HTML string that may be added to the HTML HEAD section of a web page to initialize
    * this extension.
-   * 
+   *
    * By default, this returns a set of {@code <LINK>} and/or {@code SCRIPT} HTML elements, pointing
    * to the resources registered in {@link #initResources()}.
-   * 
+   *
    * @param context The context of the page.
    * @return The HTML string.
    */
@@ -178,7 +178,7 @@ public abstract class Extension {
   /**
    * Returns an HTML string that may be added to the top of the HTML BODY section of a web page to
    * initialize this extension.
-   * 
+   *
    * @param context The context of the page.
    * @return The HTML string.
    */
@@ -188,7 +188,7 @@ public abstract class Extension {
 
   /**
    * Performs dependency resolution/checks.
-   * 
+   *
    * @param app The server app
    * @param extensions The extensions to check.
    * @throws ExtensionDependencyException on dependency conflict.

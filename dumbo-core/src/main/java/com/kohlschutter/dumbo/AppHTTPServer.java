@@ -35,7 +35,7 @@ import com.kohlschutter.dumbo.util.DevTools;
 
 /**
  * A simple HTTP Server to run demos locally from within the IDE, with JSON-RPC support.
- * 
+ *
  * See {@code HelloWorldApp} for a simple demo.
  */
 public class AppHTTPServer {
@@ -68,7 +68,7 @@ public class AppHTTPServer {
 
   /**
    * Creates a new HTTP server for the given {@link ServerApp} on a free port.
-   * 
+   *
    * @param app The server app.
    * @throws IOException on error
    * @throws ExtensionDependencyException on dependency conflict.
@@ -83,7 +83,7 @@ public class AppHTTPServer {
    *
    * @param app The server app.
    * @param webappBaseURL The location of the resources that should be served.
-   * 
+   *
    * @throws ExtensionDependencyException on dependency conflict.
    */
   public AppHTTPServer(final ServerApp app, final URL webappBaseURL) throws IOException {
@@ -93,10 +93,10 @@ public class AppHTTPServer {
   /**
    * Creates a new HTTP server for the given {@link ServerApp}, using web resources from the given
    * URL path.
-   * 
+   *
    * @param app The server app.
    * @param path The base path for the server, {@code ""} for root.
-   * 
+   *
    * @throws ExtensionDependencyException on error
    */
   public AppHTTPServer(final ServerApp app, final String path) throws IOException {
@@ -110,7 +110,7 @@ public class AppHTTPServer {
    * @param app The app.
    * @param path The base path for the server, {@code ""} for root.
    * @param webappBaseURL The location of the resources that should be served.
-   * 
+   *
    * @throws ExtensionDependencyException on dependency conflict.
    */
   public AppHTTPServer(final ServerApp app, final String path, final URL webappBaseURL)
@@ -154,7 +154,7 @@ public class AppHTTPServer {
 
   /**
    * Registers a web app context/
-   * 
+   *
    * @param contextPrefix The context prefix.
    * @param pathToWebApp The URL pointing to the resources that should be served.
    * @return The context.
@@ -217,7 +217,7 @@ public class AppHTTPServer {
 
   /**
    * This method is called upon server start.
-   * 
+   *
    * By default, it tries to open the server's root page in a browser window.
    */
   protected void onServerStart() {
@@ -259,7 +259,7 @@ public class AppHTTPServer {
 
   /**
    * This method is called upon any exception during server startup or shutdown
-   * 
+   *
    * @param e The Exception
    */
   protected void onServerException(final Exception e) {

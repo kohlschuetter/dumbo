@@ -23,7 +23,7 @@ package com.kohlschutter.dumbo;
 public interface RPCRegistry {
   /**
    * Registers a service with the RPC subsystem.
-   * 
+   *
    * @param interfaze The service interface.
    * @param instance The service implementation.
    */

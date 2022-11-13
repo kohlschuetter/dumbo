@@ -30,7 +30,7 @@ import com.kohlschutter.dumbo.console.ConsoleService;
 
 /**
  * An object-oriented console ("System.out"), which can be controlled via RPC.
- * 
+ *
  * Content can be sent directly as a series objects (which must be marshallable via RPC), or through
  * a {@link PrintWriter} -- in the latter case output will be sent as chunks of strings.
  */
@@ -165,9 +165,9 @@ final class ConsoleImpl implements Closeable, Console {
 
   /**
    * Suspends flushing any chunks to the client, until {@link #resumeFlushing()} is called again.
-   * 
+   *
    * This can be used to logically group content before sending it to the client.
-   * 
+   *
    * @throws IOException
    * @see #resumeFlushing()
    */
@@ -186,9 +186,9 @@ final class ConsoleImpl implements Closeable, Console {
   /**
    * Resumes flushing chunks to the client again, after it was suspended by calling
    * {@link #suspendFlushing()}
-   * 
+   *
    * This can be used to logically group content before sending it to the client.
-   * 
+   *
    * @throws IOException
    * @see #suspendFlushing()
    */
@@ -206,7 +206,7 @@ final class ConsoleImpl implements Closeable, Console {
 
   /**
    * Adds some data to the output.
-   * 
+   *
    * @param o The object to be added to the output.
    */
   @Override
@@ -223,7 +223,7 @@ final class ConsoleImpl implements Closeable, Console {
 
   /**
    * Convenience method for {@code getPrintWriter().println(s);}
-   * 
+   *
    * @param s The string to print.
    */
   @Override
@@ -233,7 +233,7 @@ final class ConsoleImpl implements Closeable, Console {
 
   /**
    * Convenience method for {@code getPrintWriter().println(o);}
-   * 
+   *
    * @param o The object to print.
    */
   @Override
@@ -251,7 +251,7 @@ final class ConsoleImpl implements Closeable, Console {
 
   /**
    * Returns a {@link PrintWriter} that allows the textual data to be sent as String objects.
-   * 
+   *
    * @return This console's {@link PrintWriter}.
    */
   @Override
@@ -261,7 +261,7 @@ final class ConsoleImpl implements Closeable, Console {
 
   /**
    * Returns {@code true} if this {@link ConsoleImpl} has been closed.
-   * 
+   *
    * @return {@code true} if closed.
    */
   public final boolean isClosed() {
@@ -271,7 +271,7 @@ final class ConsoleImpl implements Closeable, Console {
   /**
    * Checks whether this {@link ConsoleImpl} has been closed. An {@link IOException} is thrown in
    * this case.
-   * 
+   *
    * @throws IOException if closed.
    */
   public final void checkClosed() throws IOException {
@@ -322,7 +322,7 @@ final class ConsoleImpl implements Closeable, Console {
 
     /**
      * If {@code true}, consider this shutdown "clean". If {@code false}, assume there was an error.
-     * 
+     *
      * @return The "clean" state.
      */
     public boolean isClean() {
@@ -342,7 +342,7 @@ final class ConsoleImpl implements Closeable, Console {
 
     /**
      * Returns the encapsulated chunks.
-     * 
+     *
      * @return The chunks.
      */
     public Object[] getChunks() {

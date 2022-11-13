@@ -21,7 +21,7 @@ import com.kohlschutter.dumbo.Extension;
 /**
  * Disable the "rubber band" / "overscrolling" annoyance in Google Chrome on OS X when scrolling
  * over the top of a page (e.g., two-finger touch-and-drag downwards).
- * 
+ *
  * For improved smoothness, you may want to add the CSS style {@code overflow: hidden;} to the
  * {@code BODY} tag.
  */
