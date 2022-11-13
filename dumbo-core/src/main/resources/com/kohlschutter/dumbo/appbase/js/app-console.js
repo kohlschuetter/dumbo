@@ -108,9 +108,10 @@
         }
     };
     const connProblemsCheck = function() {
-        if (connProblemsTimeoutId != -1) clearTimeout(connProblemsTimeoutId);
         if (connProblemsCheckEnabled) {
-            connProblemsTimeoutId = setTimeout(connProblems, 1000);
+            if (connProblemsTimeoutId == -1) {
+                connProblemsTimeoutId = setTimeout(connProblems, 1000);
+            }
         } else {
             connProblemsTimeoutId = -1;
         }
@@ -165,16 +166,33 @@
         return true;
     }
 
-    const noWorkerLoop = window.Worker && false ? null : function() {
+    const useWebWorkers = window.Worker != null;
+
+    const noWorkerLoop = useWebWorkers ? null : function() {
         $.rpc.ConsoleService.requestNextChunk(chunkJob);
     };
     const delayStepInitial = 8;
     var delayStep = delayStepInitial;
 
-    var chunkJob = window.Worker && false ? null : function(chunk, e) {
-        if (connProblemsTimeoutId == -1) { connProblemsCheck(); }
-        if (e != null) {
+    const checkError = function(e) {
+        connProblemsCheck();
+        if (e) {
             console.error("ConsoleService.requestNextChunk error", e);
+            if (e.code == 403) {
+                // forbidden, e.g., session no longer valid
+                processChunk(null);
+                return true;
+            }
+        }
+        return false;
+    };
+
+    var chunkJob = useWebWorkers ? null : function(chunk, e) {
+        if (e != null) {
+            if (checkError(e)) {
+                return;
+            }
+
             setTimeout(noWorkerLoop, 2 ** (delayStep));
             if (++delayStep >= 12) {
                 delayStep = 12;
@@ -186,6 +204,7 @@
         if (processChunk(chunk)) {
             $.rpc.ConsoleService.requestNextChunk(chunkJob);
         } else {
+            connProblemsCheck();
             console.log("Console service stopped");
         }
     };
@@ -213,8 +232,7 @@
                                 console.log("Console service stopped");
                             }
                         } else if (e.data.command == "error") {
-                            connProblemsCheck();
-                            //console.log("WebWorker reported error", e.data.error);
+                            checkError(e.data.error);
                         }
                     }
                 };

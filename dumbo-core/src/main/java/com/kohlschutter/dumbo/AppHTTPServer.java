@@ -18,6 +18,7 @@ package com.kohlschutter.dumbo;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.URL;
 import java.util.Objects;
 
@@ -86,12 +87,12 @@ public class AppHTTPServer {
    * @throws ExtensionDependencyException on dependency conflict.
    */
   public AppHTTPServer(final ServerApp app, final URL webappBaseURL) throws IOException {
-    this(app, "", 0, webappBaseURL);
+    this(app, "", webappBaseURL);
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
-   * from the given URL path.
+   * Creates a new HTTP server for the given {@link ServerApp}, using web resources from the given
+   * URL path.
    * 
    * @param app The server app.
    * @param path The base path for the server, {@code ""} for root.
@@ -103,23 +104,8 @@ public class AppHTTPServer {
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
-   * from the given URL path.
-   * 
-   * @param app The app.
-   * @param path The base path for the server, {@code ""} for root.
-   * @param webappBaseURL The location of the resources that should be served.
-   * 
-   * @throws ExtensionDependencyException on error
-   */
-  public AppHTTPServer(final ServerApp app, final String path, final URL webappBaseURL)
-      throws IOException {
-    this(app, path, 0, webappBaseURL != null ? webappBaseURL : getWebappBaseURL(app));
-  }
-
-  /**
-   * Creates a new HTTP server for the given {@link ServerApp} on the given port, using web
-   * resources from the given URL path.
+   * Creates a new HTTP server for the given {@link ServerApp}, using web resources from the given
+   * URL path.
    *
    * @param app The app.
    * @param path The base path for the server, {@code ""} for root.
@@ -127,8 +113,8 @@ public class AppHTTPServer {
    * 
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  private AppHTTPServer(final ServerApp app, final String path, final int port,
-      final URL webappBaseURL) throws IOException {
+  public AppHTTPServer(final ServerApp app, final String path, final URL webappBaseURL)
+      throws IOException {
     this.app = app;
     this.server = new Server();
     this.path = path.replaceFirst("^/", "");
@@ -163,12 +149,7 @@ public class AppHTTPServer {
     }
 
     server.setHandler(contextHandlers);
-
-    // from Server constructor -- only open connector after initialization
-    ServerConnector connector = new ServerConnector(server);
-    connector.setPort(port <= 0 ? 0 : port);
-    connector.setHost("127.0.0.1"); // listen on localhost only
-    server.setConnectors(new Connector[] {connector});
+    server.setConnectors(initConnectors(server));
   }
 
   /**
@@ -326,5 +307,18 @@ public class AppHTTPServer {
    */
   public boolean isStaticMode() {
     return staticMode;
+  }
+
+  protected Connector[] initConnectors(Server targetServer) throws IOException {
+    ServerConnector localhostConnector = new ServerConnector(targetServer);
+
+    int port = Integer.parseInt(System.getProperty("dumbo.port", "8084"));
+
+    localhostConnector.setPort(port <= 0 ? 0 : port);
+    localhostConnector.setReuseAddress(true);
+    localhostConnector.setReusePort(true);
+    localhostConnector.setHost(Inet4Address.getLoopbackAddress().getHostAddress());
+
+    return new Connector[] {localhostConnector};
   }
 }

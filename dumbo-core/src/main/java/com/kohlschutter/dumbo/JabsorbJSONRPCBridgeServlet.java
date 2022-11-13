@@ -56,32 +56,37 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
   @Override
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
+    try {
 
-    ServletContext ctx = config.getServletContext();
-    ServerApp app = (ServerApp) ctx.getAttribute("app");
+      ServletContext ctx = config.getServletContext();
+      ServerApp app = (ServerApp) ctx.getAttribute("app");
 
-    bridge = new JSONRPCBridge();
-    bridge.setExceptionTransformer(new ExceptionTransformer() {
-      private static final long serialVersionUID = 1L;
+      bridge = new JSONRPCBridge();
+      bridge.setExceptionTransformer(new ExceptionTransformer() {
+        private static final long serialVersionUID = 1L;
 
-      @Override
-      public Object transform(Throwable t) {
-        System.err.println("Error during JSON method call: " + tlMethod.get());
-        t.printStackTrace();
-        return t;
+        @Override
+        public Object transform(Throwable t) {
+          System.err.println("Error during JSON method call: " + tlMethod.get());
+          t.printStackTrace();
+          return t;
+        }
+      });
+
+      registry = new JSONRPCRegistryImpl(bridge);
+      app.initRPCInternal(registry);
+      app.initRPC(registry);
+
+      if (app.isStaticDesignMode()) {
+        // don't run actual app in design mode
+        return;
       }
-    });
 
-    registry = new JSONRPCRegistryImpl(bridge);
-    app.initRPCInternal(registry);
-    app.initRPC(registry);
-
-    if (app.isStaticDesignMode()) {
-      // don't run actual app in design mode
-      return;
+      app.onStart();
+    } catch (RuntimeException | Error e) {
+      e.printStackTrace();
+      throw e;
     }
-
-    app.onStart();
   }
 
   private static final class JSONRPCRegistryImpl implements RPCRegistry {
