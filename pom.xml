@@ -56,6 +56,7 @@
         <module>dumbo-jabsorb</module>
         <module>dumbo-core</module>
         <module>dumbo-extensions</module>
+        <module>dumbo-junixsocket</module>
         <module>dumbo-helloworld</module>
     </modules>
 </project>
