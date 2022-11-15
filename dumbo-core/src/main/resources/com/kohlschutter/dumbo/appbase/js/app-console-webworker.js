@@ -1,8 +1,4 @@
-var appId = null;
 var rpc = null;
-var pageId = null;
-
-self.importScripts("/_app_base/js/jsonrpc.js?");
 
 var commands = {};
 
@@ -12,13 +8,8 @@ var delayStep = delayStepInitial;
 var chunkJob = function(chunk, err) {
     if (err != null) {
         console.error("requestNextChunk error", err);
-        self.postMessage({ command: "error", error: err });
 
-        // console.log("try again", 2**delayStep);
-        setTimeout(commands["next"], 2 ** (delayStep));
-        if (++delayStep >= 12) {
-            delayStep = 12;
-        }
+        self.postMessage({ command: "error", error: err });
         return;
     } else {
         delayStep = delayStepInitial;
@@ -30,20 +21,30 @@ var chunkJob = function(chunk, err) {
     self.postMessage({ command: "chunk", chunk: chunk });
 };
 
-commands["next"] = function(_) {
+const nextChunkCall = function() {
     rpc.ConsoleService.requestNextChunk(chunkJob);
+}
+
+commands["next"] = function(data) {
+    if (data && data.delay) {
+        setTimeout(nextChunkCall, data.delay);
+    } else {
+        nextChunkCall();
+    }
 };
 
 commands["init"] = function(data) {
-    appId = data.appId;
-    pageId = data.pageId;
+    var url = data && data.url ? data.url : "/json";
+
+    self.importScripts("/_app_base/js/jsonrpc.js");
+
     rpc = new JSONRpcClient(function(res, err) {
         if (!res || err) {
             console.error("JSONRpcClient error", res, err);
             self.postMessage({ command: "error", error: err });
         }
         commands["next"]();
-    }, "/json?pageId=" + pageId);
+    }, url);
 };
 
 self.onmessage = function(ev) {

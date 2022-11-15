@@ -965,7 +965,8 @@ JSONRpcClient.prototype.unmarshallResponse = function(data) {
 
     var obj;
     try {
-        eval("obj = " + data);
+        // eval("obj = " + data);
+        obj = JSON.parse(data);
     }
     catch (e) {
         throw new JSONRpcClient.Exception({ code: 550, message: "error parsing result" });
@@ -973,6 +974,11 @@ JSONRpcClient.prototype.unmarshallResponse = function(data) {
     if (obj.error) {
         throw new JSONRpcClient.Exception(obj.error);
     }
+
+    if (obj.serverURL) {
+        this.serverURL = obj.serverURL;
+    }
+
     var r = obj.result;
 
     // look for circular reference/duplicates fixups and execute them

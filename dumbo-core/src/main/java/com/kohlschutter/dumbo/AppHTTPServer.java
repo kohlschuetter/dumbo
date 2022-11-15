@@ -310,7 +310,7 @@ public class AppHTTPServer {
 
   /**
    * Returns an array of {@link Connector}s to be used for the given server.
-   * 
+   *
    * @param targetServer The target server.
    * @return The connector(s).
    * @throws IOException on error.
@@ -321,9 +321,9 @@ public class AppHTTPServer {
 
   /**
    * Returns a Jetty {@link ServerConnector} that listens by default on localhost TCP port 8084.
-   * 
+   *
    * The port can be configured using the {@code dumbo.port} system property.
-   * 
+   *
    * @param targetServer The server this connector is assigned to.
    * @return The connector.
    * @throws IOException on error.

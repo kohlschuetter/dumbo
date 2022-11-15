@@ -96,8 +96,6 @@
     var connProblemsTimeoutId = -1;
     var connProblemsCheckEnabled = true;
     const connProblems = function() {
-        console.log("connection problems");
-
         var callout = $('#noLongerCurrentTopCallout');
         if (callout.size() >= 0) {
             $('BODY').addClass("noLongerCurrent");
@@ -117,16 +115,20 @@
         }
     };
     const connProblemsGone = function() {
-        if (connProblemsTimeoutId == -1) {
-            return;
+        if (connProblemsTimeoutId != -1) {
+            clearTimeout(connProblemsTimeoutId);
+            connProblemsTimeoutId = -1;
         }
-        clearTimeout(connProblemsTimeoutId);
-        connProblemsTimeoutId = -1;
         $('#noLongerCurrentTopCallout').addClass("hidden");
         $('BODY').removeClass("noLongerCurrent");
     };
 
+    if (addEventListener) {
+        addEventListener('beforeunload', connProblemsGone);
+    }
+
     var processChunk = function(chunk) {
+        connProblemsGone();
         if (chunk == null) {
             // console was closed
             $.app.console._onClose();
@@ -142,14 +144,11 @@
         } else if (chunk.javaClass == "com.kohlschutter.dumbo.ConsoleImpl$ShutdownNotice") {
             // close console and shutdown app as if the window was closed.
             connProblemsCheckEnabled = false;
-            connProblemsGone();
 
             if (chunk.clean) {
                 // don't show modal on clean shutdowns
                 $("#noLongerCurrentModal").remove();
             }
-            $.rpc.AppControlService.notifyAppUnload($.app.ASYNC_IGNORE_RESPONSE,
-                $.app.id);
             $.app.console._onClose();
             return false;
         }
@@ -219,24 +218,34 @@
                     return;
                 }
 
+
                 var worker = $.app.console.worker = new Worker("/_app_base/js/app-console-webworker.js");
+
+                var workerNextMessage = function(delay) {
+                    worker.postMessage({ command: "next", delay: delay });
+                }
+
                 worker.onmessage = function(e) {
                     if (e && e.data) {
                         if (e.data.command == "chunk") {
-                            connProblemsGone();
                             if (processChunk(e.data.chunk)) {
-                                worker.postMessage({ command: "next" });
+                                workerNextMessage(0);
                             } else {
                                 // FIXME proper shutdown?
                                 connProblemsCheck();
                                 console.log("Console service stopped");
                             }
                         } else if (e.data.command == "error") {
-                            checkError(e.data.error);
+                            if (!checkError(e.data.error)) {
+                                workerNextMessage(2 ** (delayStep));
+                                if (++delayStep >= 12) {
+                                    delayStep = 12;
+                                }
+                            }
                         }
                     }
                 };
-                worker.postMessage({ command: "init", appId: $.app.id, pageId: $.app.pageId });
+                worker.postMessage({ command: "init", url: $.rpc.serverURL });
             }, 0);
         }
     });

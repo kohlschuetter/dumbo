@@ -18,8 +18,10 @@ package com.kohlschutter.dumbo.simple;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -37,14 +39,16 @@ import com.kohlschutter.dumbo.ext.AppDefaultsSupport;
 public abstract class SimpleServerApp extends ServerApp {
   private static final Logger LOG = Logger.getLogger(SimpleServerApp.class);
 
-  private final List<Class<Extension>> annotatedExtensions;
-  private final List<Class<Object>> annotatedServices;
+  private final Set<Class<Extension>> annotatedExtensions;
+  private final Set<Class<Object>> annotatedServices;
 
   protected SimpleServerApp() {
     super();
 
-    this.annotatedExtensions = getClassesFromAnnotation(Extensions.class, Extension.class);
-    this.annotatedServices = getClassesFromAnnotation(Services.class, Object.class);
+    this.annotatedExtensions = new LinkedHashSet<>(getClassesFromAnnotation(Extensions.class,
+        Extension.class));
+    this.annotatedServices = new LinkedHashSet<>(getClassesFromAnnotation(Services.class,
+        Object.class));
   }
 
   @SuppressWarnings("unchecked")

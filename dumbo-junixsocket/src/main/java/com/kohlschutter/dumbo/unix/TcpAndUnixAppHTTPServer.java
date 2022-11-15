@@ -14,7 +14,7 @@ import com.kohlschutter.dumbo.ServerApp;
 
 /**
  * An {@link AppHTTPServer} that binds both on a TCP port as well as on an AF_UNIX socket address.
- * 
+ *
  * @author Christian Kohlschütter
  */
 public class TcpAndUnixAppHTTPServer extends UnixAppHTTPServer {

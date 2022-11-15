@@ -36,7 +36,7 @@ import com.kohlschutter.dumbo.console.ConsoleService;
  */
 final class ConsoleImpl implements Closeable, Console {
   private static final int MAX_CHUNKS_AT_ONCE = 20;
-  private static final long MAX_WAIT_NEXT_CHUNK_MILLIS = 60 * 1000;
+  private static final long MAX_WAIT_NEXT_CHUNK_MILLIS = 20 * 1000;
 
   private final StringWriter sw = new StringWriter() {
     @Override

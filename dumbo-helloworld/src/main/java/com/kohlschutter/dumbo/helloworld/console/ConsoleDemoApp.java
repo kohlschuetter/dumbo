@@ -17,6 +17,7 @@
 package com.kohlschutter.dumbo.helloworld.console;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 import com.kohlschutter.dumbo.DumboSession;
 import com.kohlschutter.dumbo.RPCRegistry;
@@ -64,6 +65,9 @@ public class ConsoleDemoApp extends ServerApp {
         final String color = colors[count++ % colors.length];
 
         session.getConsole().add(new ColorMessage(line, color));
+        synchronized (session) {
+          session.notifyAll();
+        }
       }
     });
   }
@@ -71,56 +75,50 @@ public class ConsoleDemoApp extends ServerApp {
   @Override
   protected void onAppLoaded(DumboSession session) {
     Console console = session.getConsole();
+    State state = session.getOrCreatePageAttribute(State.class, State::new);
 
     console.println("Please enter some text into the >> text box << above!");
     console.println("Java version: " + System.getProperty("java.version"));
 
-    State state = session.getOrCreatePageAttribute(State.class, State::new);
-
-    new Thread() {
-      {
-        setDaemon(true);
-      }
-
-      @Override
-      public void run() {
-        while (!Thread.interrupted()) {
+    CompletableFuture.runAsync(() -> {
+      while (!Thread.interrupted()) {
+        synchronized (session) {
           try {
-            Thread.sleep(5000);
+            session.wait(5000);
           } catch (InterruptedException e) {
           }
-
-          if (state.enteredCommand) {
-            state.n = 0;
-            state.enteredCommand = false;
-          }
-          switch (state.n) {
-            case -1:
-              console.println("Hello World from the server. Please enter some text!");
-              state.n = 0;
-              break;
-            case 0:
-              console.println("Thank you for entering some text");
-              break;
-            case 1:
-              console.println("Please enter some text");
-              break;
-            case 2:
-              console.println("Come on, please enter _anything_");
-              break;
-            case 3:
-              console.println("Last chance!");
-              break;
-            case 4:
-              console.add(new UserInputException("Too late!"));
-              break;
-            default:
-              // silence
-          }
-
-          state.n++;
         }
+
+        if (state.enteredCommand) {
+          state.n = 0;
+          state.enteredCommand = false;
+        }
+        switch (state.n) {
+          case -1:
+            console.println("Hello World from the server. Please enter some text!");
+            state.n = 0;
+            break;
+          case 0:
+            console.println("Thank you for entering some text");
+            break;
+          case 1:
+            console.println("Please enter some text");
+            break;
+          case 2:
+            console.println("Come on, please enter _anything_");
+            break;
+          case 3:
+            console.println("Last chance!");
+            break;
+          case 4:
+            console.add(new UserInputException("Too late!"));
+            break;
+          default:
+            // silence
+        }
+
+        state.n++;
       }
-    }.start();
+    });
   }
 }

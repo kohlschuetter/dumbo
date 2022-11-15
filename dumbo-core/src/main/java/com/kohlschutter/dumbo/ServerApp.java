@@ -33,7 +33,7 @@ import com.kohlschutter.dumbo.console.ConsoleService;
 /**
  * Base class for a lightweight Server-based application.
  */
-public abstract class ServerApp implements AppControlService, Closeable, Cloneable {
+public abstract class ServerApp implements Closeable, Cloneable {
   private static final Logger LOG = Logger.getLogger(ServerApp.class);
   private final Set<Extension> extensions = new LinkedHashSet<Extension>();
   private boolean initExtensionsDone = false;
@@ -106,8 +106,6 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
    */
   final void initRPCInternal(RPCRegistry registry) {
     this.rpcRegistry = registry;
-    registry.registerRPCService(AppControlService.class, this);
-
     registry.registerRPCService(ConsoleService.class, new ConsoleService() {
 
       @Override
@@ -136,45 +134,12 @@ public abstract class ServerApp implements AppControlService, Closeable, Cloneab
     return cl;
   }
 
-  @Override
-  public final String notifyAppLoaded() {
-    DumboSession session = DumboSession.getSessionIfExists();
-    if (session == null) {
-      // ignore
-      return null;
-    }
-    String pageId = session.getPageId();
-
-    try {
-      onAppLoaded(session);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return pageId;
-  }
-
   /**
-   * Called when an instance of this app (e.g., a browser window) has loaded.
+   * Called when an instance of this app has loaded.
    *
    * @param session The session for this instance.
    */
   protected void onAppLoaded(final DumboSession session) {
-  }
-
-  /**
-   * Called when an instance of this app (e.g., a browser window) is being unloaded/closed or
-   * reloaded.
-   *
-   * @param pageId The app ID for this instance.
-   */
-  protected void onAppUnload(final String pageId) {
-  }
-
-  @Override
-  public final void notifyAppUnload(final String pageId) {
-    onAppUnload(pageId);
-
-    DumboSession.removePageIdFromCurrentSession(pageId);
   }
 
   @Override

@@ -58,7 +58,7 @@ public final class BootstrapSupport extends Extension {
   protected void initResources() {
     registerCSS("css/bootstrap.min.css");
     registerCSS("css/bootstrap-extras.css");
-    registerJavaScript("js/bootstrap.min.js");
+    registerJavaScript("js/bootstrap.bundle.min.js");
     registerJavaScript("js/bootstrap-extras.js");
   }
 

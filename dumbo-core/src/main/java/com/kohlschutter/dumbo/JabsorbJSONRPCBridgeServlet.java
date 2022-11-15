@@ -25,7 +25,9 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.jetty.io.EofException;
 import org.jabsorb.ExceptionTransformer;
 import org.jabsorb.JSONRPCBridge;
 import org.jabsorb.serializer.response.results.FailedResult;
@@ -52,6 +54,7 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
   private JSONRPCBridge bridge;
   private JSONRPCRegistryImpl registry;
   private final ThreadLocal<String> tlMethod = new ThreadLocal<>();
+  private ServerApp app;
 
   @Override
   public void init(ServletConfig config) throws ServletException {
@@ -59,7 +62,7 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
     try {
 
       ServletContext ctx = config.getServletContext();
-      ServerApp app = (ServerApp) ctx.getAttribute("app");
+      this.app = (ServerApp) ctx.getAttribute("app");
 
       bridge = new JSONRPCBridge();
       bridge.setExceptionTransformer(new ExceptionTransformer() {
@@ -115,29 +118,46 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
   }
 
   @Override
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    doPost(request, response);
+    try {
+      doPost0(request, response);
+    } catch (ServletException | IOException | RuntimeException | Error e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
-  @Override
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+  private void doPost0(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
 
     request.setCharacterEncoding("UTF-8");
     response.setCharacterEncoding("UTF-8");
 
-    HttpSession session = request.getSession(false);
-    if (session == null) {
+    HttpSession context = request.getSession(true);
+    if (context == null) {
+      // unlikely
       response.sendError(HttpServletResponse.SC_FORBIDDEN, "No session");
       return;
     }
+
+    boolean triggerOnAppLoaded = false;
+
     String pageId = request.getParameter("pageId");
+    String newServerURL = null;
     if (pageId == null) {
-      response.sendError(HttpServletResponse.SC_FORBIDDEN, "No pageId");
-      return;
+      triggerOnAppLoaded = true;
+      pageId = DumboSession.newPageId(context);
+      newServerURL = request.getRequestURI();
+      String qs = request.getQueryString();
+      if (qs != null && !qs.isEmpty()) {
+        newServerURL += "?" + qs + "&pageId=" + response.encodeURL(pageId);
+      } else {
+        newServerURL += "?pageId=" + response.encodeURL(pageId);
+      }
     }
-    DumboSession dumboSession = DumboSession.getDumboSession(session, pageId);
+
+    DumboSession dumboSession = DumboSession.getDumboSession(context, pageId);
     if (dumboSession == null) {
       response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid pageId");
       return;
@@ -168,15 +188,23 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       DumboSession.removeSessionTL();
     }
 
-    ByteBuffer byteBuffer = UTF_8.encode(result.toString());
+    ByteBuffer byteBuffer = UTF_8.encode(result.toJSONString(newServerURL));
     response.setContentLength(byteBuffer.remaining());
     response.setContentType("application/json;charset=utf-8");
     try (OutputStream out = response.getOutputStream();
         WritableByteChannel channel = Channels.newChannel(out)) {
       channel.write(byteBuffer);
       out.flush();
-    } catch (ClosedByInterruptException e) {
-      // ignore
+      response.flushBuffer();
+    } catch (EofException | ClosedByInterruptException e) {
+      // connection terminated; ignore
+      return;
+    }
+
+    if (triggerOnAppLoaded) {
+      CompletableFuture.runAsync(() -> {
+        app.onAppLoaded(dumboSession);
+      });
     }
   }
 }

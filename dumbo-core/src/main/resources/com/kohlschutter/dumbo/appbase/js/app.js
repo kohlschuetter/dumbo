@@ -1,10 +1,6 @@
 (function($) {
-    var pageId = $dumbo.pageId;
-
     $.rpc = null;
     $.app = {
-        id: null,
-        pageId: pageId,
         proto: {}
     };
 
@@ -94,31 +90,22 @@
     $(document).ready(
         function() {
             $.rpc = new JSONRpcClient(function(_, _) {
-                $.rpc.AppControlService.notifyAppLoaded(function(result, _) {
-                    $.app.id = result;
-                    $(window).unload(
-                        function() {
-                            $.rpc.AppControlService.notifyAppUnload(
-                                $.app.ASYNC_IGNORE_RESPONSE, $.app.id);
-                        });
+                var cb;
+                if ($.app._onStaticModeCallbacks.condition()) {
+                    cb = $.app._onStaticModeCallbacks;
+                } else {
+                    cb = $.app._onLiveModeCallbacks;
+                }
 
-                    var cb;
-                    if ($.app._onStaticModeCallbacks.condition()) {
-                        cb = $.app._onStaticModeCallbacks;
-                    } else {
-                        cb = $.app._onLiveModeCallbacks;
-                    }
+                cb.afterwards = function() {
+                    _runCallbacks($.app._onReadyCallbacks);
+                };
 
-                    cb.afterwards = function() {
-                        _runCallbacks($.app._onReadyCallbacks);
-                    };
+                $.app._onLoadedCallbacks.afterwards = function() {
+                    _runCallbacks(cb);
+                };
 
-                    $.app._onLoadedCallbacks.afterwards = function() {
-                        _runCallbacks(cb);
-                    };
-
-                    _runCallbacks($.app._onLoadedCallbacks);
-                });
-            }, '/json?pageId=' + pageId);
+                _runCallbacks($.app._onLoadedCallbacks);
+            }, '/json');
         });
 }(jQuery));

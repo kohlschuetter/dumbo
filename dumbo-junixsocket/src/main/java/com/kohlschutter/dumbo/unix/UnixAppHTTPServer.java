@@ -15,7 +15,7 @@ import com.kohlschutter.dumbo.ServerApp;
 
 /**
  * An {@link AppHTTPServer} that only binds on an AF_UNIX socket address.
- * 
+ *
  * @author Christian Kohlschütter
  */
 public class UnixAppHTTPServer extends AppHTTPServer {
