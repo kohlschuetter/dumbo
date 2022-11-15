@@ -18,13 +18,13 @@ package com.kohlschutter.dumbo.helloworld.console;
 
 import java.io.IOException;
 
-import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.DumboSession;
 import com.kohlschutter.dumbo.RPCRegistry;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 import com.kohlschutter.dumbo.console.Console;
 import com.kohlschutter.dumbo.console.ConsoleSupport;
+import com.kohlschutter.dumbo.unix.TcpAndUnixAppHTTPServer;
 
 /**
  * This demo shows how one can use the Console.
@@ -32,7 +32,7 @@ import com.kohlschutter.dumbo.console.ConsoleSupport;
 public class ConsoleDemoApp extends ServerApp {
   public static void main(String[] args) throws IOException {
     final ConsoleDemoApp app = new ConsoleDemoApp();
-    new AppHTTPServer(app, "consoleDemo.jsp", ConsoleDemoApp.class.getResource(
+    new TcpAndUnixAppHTTPServer(app, "consoleDemo.jsp", ConsoleDemoApp.class.getResource(
         "/com/kohlschutter/dumbo/helloworld/webapp/")).startAndWait();
   }
 

@@ -239,7 +239,6 @@ public class AppHTTPServer {
    * This method is called upon server stop.
    */
   protected void onServerStop() {
-
     // Make sure the JVM exits -- Maven's exec:java may spawn extra threads...
     new Thread() {
       {
@@ -309,16 +308,36 @@ public class AppHTTPServer {
     return staticMode;
   }
 
+  /**
+   * Returns an array of {@link Connector}s to be used for the given server.
+   * 
+   * @param targetServer The target server.
+   * @return The connector(s).
+   * @throws IOException on error.
+   */
   protected Connector[] initConnectors(Server targetServer) throws IOException {
-    ServerConnector localhostConnector = new ServerConnector(targetServer);
+    return new Connector[] {initDefaultTCPConnector(targetServer)};
+  }
+
+  /**
+   * Returns a Jetty {@link ServerConnector} that listens by default on localhost TCP port 8084.
+   * 
+   * The port can be configured using the {@code dumbo.port} system property.
+   * 
+   * @param targetServer The server this connector is assigned to.
+   * @return The connector.
+   * @throws IOException on error.
+   */
+  protected ServerConnector initDefaultTCPConnector(Server targetServer) throws IOException {
+    ServerConnector connector = new ServerConnector(targetServer);
 
     int port = Integer.parseInt(System.getProperty("dumbo.port", "8084"));
 
-    localhostConnector.setPort(port <= 0 ? 0 : port);
-    localhostConnector.setReuseAddress(true);
-    localhostConnector.setReusePort(true);
-    localhostConnector.setHost(Inet4Address.getLoopbackAddress().getHostAddress());
+    connector.setPort(port <= 0 ? 0 : port);
+    connector.setReuseAddress(true);
+    connector.setReusePort(true);
+    connector.setHost(Inet4Address.getLoopbackAddress().getHostAddress());
 
-    return new Connector[] {localhostConnector};
+    return connector;
   }
 }

@@ -13,6 +13,11 @@ import org.newsclub.net.unix.jetty.AFSocketServerConnector;
 import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.ServerApp;
 
+/**
+ * An {@link AppHTTPServer} that only binds on an AF_UNIX socket address.
+ * 
+ * @author Christian Kohlschütter
+ */
 public class UnixAppHTTPServer extends AppHTTPServer {
   public UnixAppHTTPServer(ServerApp app) throws IOException {
     super(app);
@@ -32,12 +37,25 @@ public class UnixAppHTTPServer extends AppHTTPServer {
 
   @Override
   protected Connector[] initConnectors(Server targetServer) throws IOException {
+    return new Connector[] {initUnixConnector(targetServer)};
+  }
+
+  protected Connector initUnixConnector(Server targetServer) throws IOException {
+    return initUnixConnector(targetServer, null);
+  }
+
+  protected Connector initUnixConnector(Server targetServer, AFUNIXSocketAddress address)
+      throws IOException {
+
     AFSocketServerConnector unixConnector = new AFSocketServerConnector(targetServer,
         new HttpConnectionFactory());
-    unixConnector.setListenSocketAddress(AFUNIXSocketAddress.of(new File("/tmp/dumbo.socket")));
+    if (address == null) {
+      address = AFUNIXSocketAddress.of(new File("/tmp/dumbo.socket"));
+    }
+    unixConnector.setListenSocketAddress(address);
     unixConnector.setAcceptQueueSize(128);
-    unixConnector.setMayStopServer(true);
+    unixConnector.setMayStopServerForce(true);
 
-    return new Connector[] {unixConnector};
+    return unixConnector;
   }
 }
