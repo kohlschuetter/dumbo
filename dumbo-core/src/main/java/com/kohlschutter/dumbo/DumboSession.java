@@ -2,11 +2,12 @@ package com.kohlschutter.dumbo;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -17,13 +18,13 @@ import com.kohlschutter.dumbo.console.Console;
 import jakarta.servlet.http.HttpSession;
 
 public final class DumboSession {
-  private static final int MAX_PAGES_PER_SESSION = 5;
   private static final String SESSION_ATTRIBUTE_PAGEIDS = "com.kohlschutter.dumbo.PageIds";
   private static final ThreadLocal<DumboSession> TL_DUMBO_SESSION = new ThreadLocal<>();
   private final String pageId;
   private final Map<String, Object> pageScope = new HashMap<>();
   private final HttpSession context;
   private final Console console = new ConsoleImpl();
+  private AtomicBoolean invalid = new AtomicBoolean(false);
 
   DumboSession(String pageId, HttpSession context) {
     this.pageId = pageId;
@@ -55,7 +56,7 @@ public final class DumboSession {
   public static Set<String> getCurrentPageIds() {
     DumboSession session = getSessionIfExists();
     if (session == null) {
-      return null;
+      return Collections.emptySet();
     } else {
       return session.getPageIds();
     }
@@ -82,6 +83,7 @@ public final class DumboSession {
   }
 
   public Object getPageAttribute(String key) {
+    checkValid();
     synchronized (pageScope) {
       return pageScope.get(key);
     }
@@ -97,6 +99,7 @@ public final class DumboSession {
 
   @SuppressWarnings("unchecked")
   public <@NonNull T> T getOrCreatePageAttribute(String key, Supplier<T> attrSupplier) {
+    checkValid();
     synchronized (pageScope) {
       return (T) pageScope.computeIfAbsent(key, (k) -> attrSupplier.get());
     }
@@ -104,40 +107,50 @@ public final class DumboSession {
 
   @SuppressWarnings("unchecked")
   public <@NonNull T> T getOrCreatePageAttribute(String key, Function<String, T> attrSupplier) {
+    checkValid();
     synchronized (pageScope) {
       return (T) pageScope.computeIfAbsent(key, attrSupplier);
     }
   }
 
   public void setPageAttribute(String key, Object val) {
+    checkValid();
     synchronized (pageScope) {
       pageScope.put(key, val);
     }
   }
 
   public Object getSessionAttribute(String key) {
+    checkValid();
     return context.getAttribute("dumbo." + key);
   }
 
   public void setSessionAttribute(String key, Object val) {
+    checkValid();
     context.setAttribute("dumbo." + key, val);
   }
 
-  static String newPageId(HttpSession context) {
+  static String newPageId(HttpSession context, int max) {
+    if (max > 0) {
+      Set<String> existingPageIds = DumboSession.getDumboSessionPageIds(context);
+      int toDelete = Math.max(0, existingPageIds.size() + 1 - max);
+      if (toDelete > 0) {
+        for (String p : existingPageIds) {
+          DumboSession.removePageId(context, p);
+          if (--toDelete <= 0) {
+            break;
+          }
+        }
+      }
+    }
+
     String pageId = UUID.randomUUID().toString();
     synchronized (context) {
       @SuppressWarnings("unchecked")
       Map<String, DumboSession> map = (Map<String, DumboSession>) context.getAttribute(
           SESSION_ATTRIBUTE_PAGEIDS);
       if (map == null) {
-        map = new LinkedHashMap<>() {
-          private static final long serialVersionUID = 1L;
-
-          protected boolean removeEldestEntry(Map.Entry<String, DumboSession> eldest) {
-            // FIXME: properly terminate session
-            return size() > MAX_PAGES_PER_SESSION;
-          }
-        };
+        map = new LinkedHashMap<>();
         context.setAttribute(SESSION_ATTRIBUTE_PAGEIDS, map);
       }
       map.put(pageId, new DumboSession(pageId, context));
@@ -145,13 +158,13 @@ public final class DumboSession {
     return pageId;
   }
 
-  private static Set<String> getDumboSessionPageIds(HttpSession context) {
+  static Set<String> getDumboSessionPageIds(HttpSession context) {
     synchronized (context) {
       @SuppressWarnings("unchecked")
       Map<String, DumboSession> map = (Map<String, DumboSession>) context.getAttribute(
           SESSION_ATTRIBUTE_PAGEIDS);
       if (map == null) {
-        return null;
+        return Collections.emptySet();
       } else {
         switch (map.size()) {
           case 0:
@@ -159,7 +172,7 @@ public final class DumboSession {
           case 1:
             return Collections.singleton(map.keySet().iterator().next());
           default:
-            return new HashSet<>(map.keySet());
+            return new LinkedHashSet<>(map.keySet());
         }
       }
     }
@@ -178,7 +191,10 @@ public final class DumboSession {
     }
   }
 
-  private static void removePageId(HttpSession context, String pageId) {
+  static void removePageId(HttpSession context, String pageId) {
+    if (pageId == null) {
+      return;
+    }
     synchronized (context) {
       @SuppressWarnings("unchecked")
       Map<String, DumboSession> map = (Map<String, DumboSession>) context.getAttribute(
@@ -186,11 +202,26 @@ public final class DumboSession {
       if (map == null) {
         return;
       } else {
-        map.remove(pageId);
+        DumboSession session = map.remove(pageId);
         if (map.isEmpty()) {
           context.removeAttribute(SESSION_ATTRIBUTE_PAGEIDS);
         }
+        if (session != null) {
+          session.invalidate();
+        }
       }
+    }
+  }
+
+  private void checkValid() {
+    if (invalid.get()) {
+      throw new InvalidSessionException();
+    }
+  }
+
+  void invalidate() {
+    if (invalid.compareAndSet(false, true)) {
+      console.shutdown();
     }
   }
 
@@ -202,7 +233,13 @@ public final class DumboSession {
     removePageId(session.context, pageId);
   }
 
+  /**
+   * Returns the console.
+   * 
+   * @return The console.
+   */
   public Console getConsole() {
+    checkValid();
     return console;
   }
 }

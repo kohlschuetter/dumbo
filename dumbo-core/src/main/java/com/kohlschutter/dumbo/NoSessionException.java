@@ -1,6 +1,6 @@
 package com.kohlschutter.dumbo;
 
-public class NoSessionException extends IllegalStateException {
+public class NoSessionException extends PermanentRPCException {
   private static final long serialVersionUID = 1L;
 
   public NoSessionException() {

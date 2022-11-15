@@ -72,6 +72,9 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
         public Object transform(Throwable t) {
           System.err.println("Error during JSON method call: " + tlMethod.get());
           t.printStackTrace();
+          if (t instanceof PermanentRPCException) {
+            throw (PermanentRPCException) t;
+          }
           return t;
         }
       });
@@ -122,6 +125,9 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       throws ServletException, IOException {
     try {
       doPost0(request, response);
+    } catch (EofException | ClosedByInterruptException e) {
+      // connection terminated; ignore
+      return;
     } catch (ServletException | IOException | RuntimeException | Error e) {
       e.printStackTrace();
       throw e;
@@ -143,24 +149,31 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
 
     boolean triggerOnAppLoaded = false;
 
-    String pageId = request.getParameter("pageId");
-    String newServerURL = null;
-    if (pageId == null) {
-      triggerOnAppLoaded = true;
-      pageId = DumboSession.newPageId(context);
-      newServerURL = request.getRequestURI();
-      String qs = request.getQueryString();
-      if (qs != null && !qs.isEmpty()) {
-        newServerURL += "?" + qs + "&pageId=" + response.encodeURL(pageId);
-      } else {
-        newServerURL += "?pageId=" + response.encodeURL(pageId);
-      }
-    }
+    int maxPagesPerSession = app.getMaximumPagesPerSession();
 
-    DumboSession dumboSession = DumboSession.getDumboSession(context, pageId);
-    if (dumboSession == null) {
-      response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid pageId");
-      return;
+    DumboSession dumboSession;
+    String newServerURL = null;
+    if (maxPagesPerSession != 0) {
+      String pageId = request.getParameter("pageId");
+      if (pageId == null && maxPagesPerSession != 0) {
+        triggerOnAppLoaded = true;
+        pageId = DumboSession.newPageId(context, maxPagesPerSession);
+        newServerURL = request.getRequestURI();
+        String qs = request.getQueryString();
+        if (qs != null && !qs.isEmpty()) {
+          newServerURL += "?" + qs + "&pageId=" + response.encodeURL(pageId);
+        } else {
+          newServerURL += "?pageId=" + response.encodeURL(pageId);
+        }
+      }
+
+      dumboSession = DumboSession.getDumboSession(context, pageId);
+      if (dumboSession == null) {
+        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid pageId");
+        return;
+      }
+    } else {
+      dumboSession = null;
     }
 
     DumboSession.setSessionTL(dumboSession);
@@ -172,7 +185,8 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       String method = jsonRequest.getString("method");
       tlMethod.set(method);
       if (registry.consoleService != null) {
-        if (!method.startsWith("ConsoleService.") && !method.startsWith("system.")) {
+        if (dumboSession != null && !method.startsWith("ConsoleService.") && !method.startsWith(
+            "system.")) {
           ConsoleService service = ((ConsoleImpl) dumboSession.getConsole()).getConsoleService();
           synchronized (service) {
             service.notifyAll();
@@ -181,8 +195,32 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       }
 
       result = bridge.call(new Object[] {request, response}, jsonRequest);
+    } catch (PermanentRPCException e) {
+      String message = e.getMessage();
+
+      int statusCode = HttpServletResponse.SC_OK;
+
+      if (e instanceof NoSessionException) {
+        if (app.getMaximumPagesPerSession() == 0) {
+          statusCode = HttpServletResponse.SC_FORBIDDEN;
+        } else {
+          statusCode = HttpServletResponse.SC_UNAUTHORIZED;
+        }
+      }
+
+      if (statusCode != HttpServletResponse.SC_OK) {
+        response.sendError(statusCode);
+        response.flushBuffer();
+        return;
+      } else {
+        if (message == null) {
+          message = "Not allowed";
+        }
+        result = new FailedResult(HttpServletResponse.SC_FORBIDDEN, null, message);
+      }
     } catch (UnsupportedEncodingException | RuntimeException e) {
       result = new FailedResult(FailedResult.CODE_ERR_PARSE, null, FailedResult.MSG_ERR_PARSE);
+      triggerOnAppLoaded = false;
     } finally {
       tlMethod.set(null);
       DumboSession.removeSessionTL();
@@ -196,9 +234,6 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       channel.write(byteBuffer);
       out.flush();
       response.flushBuffer();
-    } catch (EofException | ClosedByInterruptException e) {
-      // connection terminated; ignore
-      return;
     }
 
     if (triggerOnAppLoaded) {

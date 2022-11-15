@@ -16,7 +16,6 @@
  */
 package com.kohlschutter.dumbo;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -34,7 +33,7 @@ import com.kohlschutter.dumbo.console.ConsoleService;
  * Content can be sent directly as a series objects (which must be marshallable via RPC), or through
  * a {@link PrintWriter} -- in the latter case output will be sent as chunks of strings.
  */
-final class ConsoleImpl implements Closeable, Console {
+final class ConsoleImpl implements Console {
   private static final int MAX_CHUNKS_AT_ONCE = 20;
   private static final long MAX_WAIT_NEXT_CHUNK_MILLIS = 20 * 1000;
 
@@ -281,8 +280,14 @@ final class ConsoleImpl implements Closeable, Console {
   }
 
   @Override
-  public final void close() throws IOException {
-    closed = true;
+  public final void close() {
+    synchronized (consoleService) {
+      if (closed) {
+        return;
+      }
+
+      closed = true;
+    }
     consoleOut.close();
     sw.getBuffer().setLength(0);
   }
@@ -298,35 +303,17 @@ final class ConsoleImpl implements Closeable, Console {
   /**
    * Requests the application to gracefully shutdown.
    */
+  @Override
   public void shutdown(ShutdownNotice notice) {
-    if (!closed && shutdownRequested == null) {
-      shutdownRequested = notice;
-    }
     synchronized (consoleService) {
+      if (closed) {
+        return;
+      }
+      if (shutdownRequested == null) {
+        shutdownRequested = notice;
+      }
       consoleService.notifyAll();
-    }
-  }
-
-  /**
-   * The "shutdown notice" that is sent to the client.
-   */
-  public static final class ShutdownNotice {
-    public static final ShutdownNotice CLEAN = new ShutdownNotice(true);
-    public static final ShutdownNotice NOT_CLEAN = new ShutdownNotice(false);
-
-    private boolean clean;
-
-    private ShutdownNotice(boolean clean) {
-      this.clean = clean;
-    }
-
-    /**
-     * If {@code true}, consider this shutdown "clean". If {@code false}, assume there was an error.
-     *
-     * @return The "clean" state.
-     */
-    public boolean isClean() {
-      return clean;
+      close();
     }
   }
 

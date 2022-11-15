@@ -16,22 +16,22 @@
  */
 package com.kohlschutter.dumbo;
 
-public class InvalidCredentialsException extends PermanentRPCException {
+public class InvalidSessionException extends PermanentRPCException {
   private static final long serialVersionUID = 1L;
 
-  public InvalidCredentialsException() {
+  public InvalidSessionException() {
     super();
   }
 
-  public InvalidCredentialsException(String message, Throwable cause) {
+  public InvalidSessionException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public InvalidCredentialsException(String s) {
+  public InvalidSessionException(String s) {
     super(s);
   }
 
-  public InvalidCredentialsException(Throwable cause) {
+  public InvalidSessionException(Throwable cause) {
     super(cause);
   }
 }

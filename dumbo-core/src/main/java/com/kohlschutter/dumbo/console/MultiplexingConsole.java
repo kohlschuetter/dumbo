@@ -91,4 +91,11 @@ public abstract class MultiplexingConsole implements Console {
       c.shutdown();
     }
   }
+
+  @Override
+  public void shutdown(ShutdownNotice notice) {
+    for (Console c : getConsoles()) {
+      c.shutdown(notice);
+    }
+  }
 }

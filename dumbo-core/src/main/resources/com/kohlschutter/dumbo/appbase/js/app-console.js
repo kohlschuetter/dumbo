@@ -177,10 +177,14 @@
         connProblemsCheck();
         if (e) {
             console.error("ConsoleService.requestNextChunk error", e);
-            if (e.code == 403) {
-                // forbidden, e.g., session no longer valid
-                processChunk(null);
-                return true;
+            switch(e.code) {
+                case 401: // unauthorized
+                case 403: // forbidden
+                case 410: // gone
+                case 501: // not implemented
+                    // session no longer valid
+                    processChunk(null);
+                    return true;
             }
         }
         return false;

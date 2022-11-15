@@ -110,10 +110,7 @@ public abstract class ServerApp implements Closeable, Cloneable {
 
       @Override
       public Object requestNextChunk() {
-        DumboSession session = DumboSession.getSessionIfExists();
-        if (session == null) {
-          return null;
-        }
+        DumboSession session = DumboSession.getSession();
 
         return ((ConsoleImpl) session.getConsole()).getConsoleService().requestNextChunk();
       }
@@ -231,5 +228,17 @@ public abstract class ServerApp implements Closeable, Cloneable {
 
   RPCRegistry getRPCRegistry() {
     return rpcRegistry;
+  }
+
+  /**
+   * Returns how many concurrent pageIds should be maintained per HTTP session; use {@code -1} for
+   * "unlimited", {@code 0} for "none" (which is probably not what you want).
+   * 
+   * By default, a sensible limit is returned.
+   * 
+   * @return The maximum, {@code -1} for unlimited, {@code 0} for none
+   */
+  public int getMaximumPagesPerSession() {
+    return 0;
   }
 }
