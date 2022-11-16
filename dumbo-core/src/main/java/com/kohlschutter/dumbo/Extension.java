@@ -17,6 +17,10 @@
 package com.kohlschutter.dumbo;
 
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -59,7 +63,15 @@ public abstract class Extension {
   }
 
   protected String initExtensionPath() {
-    return "/_app_extension_" + getClass().getName();
+    String name = getClass().getName();
+    MessageDigest md;
+    try {
+      md = MessageDigest.getInstance("SHA-1");
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
+    return "/app_/" + Base64.getEncoder().encodeToString(md.digest(name.getBytes(
+        StandardCharsets.UTF_8))).replace('/', '_');
   }
 
   private String toAbsolutePath(String path) {
@@ -193,7 +205,7 @@ public abstract class Extension {
    * @param extensions The extensions to check.
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public void resolveDependencies(final ServerApp app, List<Extension> extensions)
+  public void resolveDependencies(final ServerAppBase app, List<Extension> extensions)
       throws ExtensionDependencyException {
   }
 

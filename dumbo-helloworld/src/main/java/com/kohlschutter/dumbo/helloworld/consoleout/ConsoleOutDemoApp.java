@@ -19,27 +19,26 @@ package com.kohlschutter.dumbo.helloworld.consoleout;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.DumboSession;
+import com.kohlschutter.dumbo.Extensions;
 import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.dumbo.Services;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 import com.kohlschutter.dumbo.console.Console;
 import com.kohlschutter.dumbo.console.ConsoleSupport;
+import com.kohlschutter.dumbo.helloworld.DemoServiceImpl;
+import com.kohlschutter.dumbo.unix.TcpAndUnixAppHTTPServer;
 
 /**
  * This demo shows how one can use the Console.
  */
+@Extensions({BootstrapSupport.class, ConsoleSupport.class})
+@Services({DemoServiceImpl.class})
 public class ConsoleOutDemoApp extends ServerApp {
   public static void main(String[] args) throws IOException {
     final ConsoleOutDemoApp app = new ConsoleOutDemoApp();
-    new AppHTTPServer(app, "consoleOutDemo.jsp", ConsoleOutDemoApp.class.getResource(
+    new TcpAndUnixAppHTTPServer(app, "consoleOutDemo.jsp", ConsoleOutDemoApp.class.getResource(
         "/com/kohlschutter/dumbo/helloworld/webapp/")).startAndWait();
-  }
-
-  @Override
-  protected void initExtensions() {
-    registerExtension(new BootstrapSupport());
-    registerExtension(new ConsoleSupport());
   }
 
   @Override

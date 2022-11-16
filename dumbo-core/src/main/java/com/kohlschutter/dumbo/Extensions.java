@@ -16,65 +16,16 @@
  */
 package com.kohlschutter.dumbo;
 
-import jakarta.servlet.http.HttpSession;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * {@link Extension}-hooks to be called from within a JSP page.
+ * Specifies a set of {@link Extension}s.
  */
-public final class Extensions {
-  private Extensions() {
-    throw new IllegalStateException("No instances");
-  }
-
-  /**
-   * Returns an HTML string that may be added to the HTML HEAD section of a web page to initialize
-   * all extensions registered with the app.
-   *
-   * @param session The HTTP session associated with the page.
-   * @return The HTML string.
-   */
-  public static String htmlHead(final HttpSession session) {
-    ServerApp app = getApp(session);
-
-    StringBuilder sb = new StringBuilder();
-    for (Extension ext : app.getExtensions()) {
-      String v = ext.htmlHead(session);
-      if (v != null) {
-        sb.append(v);
-      }
-    }
-
-    return sb.toString();
-  }
-
-  /**
-   * Returns an HTML string that may be added to the top of the HTML BODY section of a web page to
-   * initialize all extensions registered with the app.
-   *
-   * @param session The HTTP session associated with the page.
-   * @return The HTML string.
-   */
-  public static String htmlBodyTop(final HttpSession session) {
-    ServerApp app = getApp(session);
-
-    StringBuilder sb = new StringBuilder();
-    for (Extension ext : app.getExtensions()) {
-      String v = ext.htmlBodyTop(session);
-      if (v != null) {
-        sb.append(v);
-      }
-    }
-
-    return sb.toString();
-  }
-
-  /**
-   * Returns the {@link ServerApp} associated with the given {@link HttpSession}.
-   *
-   * @param session The session to check.
-   * @return The instance.
-   */
-  public static ServerApp getApp(final HttpSession session) {
-    return (ServerApp) session.getServletContext().getAttribute("app");
-  }
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Extensions {
+  Class<? extends Extension>[] value();
 }

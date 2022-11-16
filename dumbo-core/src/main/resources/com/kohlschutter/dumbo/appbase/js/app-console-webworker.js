@@ -36,7 +36,7 @@ commands["next"] = function(data) {
 commands["init"] = function(data) {
     var url = data && data.url ? data.url : "/json";
 
-    self.importScripts("/_app_base/js/jsonrpc.js");
+    self.importScripts("/app_/base/js/jsonrpc.js");
 
     rpc = new JSONRpcClient(function(res, err) {
         if (!res || err) {

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 import com.kohlschutter.dumbo.DumboSession;
+import com.kohlschutter.dumbo.Extensions;
 import com.kohlschutter.dumbo.RPCRegistry;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
@@ -30,17 +31,12 @@ import com.kohlschutter.dumbo.unix.TcpAndUnixAppHTTPServer;
 /**
  * This demo shows how one can use the Console.
  */
+@Extensions({BootstrapSupport.class, ConsoleSupport.class})
 public class ConsoleDemoApp extends ServerApp {
   public static void main(String[] args) throws IOException {
     final ConsoleDemoApp app = new ConsoleDemoApp();
     new TcpAndUnixAppHTTPServer(app, "consoleDemo.jsp", ConsoleDemoApp.class.getResource(
         "/com/kohlschutter/dumbo/helloworld/webapp/")).startAndWait();
-  }
-
-  @Override
-  protected void initExtensions() {
-    registerExtension(new BootstrapSupport());
-    registerExtension(new ConsoleSupport());
   }
 
   /**
@@ -52,7 +48,7 @@ public class ConsoleDemoApp extends ServerApp {
   }
 
   @Override
-  protected void initRPC(final RPCRegistry registry) {
+  protected void onRPCInit(final RPCRegistry registry) {
     registry.registerRPCService(CommandLineService.class, new CommandLineService() {
       final String[] colors = new String[] {"red", "coral", "gold", "green", "blue", "fuchsia"};
 

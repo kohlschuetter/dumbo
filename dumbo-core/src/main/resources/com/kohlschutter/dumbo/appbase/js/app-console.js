@@ -136,12 +136,12 @@
         } else if (chunk == "") {
             // no-op, continue
             return true;
-        } else if (chunk.javaClass == "com.kohlschutter.dumbo.ConsoleImpl$MultipleChunks") {
+        } else if (chunk.javaClass == "com.kohlschutter.dumbo.MultipleChunks") {
             $.each(chunk.chunks, function(_, value) {
                 processChunk(value);
             });
             return true;
-        } else if (chunk.javaClass == "com.kohlschutter.dumbo.ConsoleImpl$ShutdownNotice") {
+        } else if (chunk.javaClass == "com.kohlschutter.dumbo.ShutdownNotice") {
             // close console and shutdown app as if the window was closed.
             connProblemsCheckEnabled = false;
 
@@ -177,7 +177,7 @@
         connProblemsCheck();
         if (e) {
             console.error("ConsoleService.requestNextChunk error", e);
-            switch(e.code) {
+            switch (e.code) {
                 case 401: // unauthorized
                 case 403: // forbidden
                 case 410: // gone
@@ -223,7 +223,7 @@
                 }
 
 
-                var worker = $.app.console.worker = new Worker("/_app_base/js/app-console-webworker.js");
+                var worker = $.app.console.worker = new Worker("/app_/base/js/app-console-webworker.js");
 
                 var workerNextMessage = function(delay) {
                     worker.postMessage({ command: "next", delay: delay });

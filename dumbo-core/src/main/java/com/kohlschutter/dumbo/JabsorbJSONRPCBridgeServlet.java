@@ -62,7 +62,7 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
     try {
 
       ServletContext ctx = config.getServletContext();
-      this.app = (ServerApp) ctx.getAttribute("app");
+      this.app = (ServerApp) ctx.getAttribute(ServerApp.class.getName());
 
       bridge = new JSONRPCBridge();
       bridge.setExceptionTransformer(new ExceptionTransformer() {

@@ -22,6 +22,7 @@ import java.io.StringWriter;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.kohlschutter.dumbo.console.ClearConsole;
 import com.kohlschutter.dumbo.console.Console;
@@ -56,8 +57,9 @@ final class ConsoleImpl implements Console {
     }
   };
 
-  private volatile boolean closed = false;
-  private volatile ShutdownNotice shutdownRequested = null;
+  private AtomicBoolean closed = new AtomicBoolean();
+  private AtomicBoolean shutdownNoticeSent = new AtomicBoolean();
+  private ShutdownNotice shutdownRequested = null;
 
   // FIXME this should be a circular buffer of some large maximum size to prevent OOMEs
   private final List<Object> cachedChunks = Collections.synchronizedList(new LinkedList<>());
@@ -97,7 +99,10 @@ final class ConsoleImpl implements Console {
     }
 
     private Object requestNextChunk(final long maxWait) {
-      if (closed) {
+      if (closed.get()) {
+        return null;
+      } else if (shutdownNoticeSent.get()) {
+        close();
         return null;
       }
 
@@ -137,6 +142,7 @@ final class ConsoleImpl implements Console {
     synchronized (consoleService) {
       if (markedDontFlush) {
         if (shutdownRequested != null) {
+          shutdownNoticeSent.set(true);
           return shutdownRequested;
         }
         return "";
@@ -145,6 +151,7 @@ final class ConsoleImpl implements Console {
       StringBuffer buffer = sw.getBuffer();
       if (buffer.length() == 0) {
         if (shutdownRequested != null) {
+          shutdownNoticeSent.set(true);
           return shutdownRequested;
         }
         return "";
@@ -211,7 +218,7 @@ final class ConsoleImpl implements Console {
   @Override
   public void add(Object o) {
     synchronized (consoleService) {
-      if (closed || o == null || (shutdownRequested != null)) {
+      if (closed.get() || o == null || (shutdownRequested != null)) {
         return;
       }
       addChunkFromBufferToCache();
@@ -264,7 +271,7 @@ final class ConsoleImpl implements Console {
    * @return {@code true} if closed.
    */
   public final boolean isClosed() {
-    return closed;
+    return closed.get();
   }
 
   /**
@@ -274,7 +281,7 @@ final class ConsoleImpl implements Console {
    * @throws IOException if closed.
    */
   public final void checkClosed() throws IOException {
-    if (closed) {
+    if (isClosed()) {
       throw new IOException("Console is closed");
     }
   }
@@ -282,11 +289,9 @@ final class ConsoleImpl implements Console {
   @Override
   public final void close() {
     synchronized (consoleService) {
-      if (closed) {
+      if (!closed.compareAndSet(false, true)) {
         return;
       }
-
-      closed = true;
     }
     consoleOut.close();
     sw.getBuffer().setLength(0);
@@ -306,34 +311,13 @@ final class ConsoleImpl implements Console {
   @Override
   public void shutdown(ShutdownNotice notice) {
     synchronized (consoleService) {
-      if (closed) {
+      if (isClosed()) {
         return;
       }
       if (shutdownRequested == null) {
         shutdownRequested = notice;
       }
       consoleService.notifyAll();
-      close();
-    }
-  }
-
-  /**
-   * A series of chunks, encapsulated into one.
-   */
-  public static final class MultipleChunks {
-    private Object[] chunks;
-
-    MultipleChunks(final Object[] chunks) {
-      this.chunks = chunks;
-    }
-
-    /**
-     * Returns the encapsulated chunks.
-     *
-     * @return The chunks.
-     */
-    public Object[] getChunks() {
-      return chunks;
     }
   }
 

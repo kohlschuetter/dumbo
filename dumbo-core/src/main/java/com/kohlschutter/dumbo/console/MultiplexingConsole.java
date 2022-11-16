@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Collection;
 
+import com.kohlschutter.dumbo.ShutdownNotice;
+
 public abstract class MultiplexingConsole implements Console {
   public MultiplexingConsole() {
 

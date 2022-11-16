@@ -14,20 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.simple;
+package com.kohlschutter.dumbo;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.kohlschutter.dumbo.Extension;
-
 /**
- * Specifies a set of {@link Extension}s.
+ * Specifies a set of RPC services.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Extensions {
-  Class<? extends Extension>[] value();
+public @interface Services {
+  Class<?>[] value();
 }

@@ -8,11 +8,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AppServer Demo</title>
-<%=com.kohlschutter.dumbo.Extensions.htmlHead(session)%>
+<%=com.kohlschutter.dumbo.JSPSupport.htmlHead(session)%>
 <link rel="stylesheet" href="/css/consoleDemo.css" />
 </head>
 <body>
-	<%=com.kohlschutter.dumbo.Extensions.htmlBodyTop(session)%>
+	<%=com.kohlschutter.dumbo.JSPSupport.htmlBodyTop(session)%>
 	<div class="container" style="padding-top: 20pt">
 
 		<div class="page-header">

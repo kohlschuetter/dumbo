@@ -19,27 +19,18 @@ package com.kohlschutter.dumbo.helloworld;
 import java.io.IOException;
 
 import com.kohlschutter.dumbo.AppHTTPServer;
-import com.kohlschutter.dumbo.RPCRegistry;
+import com.kohlschutter.dumbo.Extensions;
 import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.dumbo.Services;
 import com.kohlschutter.dumbo.ext.AppDefaultsSupport;
 
 /**
- * A simple "Hello world" demo app, using {@link AppHTTPServer} and JSON-RPC.
+ * A simple "Hello world" demo app.
  */
+@Extensions({AppDefaultsSupport.class})
+@Services({DemoServiceImpl.class})
 public class HelloWorldApp extends ServerApp {
   public static void main(String[] args) throws IOException {
-    final HelloWorldApp app = new HelloWorldApp();
-
-    new AppHTTPServer(app).start();
-  }
-
-  @Override
-  protected void initRPC(final RPCRegistry registry) {
-    registry.registerRPCService(DemoService.class, new DemoServiceImpl());
-  }
-
-  @Override
-  protected void initExtensions() {
-    registerExtension(new AppDefaultsSupport());
+    new AppHTTPServer(new HelloWorldApp()).start();
   }
 }

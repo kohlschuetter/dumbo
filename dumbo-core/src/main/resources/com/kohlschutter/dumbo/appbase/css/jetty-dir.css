@@ -1,0 +1,37 @@
+body {
+	background-color: #FFFFFF;
+	margin: 10px;
+	padding: 5px;
+	font-family: monospace;
+}
+
+h1 {
+	font-weight: bold;
+	margin-left: -10.7rem;
+}
+
+a {
+	font-style: normal;
+	text-decoration: none;
+	font-size: inherit;
+}
+
+th, td {
+	padding: 2pt 10pt 2pt 0pt;
+}
+
+th {
+	text-align: left;
+}
+
+th a {
+	color: blue;
+}
+
+th a:visited {
+	color: blue;
+}
+
+th.name {
+	width: 200pt;
+}

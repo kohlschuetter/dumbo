@@ -28,6 +28,8 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 
@@ -47,9 +49,9 @@ public class AppHTTPServer {
 
   private final ContextHandlerCollection contextHandlers;
   private boolean staticMode = false;
-  private final ServerApp app;
+  private final ServerAppBase app;
 
-  private static URL getWebappBaseURL(final ServerApp app) {
+  private static URL getWebappBaseURL(final ServerAppBase app) {
     URL u;
 
     u = app.getClass().getResource("webapp/");
@@ -67,45 +69,45 @@ public class AppHTTPServer {
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp} on a free port.
+   * Creates a new HTTP server for the given {@link ServerAppBase} on a free port.
    *
    * @param app The server app.
    * @throws IOException on error
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public AppHTTPServer(final ServerApp app) throws IOException {
+  public AppHTTPServer(final ServerAppBase app) throws IOException {
     this(app, getWebappBaseURL(app));
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
-   * from the given URL path.
+   * Creates a new HTTP server for the given {@link ServerAppBase} on a free port, using web
+   * resources from the given URL path.
    *
    * @param app The server app.
    * @param webappBaseURL The location of the resources that should be served.
    *
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public AppHTTPServer(final ServerApp app, final URL webappBaseURL) throws IOException {
+  public AppHTTPServer(final ServerAppBase app, final URL webappBaseURL) throws IOException {
     this(app, "", webappBaseURL);
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp}, using web resources from the given
-   * URL path.
+   * Creates a new HTTP server for the given {@link ServerAppBase}, using web resources from the
+   * given URL path.
    *
    * @param app The server app.
    * @param path The base path for the server, {@code ""} for root.
    *
    * @throws ExtensionDependencyException on error
    */
-  public AppHTTPServer(final ServerApp app, final String path) throws IOException {
+  public AppHTTPServer(final ServerAppBase app, final String path) throws IOException {
     this(app, path, (URL) null);
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp}, using web resources from the given
-   * URL path.
+   * Creates a new HTTP server for the given {@link ServerAppBase}, using web resources from the
+   * given URL path.
    *
    * @param app The app.
    * @param path The base path for the server, {@code ""} for root.
@@ -113,7 +115,7 @@ public class AppHTTPServer {
    *
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public AppHTTPServer(final ServerApp app, final String path, final URL webappBaseURL)
+  public AppHTTPServer(final ServerAppBase app, final String path, final URL webappBaseURL)
       throws IOException {
     this.app = app;
     this.server = new Server();
@@ -130,9 +132,11 @@ public class AppHTTPServer {
     contextHandlers = new ContextHandlerCollection();
     {
       final WebAppContext wac = new WebAppContext(webappBaseURL.toExternalForm(), "");
-      wac.getServletContext().setAttribute("app", app);
+      initWebAppContext(wac);
+
       wac.addServlet(JabsorbJSONRPCBridgeServlet.class, "/json");
       contextHandlers.addHandler(wac);
+
       // wac.getSessionHandler().addEventListener(new HttpSessionListener() {
       //
       // @Override
@@ -160,7 +164,20 @@ public class AppHTTPServer {
    * @return The context.
    */
   public WebAppContext registerContext(final String contextPrefix, final URL pathToWebApp) {
-    return registerContext(new WebAppContext(pathToWebApp.toExternalForm(), contextPrefix));
+    WebAppContext wac = new WebAppContext(pathToWebApp.toExternalForm(), contextPrefix);
+    initWebAppContext(wac);
+    return registerContext(wac);
+  }
+
+  private void initWebAppContext(WebAppContext wac) {
+    wac.getServletContext().setAttribute(ServerApp.class.getName(), app);
+
+    ServletHolder sh = wac.addServlet(DefaultServlet.class.getName(), "/");
+    sh.setInitParameter("useFileMappedBuffer", "true");
+    sh.setInitParameter("stylesheet", AppHTTPServer.class.getResource(
+        "/com/kohlschutter/dumbo/appbase/css/jetty-dir.css").toExternalForm());
+
+    // sh.setInitParameter("dirAllowed", "false");
   }
 
   WebAppContext registerContext(WebAppContext wac) {

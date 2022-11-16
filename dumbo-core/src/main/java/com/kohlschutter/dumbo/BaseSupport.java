@@ -31,7 +31,7 @@ final class BaseSupport extends Extension {
 
   @Override
   protected String initExtensionPath() {
-    return "/_app_base";
+    return "/app_/base";
   }
 
   @Override

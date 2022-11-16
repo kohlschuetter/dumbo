@@ -16,6 +16,8 @@
  */
 package com.kohlschutter.dumbo.console;
 
+import java.net.URL;
+
 import com.kohlschutter.dumbo.Extension;
 
 /**
@@ -26,7 +28,17 @@ import com.kohlschutter.dumbo.Extension;
 public class ConsoleSupport extends Extension {
   @Override
   protected void initResources() {
-    registerCSS("/_app_base/css/app-console.css");
-    registerJavaScript("/_app_base/js/app-console.js");
+    registerCSS("css/app-console.css");
+    registerJavaScript("js/app-console.js");
+  }
+
+  @Override
+  protected String initExtensionPath() {
+    return "/app_/base";
+  }
+
+  @Override
+  protected URL initExtensionResourceURL() {
+    return ConsoleSupport.class.getResource("/com/kohlschutter/dumbo/appbase/");
   }
 }
