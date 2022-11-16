@@ -789,10 +789,8 @@ JSONRpcClient._sendRequest = function(client, req) {
     http.open("POST", client.serverURL, !!req.cb, client.user, client.pass);
 
     /* setRequestHeader is missing in Opera 8 Beta */
-    try {
-        http.setRequestHeader("Content-type", "text/plain");
-    }
-    catch (e) {
+    if(http.setRequestHeader) {
+        http.setRequestHeader("Content-Type", "application/json;charset=utf-8");
     }
 
     /* Construct call back if we have one */

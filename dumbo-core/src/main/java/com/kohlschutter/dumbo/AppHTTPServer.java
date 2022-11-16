@@ -195,6 +195,9 @@ public class AppHTTPServer {
   }
 
   private void initWebAppContext(WebAppContext wac) throws IOException {
+    wac.setDefaultRequestCharacterEncoding("UTF-8");
+    wac.setDefaultResponseCharacterEncoding("UTF-8");
+
     wac.setWelcomeFiles(new String[] {"index.html.jsp", "index.html"});
     wac.setErrorHandler(errorHandler);
 
@@ -377,7 +380,7 @@ public class AppHTTPServer {
     return connector;
   }
 
-  public String getContextPath() {
+  String getContextPath() {
     return contextPath;
   }
 
