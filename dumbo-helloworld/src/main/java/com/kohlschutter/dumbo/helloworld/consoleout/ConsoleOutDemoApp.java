@@ -28,6 +28,7 @@ import com.kohlschutter.dumbo.console.Console;
 import com.kohlschutter.dumbo.console.ConsoleSupport;
 import com.kohlschutter.dumbo.helloworld.DemoServiceImpl;
 import com.kohlschutter.dumbo.unix.TcpAndUnixAppHTTPServer;
+import com.kohlschutter.dumbo.util.DevTools;
 
 /**
  * This demo shows how one can use the Console.
@@ -37,8 +38,15 @@ import com.kohlschutter.dumbo.unix.TcpAndUnixAppHTTPServer;
 public class ConsoleOutDemoApp extends ServerApp {
   public static void main(String[] args) throws IOException {
     final ConsoleOutDemoApp app = new ConsoleOutDemoApp();
-    new TcpAndUnixAppHTTPServer(app, "consoleOutDemo.jsp", ConsoleOutDemoApp.class.getResource(
-        "/com/kohlschutter/dumbo/helloworld/webapp/")).startAndWait();
+    new TcpAndUnixAppHTTPServer(app, "/out/", ConsoleOutDemoApp.class.getResource(
+        "/com/kohlschutter/dumbo/helloworld/webapp/")) {
+
+      @Override
+      protected void onServerStart() {
+        DevTools.openURL(this, "/consoleOutDemo.jsp");
+      }
+
+    }.startAndWait();
   }
 
   @Override

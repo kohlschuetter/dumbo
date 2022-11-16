@@ -19,10 +19,17 @@ package com.kohlschutter.dumbo.util;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
+import com.kohlschutter.dumbo.AppHTTPServer;
+
 /**
  * Helper methods for developing. Currently works on OS X only.
  */
 public final class DevTools {
+  private static final Logger LOG = Logger.getLogger(DevTools.class);
+  private static boolean staticMode;
+
   private DevTools() {
     throw new IllegalStateException("No instances");
   }
@@ -67,5 +74,31 @@ public final class DevTools {
    */
   public static void openURL(String url) throws IOException {
     Runtime.getRuntime().exec(new String[] {"/usr/bin/open", url});
+  }
+
+  public static void openURL(AppHTTPServer server, String page) {
+    try {
+      String url = server.getURI().toString().replaceFirst("/$", "") + "/" + page.replaceFirst("^/",
+          "");
+
+      if (staticMode) {
+        url += "?static";
+      }
+
+      LOG.info("Opening page in browser: " + url);
+      DevTools.openURL(url);
+    } catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  public static void init() {
+    staticMode = DevTools.isShiftPressed();
+    if (staticMode) {
+      LOG.info("Shift press detected -- enabling static design mode.");
+    } else {
+      LOG.info("Running in live mode. Start server with \"shift\" key pressed to "
+          + "enable static design mode.");
+    }
   }
 }

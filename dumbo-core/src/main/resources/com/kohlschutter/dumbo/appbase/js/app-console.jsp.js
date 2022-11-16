@@ -1,4 +1,5 @@
 (function($) {
+    const contextPath = '<%@page session="false" contentType="application/javascript" %><%= application.getContextPath() %>';
     $.app.console = new Object();
 
     if (location.search == "?static") {
@@ -222,8 +223,7 @@
                     return;
                 }
 
-
-                var worker = $.app.console.worker = new Worker("/app_/base/js/app-console-webworker.js");
+                var worker = $.app.console.worker = new Worker(contextPath + "/js/app-console-webworker.js");
 
                 var workerNextMessage = function(delay) {
                     worker.postMessage({ command: "next", delay: delay });

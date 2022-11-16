@@ -1,4 +1,6 @@
 (function($) {
+    const jsonUrl = '<%@page session="false" contentType="application/javascript" %><%= application.getAttribute("jsonPath") %>';
+
     $.rpc = null;
     $.app = {
         proto: {}
@@ -106,6 +108,6 @@
                 };
 
                 _runCallbacks($.app._onLoadedCallbacks);
-            }, '/json');
+            }, jsonUrl);
         });
 }(jQuery));

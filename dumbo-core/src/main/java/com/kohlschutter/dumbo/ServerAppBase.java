@@ -21,10 +21,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Set;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -35,7 +35,7 @@ import com.kohlschutter.dumbo.console.ConsoleService;
  */
 abstract class ServerAppBase implements Closeable, Cloneable {
   private static final Logger LOG = Logger.getLogger(ServerAppBase.class);
-  private final Set<Extension> extensions = new LinkedHashSet<Extension>();
+  private final Map<Class<?>, Extension> extensions = new LinkedHashMap<Class<?>, Extension>();
   private boolean initExtensionsDone = false;
   private volatile boolean registeredExtension = false;
   private volatile boolean closed = false;
@@ -64,7 +64,8 @@ abstract class ServerAppBase implements Closeable, Cloneable {
     DEPENDENCY_LOOP : do {
       registeredExtension = false;
 
-      List<Extension> extCopy = Collections.unmodifiableList(new ArrayList<Extension>(extensions));
+      List<Extension> extCopy = Collections.unmodifiableList(new ArrayList<Extension>(extensions
+          .values()));
       for (Extension ext : extCopy) {
         ext.resolveDependencies(this, extCopy);
         if (registeredExtension) {
@@ -93,9 +94,11 @@ abstract class ServerAppBase implements Closeable, Cloneable {
     if (initExtensionsDone) {
       throw new IllegalStateException("Can no longer register extensions at this point.");
     }
-    if (extensions.add(ext)) {
+
+    extensions.computeIfAbsent(ext.getClass(), (key) -> {
       registeredExtension = true;
-    }
+      return ext;
+    });
   }
 
   private final List<Closeable> closeables = Collections.synchronizedList(
@@ -184,7 +187,12 @@ abstract class ServerAppBase implements Closeable, Cloneable {
    * @return The collection of extensions.
    */
   Collection<Extension> getExtensions() {
-    return extensions;
+    return extensions.values();
+  }
+
+  @SuppressWarnings("unchecked")
+  <T extends Extension> T getExtension(Class<T> clazz) {
+    return (T) extensions.get(clazz);
   }
 
   /**

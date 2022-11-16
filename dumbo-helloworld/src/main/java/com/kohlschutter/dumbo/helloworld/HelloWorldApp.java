@@ -23,6 +23,7 @@ import com.kohlschutter.dumbo.Extensions;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.Services;
 import com.kohlschutter.dumbo.ext.AppDefaultsSupport;
+import com.kohlschutter.dumbo.util.DevTools;
 
 /**
  * A simple "Hello world" demo app.
@@ -31,6 +32,13 @@ import com.kohlschutter.dumbo.ext.AppDefaultsSupport;
 @Services({DemoServiceImpl.class})
 public class HelloWorldApp extends ServerApp {
   public static void main(String[] args) throws IOException {
-    new AppHTTPServer(new HelloWorldApp()).start();
+    new AppHTTPServer(new HelloWorldApp()) {
+
+      @Override
+      protected void onServerStart() {
+        DevTools.openURL(this, "/");
+      }
+
+    }.start();
   }
 }

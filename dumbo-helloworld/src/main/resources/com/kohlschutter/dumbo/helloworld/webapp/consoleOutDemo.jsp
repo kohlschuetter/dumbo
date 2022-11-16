@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AppServer Demo</title>
 <%=com.kohlschutter.dumbo.JSPSupport.htmlHead(session)%>
-<link rel="stylesheet" href="/css/consoleOutDemo.css" />
+<link rel="stylesheet" href="<%=getServletContext().getContextPath() %>/css/consoleOutDemo.css" />
 </head>
 <body>
 	<%=com.kohlschutter.dumbo.JSPSupport.htmlBodyTop(session)%>
@@ -21,6 +21,6 @@
 		</div>
 		<div id="console"></div>
 	</div>
-	<script type="text/javascript" src="/js/consoleOutDemo.js"></script>
+	<script type="text/javascript" src="<%=getServletContext().getContextPath() %>/js/consoleOutDemo.js"></script>
 </body>
 </html>

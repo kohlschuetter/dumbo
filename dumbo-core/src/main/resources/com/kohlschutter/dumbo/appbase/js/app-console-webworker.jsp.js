@@ -1,11 +1,13 @@
-var rpc = null;
+const jsonUrl = '<%@page session="false" contentType="application/javascript" %><%= application.getAttribute("jsonPath") %>';
+const contextPath = '<%= application.getContextPath() %>';
 
+var rpc = null;
 var commands = {};
 
 const delayStepInitial = 8;
 var delayStep = delayStepInitial;
 
-var chunkJob = function(chunk, err) {
+const chunkJob = function(chunk, err) {
     if (err != null) {
         console.error("requestNextChunk error", err);
 
@@ -23,7 +25,7 @@ var chunkJob = function(chunk, err) {
 
 const nextChunkCall = function() {
     rpc.ConsoleService.requestNextChunk(chunkJob);
-}
+};
 
 commands["next"] = function(data) {
     if (data && data.delay) {
@@ -34,9 +36,9 @@ commands["next"] = function(data) {
 };
 
 commands["init"] = function(data) {
-    var url = data && data.url ? data.url : "/json";
+    var url = data && data.url ? data.url : jsonUrl;
 
-    self.importScripts("/app_/base/js/jsonrpc.js");
+    self.importScripts(contextPath + "/js/jsonrpc.js");
 
     rpc = new JSONRpcClient(function(res, err) {
         if (!res || err) {
@@ -56,4 +58,4 @@ self.onmessage = function(ev) {
     if (f) {
         f(ev.data);
     }
-}
+};

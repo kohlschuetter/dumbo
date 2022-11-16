@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.URL;
 
 import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.newsclub.net.unix.jetty.AFSocketServerConnector;
@@ -48,7 +47,7 @@ public class UnixAppHTTPServer extends AppHTTPServer {
       throws IOException {
 
     AFSocketServerConnector unixConnector = new AFSocketServerConnector(targetServer,
-        new HttpConnectionFactory());
+        newHttpConnectionFactory());
     if (address == null) {
       address = AFUNIXSocketAddress.of(new File("/tmp/dumbo.socket"));
     }

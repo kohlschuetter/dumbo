@@ -31,7 +31,7 @@ public final class AppDefaultsSupport extends Extension {
    * resources.
    */
   public AppDefaultsSupport() {
-    this("/js/app.js", "/css/default.css");
+    this("js/app.js", "css/default.css");
   }
 
   /**

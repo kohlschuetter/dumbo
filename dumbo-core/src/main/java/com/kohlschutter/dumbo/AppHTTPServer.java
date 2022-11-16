@@ -19,21 +19,29 @@ package com.kohlschutter.dumbo;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Inet4Address;
+import java.net.URI;
 import java.net.URL;
 import java.util.Objects;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.kohlschutter.dumbo.util.DevTools;
+
+import jakarta.servlet.ServletContext;
 
 /**
  * A simple HTTP Server to run demos locally from within the IDE, with JSON-RPC support.
@@ -44,12 +52,14 @@ public class AppHTTPServer {
   private static final Logger LOG = Logger.getLogger(AppHTTPServer.class);
 
   private final Server server;
-  private final String path;
+  private final String contextPath;
   private Thread serverThread;
 
   private final ContextHandlerCollection contextHandlers;
-  private boolean staticMode = false;
   private final ServerAppBase app;
+  private final String jsonPath = "/json";
+
+  private final ErrorHandler errorHandler;
 
   private static URL getWebappBaseURL(final ServerAppBase app) {
     URL u;
@@ -112,14 +122,19 @@ public class AppHTTPServer {
    * @param app The app.
    * @param path The base path for the server, {@code ""} for root.
    * @param webappBaseURL The location of the resources that should be served.
+   * @throws IOException on error.
    *
    * @throws ExtensionDependencyException on dependency conflict.
    */
   public AppHTTPServer(final ServerAppBase app, final String path, final URL webappBaseURL)
       throws IOException {
     this.app = app;
+
+    this.errorHandler = new ErrorHandler();
+    errorHandler.setShowServlet(false);
+
     this.server = new Server();
-    this.path = path.replaceFirst("^/", "");
+    this.contextPath = "/" + (path.replaceFirst("^/", "").replaceFirst("/$", ""));
     app.registerCloseable(new Closeable() {
       @Override
       public void close() throws IOException {
@@ -131,10 +146,11 @@ public class AppHTTPServer {
 
     contextHandlers = new ContextHandlerCollection();
     {
-      final WebAppContext wac = new WebAppContext(webappBaseURL.toExternalForm(), "");
+      final WebAppContext wac = new WebAppContext(webappBaseURL.toExternalForm(), contextPath);
+      wac.setInitParameter("etags", "true");
       initWebAppContext(wac);
 
-      wac.addServlet(JabsorbJSONRPCBridgeServlet.class, "/json");
+      wac.addServlet(JabsorbJSONRPCBridgeServlet.class, jsonPath);
       contextHandlers.addHandler(wac);
 
       // wac.getSessionHandler().addEventListener(new HttpSessionListener() {
@@ -162,20 +178,40 @@ public class AppHTTPServer {
    * @param contextPrefix The context prefix.
    * @param pathToWebApp The URL pointing to the resources that should be served.
    * @return The context.
+   * @throws IOException
    */
-  public WebAppContext registerContext(final String contextPrefix, final URL pathToWebApp) {
-    WebAppContext wac = new WebAppContext(pathToWebApp.toExternalForm(), contextPrefix);
+  public WebAppContext registerContext(final String contextPrefix, final URL pathToWebApp)
+      throws IOException {
+    WebAppContext wac = new WebAppContext(pathToWebApp.toExternalForm(), (contextPath
+        + contextPrefix).replaceAll("//+", "/"));
     initWebAppContext(wac);
     return registerContext(wac);
   }
 
-  private void initWebAppContext(WebAppContext wac) {
-    wac.getServletContext().setAttribute(ServerApp.class.getName(), app);
+  private void initWebAppContext(WebAppContext wac) throws IOException {
+    wac.setWelcomeFiles(new String[] {"index.html.jsp", "index.html"});
+    wac.setErrorHandler(errorHandler);
 
-    ServletHolder sh = wac.addServlet(DefaultServlet.class.getName(), "/");
-    sh.setInitParameter("useFileMappedBuffer", "true");
-    sh.setInitParameter("stylesheet", AppHTTPServer.class.getResource(
+    wac.setAttribute("path." + JabsorbJSONRPCBridgeServlet.class.getName(), contextPath + jsonPath);
+    wac.setAttribute("jsonPath", (contextPath + "/" + jsonPath).replaceAll("//+", "/"));
+
+    ServletContext sc = wac.getServletContext();
+    sc.setAttribute(ServerApp.class.getName(), app);
+
+    ServletHolder dsh = wac.addServlet(DefaultServlet.class.getName(), "/");
+    sc.setAttribute("holder." + DefaultServlet.class.getName(), dsh);
+
+    ServletHolder jsh = wac.addServlet(JettyJspServlet.class.getName(), "*.jsp");
+    sc.setAttribute("holder." + JettyJspServlet.class.getName(), jsh);
+
+    dsh.setInitParameter("useFileMappedBuffer", "true");
+    dsh.setInitParameter("stylesheet", AppHTTPServer.class.getResource(
         "/com/kohlschutter/dumbo/appbase/css/jetty-dir.css").toExternalForm());
+
+    ServletHandler sh = wac.getServletHandler();
+
+    sh.addServletWithMapping(HtmlJspServlet.class, "*.html");
+    sh.addServletWithMapping(JspJsServlet.class, "*.js");
 
     // sh.setInitParameter("dirAllowed", "false");
   }
@@ -198,14 +234,7 @@ public class AppHTTPServer {
         try {
           server.start();
 
-          staticMode = DevTools.isShiftPressed();
-          if (staticMode) {
-            LOG.info("Shift press detected -- enabling static design mode.");
-          } else {
-            LOG.info("Running in live mode. Start server with \"shift\" key pressed to "
-                + "enable static design mode.");
-          }
-          app.setStaticDesignMode(staticMode);
+          DevTools.init();
 
           onServerStart();
           server.join();
@@ -234,22 +263,8 @@ public class AppHTTPServer {
 
   /**
    * This method is called upon server start.
-   *
-   * By default, it tries to open the server's root page in a browser window.
    */
   protected void onServerStart() {
-    try {
-      String url = server.getURI().toString() + path;
-
-      if (isStaticMode()) {
-        url += "?static";
-      }
-
-      LOG.info("Opening page in browser: " + url);
-      DevTools.openURL(url);
-    } catch (Exception e) {
-      // ignore
-    }
   }
 
   /**
@@ -317,15 +332,6 @@ public class AppHTTPServer {
   }
 
   /**
-   * Checks whether this server is running in "static" mode.
-   *
-   * @return {@code true} if in static mode.
-   */
-  public boolean isStaticMode() {
-    return staticMode;
-  }
-
-  /**
    * Returns an array of {@link Connector}s to be used for the given server.
    *
    * @param targetServer The target server.
@@ -334,6 +340,12 @@ public class AppHTTPServer {
    */
   protected Connector[] initConnectors(Server targetServer) throws IOException {
     return new Connector[] {initDefaultTCPConnector(targetServer)};
+  }
+
+  protected HttpConnectionFactory newHttpConnectionFactory() {
+    HttpConfiguration config = new HttpConfiguration();
+    config.setSendServerVersion(false);
+    return new HttpConnectionFactory(config);
   }
 
   /**
@@ -346,7 +358,7 @@ public class AppHTTPServer {
    * @throws IOException on error.
    */
   protected ServerConnector initDefaultTCPConnector(Server targetServer) throws IOException {
-    ServerConnector connector = new ServerConnector(targetServer);
+    ServerConnector connector = new ServerConnector(targetServer, newHttpConnectionFactory());
 
     int port = Integer.parseInt(System.getProperty("dumbo.port", "8084"));
 
@@ -356,5 +368,13 @@ public class AppHTTPServer {
     connector.setHost(Inet4Address.getLoopbackAddress().getHostAddress());
 
     return connector;
+  }
+
+  public String getContextPath() {
+    return contextPath;
+  }
+
+  public URI getURI() {
+    return server.getURI();
   }
 }

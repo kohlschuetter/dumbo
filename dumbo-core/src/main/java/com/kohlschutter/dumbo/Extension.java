@@ -16,6 +16,7 @@
  */
 package com.kohlschutter.dumbo;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -25,6 +26,9 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.eclipse.jetty.webapp.WebAppContext;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -33,12 +37,16 @@ import jakarta.servlet.http.HttpSession;
  */
 public abstract class Extension {
   private final String extensionPath;
+  private String serverContextPath;
+  private String contextPath;
 
   private final Collection<String> resJavaScript = new LinkedHashSet<>();
   private final Collection<String> resAsyncJavaScript = new LinkedHashSet<>();
   private final Collection<String> resCSS = new LinkedHashSet<>();
 
+  private final AtomicBoolean initialized = new AtomicBoolean();
   private boolean initResourcesDone = false;
+  private String htmlHead;
 
   protected Extension() {
     this.extensionPath = initPath();
@@ -58,10 +66,6 @@ public abstract class Extension {
     }
   }
 
-  public String getExtensionPath() {
-    return extensionPath;
-  }
-
   protected String initExtensionPath() {
     String name = getClass().getName();
     MessageDigest md;
@@ -74,19 +78,15 @@ public abstract class Extension {
         StandardCharsets.UTF_8))).replace('/', '_');
   }
 
-  private String toAbsolutePath(String path) {
-    Objects.requireNonNull(path);
-    if (path.startsWith("/")) {
-      return path;
-    } else {
-      return extensionPath + "/" + path;
-    }
-  }
-
   /**
    * Called by the app to initialize the {@link Extension} for the given {@link AppHTTPServer}.
+   * 
+   * @throws IOException on error.
    */
-  final void doInit(AppHTTPServer app) {
+  final void doInit(AppHTTPServer app) throws IOException {
+    if (!initialized.compareAndSet(false, true)) {
+      return;
+    }
     if (!initResourcesDone) {
       initResources();
       initResourcesDone = true;
@@ -106,7 +106,7 @@ public abstract class Extension {
     if (initResourcesDone) {
       throw new IllegalStateException("Cannot register resource at this point.");
     }
-    targetCollection.add(toAbsolutePath(path));
+    targetCollection.add(path);
   }
 
   /**
@@ -124,7 +124,7 @@ public abstract class Extension {
    * @param path The path.
    */
   protected final void registerAsyncJavaScript(final String path) {
-    register(resAsyncJavaScript, toAbsolutePath(path));
+    register(resAsyncJavaScript, path);
   }
 
   /**
@@ -133,21 +133,27 @@ public abstract class Extension {
    * @param path The path.
    */
   protected final void registerCSS(final String path) {
-    register(resCSS, toAbsolutePath(path));
+    register(resCSS, path);
   }
 
   /**
    * Registers the extension's resources with the {@link AppHTTPServer}.
    *
    * @param server The server instance to work with.
+   * @throws IOException on error.
    */
-  public void init(final AppHTTPServer server) {
+  public void init(final AppHTTPServer server) throws IOException {
+    serverContextPath = server.getContextPath().replaceFirst("/$", "");
+    contextPath = serverContextPath;
     if (extensionPath != null) {
       URL webappUrl = initExtensionResourceURL();
       if (webappUrl != null) {
-        server.registerContext(extensionPath, webappUrl);
+        WebAppContext wac = server.registerContext(extensionPath, webappUrl);
+        contextPath = wac.getContextPath().replaceFirst("/$", "");
       }
     }
+
+    htmlHead = this.initHtmlHead();
   }
 
   /**
@@ -157,6 +163,35 @@ public abstract class Extension {
    */
   protected URL initExtensionResourceURL() {
     return getClass().getResource("webapp/");
+  }
+
+  private String toAbsolutePath(String path) {
+    if (path.contains("://")) {
+      return path;
+    } else if (path.startsWith("/")) {
+      return serverContextPath + path;
+    } else {
+      return contextPath + "/" + path;
+    }
+  }
+
+  private String initHtmlHead() {
+    StringBuilder sb = new StringBuilder();
+
+    for (String path : resCSS) {
+      sb.append("<link rel=\"stylesheet\" href=\"" + xmlEntities(toAbsolutePath(path)) + "\" />\n");
+    }
+
+    for (String path : resJavaScript) {
+      sb.append("<script type=\"text/javascript\" src=\"" + xmlEntities(toAbsolutePath(path))
+          + "\"></script>\n");
+    }
+    for (String path : resAsyncJavaScript) {
+      sb.append("<script type=\"text/javascript\" async=\"async\" src=\"" + xmlEntities(
+          toAbsolutePath(path)) + "\"></script>\n");
+    }
+
+    return sb.toString();
   }
 
   /**
@@ -170,21 +205,7 @@ public abstract class Extension {
    * @return The HTML string.
    */
   public String htmlHead(final HttpSession context) {
-    StringBuilder sb = new StringBuilder();
-
-    for (String path : resCSS) {
-      sb.append("<link rel=\"stylesheet\" href=\"" + xmlEntities(path) + "\" />\n");
-    }
-
-    for (String path : resJavaScript) {
-      sb.append("<script type=\"text/javascript\" src=\"" + xmlEntities(path) + "\"></script>\n");
-    }
-    for (String path : resAsyncJavaScript) {
-      sb.append("<script type=\"text/javascript\" async=\"async\" src=\"" + xmlEntities(path)
-          + "\"></script>\n");
-    }
-
-    return sb.toString();
+    return Objects.requireNonNull(htmlHead);
   }
 
   /**
@@ -212,5 +233,13 @@ public abstract class Extension {
   private static String xmlEntities(final String in) {
     return in.replaceAll("&", "&amp;").replaceAll("\"", "&quot;").replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;").replaceAll("'", "&#39;");
+  }
+
+  String getContextPath() {
+    return contextPath;
+  }
+
+  String getExtensionPath() {
+    return extensionPath;
   }
 }
