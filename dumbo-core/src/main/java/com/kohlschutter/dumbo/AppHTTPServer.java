@@ -18,6 +18,7 @@ package com.kohlschutter.dumbo;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.Inet4Address;
 import java.net.URI;
 import java.net.URL;
@@ -31,8 +32,10 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SessionIdManager;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
+import org.eclipse.jetty.server.session.DefaultSessionIdManager;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -42,6 +45,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import com.kohlschutter.dumbo.util.DevTools;
 
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * A simple HTTP Server to run demos locally from within the IDE, with JSON-RPC support.
@@ -134,6 +138,9 @@ public class AppHTTPServer {
     errorHandler.setShowServlet(false);
 
     this.server = new Server();
+    SessionIdManager smgr = new DefaultSessionIdManager(server);
+    server.setSessionIdManager(smgr);
+
     this.contextPath = "/" + (path.replaceFirst("^/", "").replaceFirst("/$", ""));
     app.registerCloseable(new Closeable() {
       @Override
@@ -147,7 +154,6 @@ public class AppHTTPServer {
     contextHandlers = new ContextHandlerCollection();
     {
       final WebAppContext wac = new WebAppContext(webappBaseURL.toExternalForm(), contextPath);
-      wac.setInitParameter("etags", "true");
       initWebAppContext(wac);
 
       wac.addServlet(JabsorbJSONRPCBridgeServlet.class, jsonPath);
@@ -192,7 +198,8 @@ public class AppHTTPServer {
     wac.setWelcomeFiles(new String[] {"index.html.jsp", "index.html"});
     wac.setErrorHandler(errorHandler);
 
-    wac.setAttribute("path." + JabsorbJSONRPCBridgeServlet.class.getName(), contextPath + jsonPath);
+    wac.setAttribute(AppHTTPServer.class.getName(), this);
+
     wac.setAttribute("jsonPath", (contextPath + "/" + jsonPath).replaceAll("//+", "/"));
 
     ServletContext sc = wac.getServletContext();
@@ -376,5 +383,9 @@ public class AppHTTPServer {
 
   public URI getURI() {
     return server.getURI();
+  }
+
+  void onSessionShutdown(String sessionId, WeakReference<HttpSession> weakSession) {
+    // FIXME: implement server shutdown check
   }
 }

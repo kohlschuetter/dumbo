@@ -63,6 +63,7 @@ final class ConsoleImpl implements Console {
 
   // FIXME this should be a circular buffer of some large maximum size to prevent OOMEs
   private final List<Object> cachedChunks = Collections.synchronizedList(new LinkedList<>());
+  private final DumboSession session;
 
   // private final Thread CHECK_UNCLEAN_SHUTDOWN = new Thread() {
   // @Override
@@ -82,7 +83,8 @@ final class ConsoleImpl implements Console {
   /**
    * Creates a new {@link ConsoleImpl}.
    */
-  public ConsoleImpl() {
+  ConsoleImpl(DumboSession session) {
+    this.session = session;
     // app.registerCloseable(this);
 
     // Runtime.getRuntime().addShutdownHook(CHECK_UNCLEAN_SHUTDOWN);
@@ -143,6 +145,7 @@ final class ConsoleImpl implements Console {
       if (markedDontFlush) {
         if (shutdownRequested != null) {
           shutdownNoticeSent.set(true);
+          session.invalidate();
           return shutdownRequested;
         }
         return "";
@@ -152,6 +155,7 @@ final class ConsoleImpl implements Console {
       if (buffer.length() == 0) {
         if (shutdownRequested != null) {
           shutdownNoticeSent.set(true);
+          session.invalidate();
           return shutdownRequested;
         }
         return "";
@@ -310,6 +314,9 @@ final class ConsoleImpl implements Console {
    */
   @Override
   public void shutdown(ShutdownNotice notice) {
+    if (shutdownNoticeSent.get()) {
+      return;
+    }
     synchronized (consoleService) {
       if (isClosed()) {
         return;

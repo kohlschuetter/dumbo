@@ -1,5 +1,6 @@
 package com.kohlschutter.dumbo;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -23,7 +24,7 @@ public final class DumboSession {
   private final String pageId;
   private final Map<String, Object> pageScope = new HashMap<>();
   private final HttpSession context;
-  private final Console console = new ConsoleImpl();
+  private final Console console = new ConsoleImpl(this);
   private AtomicBoolean invalid = new AtomicBoolean(false);
 
   DumboSession(String pageId, HttpSession context) {
@@ -195,21 +196,29 @@ public final class DumboSession {
     if (pageId == null) {
       return;
     }
+    DumboSession session;
     synchronized (context) {
       @SuppressWarnings("unchecked")
       Map<String, DumboSession> map = (Map<String, DumboSession>) context.getAttribute(
           SESSION_ATTRIBUTE_PAGEIDS);
       if (map == null) {
         return;
-      } else {
-        DumboSession session = map.remove(pageId);
-        if (map.isEmpty()) {
-          context.removeAttribute(SESSION_ATTRIBUTE_PAGEIDS);
-        }
-        if (session != null) {
-          session.invalidate();
+      }
+      session = map.remove(pageId);
+      if (session == null) {
+        return;
+      } else if (map.isEmpty()) {
+        context.removeAttribute(SESSION_ATTRIBUTE_PAGEIDS);
+
+        AppHTTPServer server = (AppHTTPServer) context.getServletContext().getAttribute(
+            AppHTTPServer.class.getName());
+        if (server != null) {
+          server.onSessionShutdown(context.getId(), new WeakReference<>(context));
         }
       }
+    }
+    if (session != null) {
+      session.invalidate();
     }
   }
 
@@ -223,6 +232,7 @@ public final class DumboSession {
     if (invalid.compareAndSet(false, true)) {
       console.shutdown();
     }
+    removePageIdFromCurrentSession(pageId);
   }
 
   static void removePageIdFromCurrentSession(String pageId) {
