@@ -311,11 +311,23 @@ public class AppHTTPServer {
           System.out.println("Regenerating " + pathsToRegenerate.size() + " paths...");
           for (String path : pathsToRegenerate) {
             String uri = serverURIBase + path;
+            long time1 = System.currentTimeMillis();
             ContentResponse response = client.GET(uri);
+            time1 = System.currentTimeMillis() - time1;
+            // System.out.println("Took " + time1);
             int status = response.getStatus();
             if (status != HttpServletResponse.SC_OK) {
               System.out.println("Warning: " + response + " for " + uri);
             }
+            long time2 = System.currentTimeMillis();
+            response = client.GET(uri);
+            status = response.getStatus();
+            if (status != HttpServletResponse.SC_OK) {
+              System.out.println("Warning: " + response + " for " + uri);
+            }
+            time2 = System.currentTimeMillis() - time2;
+
+            // System.out.println("Speedup: " + (time1 / (float) time2));
           }
         } finally {
           client.stop();
@@ -487,18 +499,14 @@ public class AppHTTPServer {
     return connector;
   }
 
-  String getContextPath() {
-    return contextPath;
-  }
-
-  public URI getURI() {
-    return server.getURI();
-  }
-
-  void onSessionShutdown(String sessionId, WeakReference<HttpSession> weakSession) {
-    // FIXME: implement server shutdown check
-  }
-
+  /**
+   * Returns a Jetty {@link ServerConnector} that listens on the given UNIX socket address.
+   * 
+   * @param targetServer The server this connector is assigned to.
+   * @param address The socket address.
+   * @return The connector.
+   * @throws IOException on error.
+   */
   protected Connector initUnixConnector(Server targetServer, AFUNIXSocketAddress address)
       throws IOException {
     Objects.requireNonNull(targetServer);
@@ -513,4 +521,15 @@ public class AppHTTPServer {
     return unixConnector;
   }
 
+  String getContextPath() {
+    return contextPath;
+  }
+
+  public URI getURI() {
+    return server.getURI();
+  }
+
+  void onSessionShutdown(String sessionId, WeakReference<HttpSession> weakSession) {
+    // FIXME: implement server shutdown check
+  }
 }

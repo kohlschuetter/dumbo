@@ -47,6 +47,7 @@ public class MarkdownServlet extends HttpServlet {
   private HtmlRenderer renderer;
 
   private final Map<String, Object> commonVariables = new HashMap<>();
+  private final Map<String, Object> commonDumboVariables = new HashMap<>();
 
   @Override
   public void init() throws ServletException {
@@ -64,6 +65,8 @@ public class MarkdownServlet extends HttpServlet {
     renderer = HtmlRenderer.builder().build();
 
     commonVariables.clear();
+    commonDumboVariables.clear();
+    commonVariables.put("dumbo", commonDumboVariables);
   }
 
   @SuppressWarnings("unchecked")
@@ -92,8 +95,6 @@ public class MarkdownServlet extends HttpServlet {
         System.err.println("Unexpected YAML object class in front matter: " + o.getClass());
       }
     }
-
-    page.put("yo", "testerich");
   }
 
   @Override
@@ -116,20 +117,31 @@ public class MarkdownServlet extends HttpServlet {
       return;
     }
 
+    // long time = System.currentTimeMillis();
+
     Map<String, Object> variables = new HashMap<>(commonVariables);
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> dumboVariables = (Map<String, Object>) variables.get("dumbo");
+    dumboVariables.put("htmlHead", com.kohlschutter.dumbo.JSPSupport.htmlHead(req.getSession()));
+    dumboVariables.put("htmlBodyTop", com.kohlschutter.dumbo.JSPSupport.htmlBodyTop(req
+        .getSession()));
+
     Map<String, Object> page = new HashMap<>();
     variables.put("page", page);
 
     CharBuffer cb;
+    boolean haveFrontMatter;
     try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(mdFile),
         StandardCharsets.UTF_8))) {
       char[] cbuf = new char[4];
       in.mark(cbuf.length);
-      if (in.read(cbuf) == cbuf.length && Arrays.equals(cbuf, FRONT_MATTER_LINE)) {
-        in.reset();
+
+      haveFrontMatter = (in.read(cbuf) == cbuf.length && Arrays.equals(cbuf, FRONT_MATTER_LINE));
+      in.reset();
+
+      if (haveFrontMatter) {
         parseFrontMatter(in, page);
-      } else {
-        in.reset();
       }
 
       cb = CharBuffer.allocate((int) mdFileLength);
@@ -137,13 +149,16 @@ public class MarkdownServlet extends HttpServlet {
     }
     cb.flip();
 
-    String liquid = cb.toString();
+    String markdown = cb.toString();
 
-    Template parse = Template.parse(liquid).withProtectionSettings(protectionSettings)
-        .withRenderSettings(renderSettings);
-    String liquidRendered = parse.render(variables);
+    if (haveFrontMatter) {
+      // enables Liquid templates
+      Template parse = Template.parse(markdown).withProtectionSettings(protectionSettings)
+          .withRenderSettings(renderSettings);
+      markdown = parse.render(variables);
+    }
 
-    Document document = parser.parse(liquidRendered);
+    Document document = parser.parse(markdown);
 
     resp.setContentType("text/html");
     try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -169,6 +184,7 @@ public class MarkdownServlet extends HttpServlet {
           } finally {
             if (success && mdFileHtmlTmp.renameTo(htmlFile)) {
               // renamed
+              // System.out.println("took " + (System.currentTimeMillis() - time) + "ms");
             } else {
               System.err.println("Failed to create " + htmlFile);
               mdFileHtmlTmp.delete();

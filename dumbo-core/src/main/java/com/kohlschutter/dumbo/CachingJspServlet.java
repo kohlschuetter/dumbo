@@ -44,6 +44,8 @@ public class CachingJspServlet extends JettyJspServlet {
     if (!generatedFileParent.canWrite()) {
       return false;
     }
+
+    // long time = System.currentTimeMillis();
     File tmpFile = File.createTempFile(".jsp", ".tmp", generatedFileParent);
 
     AtomicInteger status = new AtomicInteger(HttpServletResponse.SC_OK);
@@ -129,6 +131,8 @@ public class CachingJspServlet extends JettyJspServlet {
           System.out.println("Generating " + generatedFile);
           if (!tmpFile.renameTo(generatedFile)) {
             System.out.println("FAILED: " + generatedFile);
+          } else {
+            // System.out.println("took " + (System.currentTimeMillis() - time) + "ms");
           }
         }
       } finally {
