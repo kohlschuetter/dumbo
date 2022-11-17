@@ -19,6 +19,7 @@ package com.kohlschutter.dumbo.helloworld.console;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
+import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.DumboSession;
 import com.kohlschutter.dumbo.Extensions;
 import com.kohlschutter.dumbo.RPCRegistry;
@@ -26,7 +27,6 @@ import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 import com.kohlschutter.dumbo.console.Console;
 import com.kohlschutter.dumbo.console.ConsoleSupport;
-import com.kohlschutter.dumbo.unix.TcpAndUnixAppHTTPServer;
 import com.kohlschutter.dumbo.util.DevTools;
 
 /**
@@ -36,7 +36,7 @@ import com.kohlschutter.dumbo.util.DevTools;
 public class ConsoleDemoApp extends ServerApp {
   public static void main(String[] args) throws IOException {
     final ConsoleDemoApp app = new ConsoleDemoApp();
-    new TcpAndUnixAppHTTPServer(app, "/", ConsoleDemoApp.class.getResource(
+    new AppHTTPServer(app, "/", ConsoleDemoApp.class.getResource(
         "/com/kohlschutter/dumbo/helloworld/webapp/")) {
 
       @Override

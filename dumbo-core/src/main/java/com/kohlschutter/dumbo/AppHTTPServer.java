@@ -17,15 +17,25 @@
 package com.kohlschutter.dumbo;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.Inet4Address;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
+import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -39,12 +49,17 @@ import org.eclipse.jetty.server.session.DefaultSessionIdManager;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.newsclub.net.unix.AFUNIXSocketAddress;
+import org.newsclub.net.unix.jetty.AFSocketClientConnector;
+import org.newsclub.net.unix.jetty.AFSocketServerConnector;
 
 import com.kohlschutter.dumbo.util.DevTools;
 
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 /**
@@ -64,6 +79,10 @@ public class AppHTTPServer {
   private final String jsonPath = "/json";
 
   private final ErrorHandler errorHandler;
+
+  private final Set<String> pathsToRegenerate = new HashSet<>();
+
+  private AFUNIXSocketAddress serverUNIXSocketAddress = null;
 
   private static URL getWebappBaseURL(final ServerAppBase app) {
     URL u;
@@ -110,19 +129,6 @@ public class AppHTTPServer {
    * Creates a new HTTP server for the given {@link ServerAppBase}, using web resources from the
    * given URL path.
    *
-   * @param app The server app.
-   * @param path The base path for the server, {@code ""} for root.
-   *
-   * @throws ExtensionDependencyException on error
-   */
-  public AppHTTPServer(final ServerAppBase app, final String path) throws IOException {
-    this(app, path, (URL) null);
-  }
-
-  /**
-   * Creates a new HTTP server for the given {@link ServerAppBase}, using web resources from the
-   * given URL path.
-   *
    * @param app The app.
    * @param path The base path for the server, {@code ""} for root.
    * @param webappBaseURL The location of the resources that should be served.
@@ -132,6 +138,7 @@ public class AppHTTPServer {
    */
   public AppHTTPServer(final ServerAppBase app, final String path, final URL webappBaseURL)
       throws IOException {
+    Objects.requireNonNull(webappBaseURL);
     this.app = app;
 
     this.errorHandler = new ErrorHandler();
@@ -149,11 +156,23 @@ public class AppHTTPServer {
       }
     });
 
+    File webappBase;
+    try {
+      webappBase = new File(webappBaseURL.toURI());
+    } catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
+    if (!webappBase.isDirectory()) {
+      throw new FileNotFoundException("Not a directory: " + webappBase);
+    }
+
     app.initInternal();
 
     contextHandlers = new ContextHandlerCollection();
     {
-      final WebAppContext wac = new WebAppContext(webappBaseURL.toExternalForm(), contextPath);
+      Resource res = Resource.newResource(webappBaseURL);
+      final WebAppContext wac = new WebAppContext(res, contextPath);
+      visitWebapp(wac.getContextPath(), null, res);
       initWebAppContext(wac);
 
       wac.addServlet(JabsorbJSONRPCBridgeServlet.class, jsonPath);
@@ -178,6 +197,38 @@ public class AppHTTPServer {
     server.setConnectors(initConnectors(server));
   }
 
+  private void visitWebapp(String contextPrefix, String dirPrefix, Resource dir)
+      throws IOException {
+    File file = dir.getFile();
+    if (file == null || !file.canWrite()) {
+      System.out.println("FIXME won't visit " + dir);
+      return;
+    }
+
+    String dirString = dir.toString();
+    if (dirPrefix == null) {
+      dirPrefix = dirString;
+    } else if (!dirString.equals(dirPrefix) && !dirString.startsWith(dirPrefix)) {
+      return;
+    }
+
+    for (String name : dir.list()) {
+      Resource r = dir.getResource(name);
+      if (r.isDirectory()) {
+        visitWebapp(contextPrefix, dirPrefix, r);
+      } else {
+        if (name.endsWith(".md") || name.endsWith(".html.jsp") || name.endsWith(".jsp.js")) {
+          String path = r.toString();
+          if (path.startsWith(dirPrefix)) {
+            path = path.substring(dirPrefix.length());
+            path = contextPrefix + "/" + path + "?reload=true";
+            pathsToRegenerate.add(path);
+          }
+        }
+      }
+    }
+  }
+
   /**
    * Registers a web app context/
    *
@@ -188,8 +239,10 @@ public class AppHTTPServer {
    */
   public WebAppContext registerContext(final String contextPrefix, final URL pathToWebApp)
       throws IOException {
-    WebAppContext wac = new WebAppContext(pathToWebApp.toExternalForm(), (contextPath
-        + contextPrefix).replaceAll("//+", "/"));
+    Resource res = Resource.newResource(pathToWebApp);
+    WebAppContext wac = new WebAppContext(res, (contextPath + contextPrefix).replaceAll("//+",
+        "/"));
+    visitWebapp(wac.getContextPath(), null, res);
     initWebAppContext(wac);
     return registerContext(wac);
   }
@@ -198,7 +251,7 @@ public class AppHTTPServer {
     wac.setDefaultRequestCharacterEncoding("UTF-8");
     wac.setDefaultResponseCharacterEncoding("UTF-8");
 
-    wac.setWelcomeFiles(new String[] {"index.html.jsp", "index.html"});
+    wac.setWelcomeFiles(new String[] {"index.html", "index.html.jsp"});
     wac.setErrorHandler(errorHandler);
 
     wac.setAttribute(AppHTTPServer.class.getName(), this);
@@ -211,7 +264,7 @@ public class AppHTTPServer {
     ServletHolder dsh = wac.addServlet(DefaultServlet.class.getName(), "/");
     sc.setAttribute("holder." + DefaultServlet.class.getName(), dsh);
 
-    ServletHolder jsh = wac.addServlet(JettyJspServlet.class.getName(), "*.jsp");
+    ServletHolder jsh = wac.addServlet(CachingJspServlet.class.getName(), "*.jsp");
     sc.setAttribute("holder." + JettyJspServlet.class.getName(), jsh);
 
     dsh.setInitParameter("useFileMappedBuffer", "true");
@@ -219,9 +272,9 @@ public class AppHTTPServer {
         "/com/kohlschutter/dumbo/appbase/css/jetty-dir.css").toExternalForm());
 
     ServletHandler sh = wac.getServletHandler();
-
     sh.addServletWithMapping(HtmlJspServlet.class, "*.html");
     sh.addServletWithMapping(JspJsServlet.class, "*.js");
+    sh.addServletWithMapping(MarkdownServlet.class, "*.md");
 
     // sh.setInitParameter("dirAllowed", "false");
   }
@@ -229,6 +282,53 @@ public class AppHTTPServer {
   WebAppContext registerContext(WebAppContext wac) {
     contextHandlers.addHandler(wac);
     return wac;
+  }
+
+  private HttpClient newServerHttpClient() {
+    if (serverUNIXSocketAddress == null) {
+      return new HttpClient();
+    }
+
+    ClientConnector clientConnector = AFSocketClientConnector.withSocketAddress(
+        serverUNIXSocketAddress);
+    return new HttpClient(new HttpClientTransportDynamic(clientConnector));
+  }
+
+  private CompletableFuture<Void> regeneratePaths() throws Exception {
+    if (pathsToRegenerate.isEmpty()) {
+      return CompletableFuture.completedFuture((Void) null);
+    }
+
+    return CompletableFuture.runAsync(() -> {
+      try {
+        URI serverURI = server.getURI();
+        String serverURIBase = new URI(serverURI.getScheme(), serverURI.getUserInfo(), serverURI
+            .getHost(), serverURI.getPort(), null, null, null).toString();
+        // ClientConnector clientConnector = new ClientConnector();
+        HttpClient client = newServerHttpClient();
+        client.start();
+        try {
+          System.out.println("Regenerating " + pathsToRegenerate.size() + " paths...");
+          for (String path : pathsToRegenerate) {
+            String uri = serverURIBase + path;
+            ContentResponse response = client.GET(uri);
+            int status = response.getStatus();
+            if (status != HttpServletResponse.SC_OK) {
+              System.out.println("Warning: " + response + " for " + uri);
+            }
+          }
+        } finally {
+          client.stop();
+        }
+      } catch (Error | RuntimeException e) {
+        e.printStackTrace();
+        throw e;
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new IllegalStateException(e);
+      }
+    });
+
   }
 
   /**
@@ -243,6 +343,7 @@ public class AppHTTPServer {
       public void run() {
         try {
           server.start();
+          regeneratePaths();
 
           DevTools.init();
 
@@ -349,7 +450,13 @@ public class AppHTTPServer {
    * @throws IOException on error.
    */
   protected Connector[] initConnectors(Server targetServer) throws IOException {
-    return new Connector[] {initDefaultTCPConnector(targetServer)};
+    ServerConnector tcpConn = initDefaultTCPConnector(targetServer);
+
+    // FIXME directory
+    serverUNIXSocketAddress = AFUNIXSocketAddress.of(new File("/tmp/dumbo-" + tcpConn.getPort()
+        + ".sock"));
+
+    return new Connector[] {tcpConn, initUnixConnector(targetServer, serverUNIXSocketAddress)};
   }
 
   protected HttpConnectionFactory newHttpConnectionFactory() {
@@ -391,4 +498,19 @@ public class AppHTTPServer {
   void onSessionShutdown(String sessionId, WeakReference<HttpSession> weakSession) {
     // FIXME: implement server shutdown check
   }
+
+  protected Connector initUnixConnector(Server targetServer, AFUNIXSocketAddress address)
+      throws IOException {
+    Objects.requireNonNull(targetServer);
+    Objects.requireNonNull(address);
+
+    AFSocketServerConnector unixConnector = new AFSocketServerConnector(targetServer,
+        newHttpConnectionFactory());
+    unixConnector.setListenSocketAddress(address);
+    unixConnector.setAcceptQueueSize(128);
+    unixConnector.setMayStopServerForce(true);
+
+    return unixConnector;
+  }
+
 }
