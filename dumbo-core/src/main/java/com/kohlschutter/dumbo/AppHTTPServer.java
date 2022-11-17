@@ -29,12 +29,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Response.CompleteListener;
+import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.server.Connector;
@@ -297,6 +301,10 @@ public class AppHTTPServer {
     // sh.setInitParameter("dirAllowed", "false");
   }
 
+  public static ServerApp getServerApp(ServletContext sc) {
+    return (ServerApp) sc.getAttribute(ServerApp.class.getName());
+  }
+
   WebAppContext registerContext(WebAppContext wac) {
     contextHandlers.addHandler(wac);
     return wac;
@@ -325,16 +333,37 @@ public class AppHTTPServer {
         // ClientConnector clientConnector = new ClientConnector();
         HttpClient client = newServerHttpClient();
         client.start();
+
+        long time = System.currentTimeMillis();
+        CountDownLatch cdl = new CountDownLatch(pathsToRegenerate.size());
+        client.setMaxConnectionsPerDestination(1);
         try {
-          System.out.println("Regenerating " + pathsToRegenerate.size() + " paths...");
+          System.out.println("Regenerating " + cdl.getCount() + " paths...");
           for (String path : pathsToRegenerate.keySet()) {
             String uri = serverURIBase + path + "?reload=true";
-            ContentResponse response = client.GET(uri);
-            int status = response.getStatus();
-            if (status != HttpServletResponse.SC_OK) {
-              System.out.println("Warning: " + response + " for " + uri);
+            try {
+              client.newRequest(uri).method(HttpMethod.HEAD).send(new CompleteListener() {
+
+                @Override
+                public void onComplete(Result result) {
+                  if (result.isFailed()) {
+                    System.out.println("Warning: " + result.getFailure() + " for " + uri);
+                  } else if (result.getResponse().getStatus() != HttpServletResponse.SC_OK) {
+                    System.out.println("Warning: " + result.getResponse() + " for " + uri);
+                  }
+                  cdl.countDown();
+                }
+              });
+            } catch (Throwable t) {
+              t.printStackTrace();
             }
           }
+          if (!cdl.await(1, TimeUnit.MINUTES)) {
+            System.err.println("Warning: Regeneration is taking a long time");
+          }
+          cdl.await();
+          System.out.println("Regeneration completed after " + (System.currentTimeMillis() - time)
+              + "ms");
         } finally {
           client.stop();
         }

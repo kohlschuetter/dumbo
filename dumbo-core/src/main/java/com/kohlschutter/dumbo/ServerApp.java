@@ -18,6 +18,7 @@ package com.kohlschutter.dumbo;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -63,6 +64,26 @@ public abstract class ServerApp extends ServerAppBase {
     for (Class<Extension> extClass : annotatedExtensions) {
       registerExtension(newInstance(extClass));
     }
+  }
+
+  /**
+   * Look up a resource in the resource path of the app and any registered {@link Extension}.
+   * 
+   * @param path The path to look up (usually relative).
+   * @return The {@link URL} pointing to the resource, or {@code null} if not found/not accessible.
+   */
+  public URL getResource(String path) {
+    URL resource = getClass().getResource(path);
+    if (resource != null) {
+      return resource;
+    }
+    for (Class<Extension> extClass : annotatedExtensions) {
+      resource = extClass.getResource(path);
+      if (resource != null) {
+        return resource;
+      }
+    }
+    return null;
   }
 
   private <T> T newInstance(Class<T> clazz) {

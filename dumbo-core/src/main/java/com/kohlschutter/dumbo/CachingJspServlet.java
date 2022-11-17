@@ -121,9 +121,11 @@ public class CachingJspServlet extends JettyJspServlet {
       try {
         PrintWriter pw = netOut.getNow(null);
         if (pw != null) {
-          try (InputStreamReader in = new InputStreamReader(new FileInputStream(tmpFile),
-              StandardCharsets.UTF_8)) {
-            in.transferTo(pw);
+          if (!"HEAD".equals(req.getMethod())) {
+            try (InputStreamReader in = new InputStreamReader(new FileInputStream(tmpFile),
+                StandardCharsets.UTF_8)) {
+              in.transferTo(pw);
+            }
           }
         }
 
