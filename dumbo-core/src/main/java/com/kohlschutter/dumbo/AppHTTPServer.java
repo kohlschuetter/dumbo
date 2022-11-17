@@ -25,9 +25,9 @@ import java.net.Inet4Address;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.log4j.Level;
@@ -80,9 +80,11 @@ public class AppHTTPServer {
 
   private final ErrorHandler errorHandler;
 
-  private final Set<String> pathsToRegenerate = new HashSet<>();
+  private final Map<String, String> pathsToRegenerate = new HashMap<>();
 
   private AFUNIXSocketAddress serverUNIXSocketAddress = null;
+
+  private final QueuedThreadPool threadPool;
 
   private static URL getWebappBaseURL(final ServerAppBase app) {
     URL u;
@@ -144,7 +146,9 @@ public class AppHTTPServer {
     this.errorHandler = new ErrorHandler();
     errorHandler.setShowServlet(false);
 
-    this.server = new Server();
+    this.threadPool = new QueuedThreadPool();
+
+    this.server = new Server(threadPool);
     SessionIdManager smgr = new DefaultSessionIdManager(server);
     server.setSessionIdManager(smgr);
 
@@ -217,14 +221,28 @@ public class AppHTTPServer {
       if (r.isDirectory()) {
         visitWebapp(contextPrefix, dirPrefix, r);
       } else {
-        if (name.endsWith(".md") || name.endsWith(".html.jsp") || name.endsWith(".jsp.js")) {
-          String path = r.toString();
-          if (path.startsWith(dirPrefix)) {
-            path = path.substring(dirPrefix.length());
-            path = contextPrefix + "/" + path + "?reload=true";
-            pathsToRegenerate.add(path);
-          }
+        String path = r.toString();
+        if (!path.startsWith(dirPrefix)) {
+          continue;
         }
+
+        path = path.substring(dirPrefix.length());
+        path = contextPrefix + "/" + path;
+
+        String cachedFile;
+        if (name.endsWith(".md")) {
+          cachedFile = name.substring(0, name.length() - ".md".length()) + ".html";
+        } else if (name.endsWith(".html.jsp")) {
+          cachedFile = name.substring(0, name.length() - ".jsp".length());
+        } else if (name.endsWith(".jsp.js")) {
+          cachedFile = name.substring(0, name.length() - ".jsp.js".length()) + ".js";
+        } else {
+          continue;
+        }
+
+        cachedFile = contextPrefix + "/" + cachedFile;
+
+        pathsToRegenerate.put(path, cachedFile);
       }
     }
   }
@@ -309,25 +327,13 @@ public class AppHTTPServer {
         client.start();
         try {
           System.out.println("Regenerating " + pathsToRegenerate.size() + " paths...");
-          for (String path : pathsToRegenerate) {
-            String uri = serverURIBase + path;
-            long time1 = System.currentTimeMillis();
+          for (String path : pathsToRegenerate.keySet()) {
+            String uri = serverURIBase + path + "?reload=true";
             ContentResponse response = client.GET(uri);
-            time1 = System.currentTimeMillis() - time1;
-            // System.out.println("Took " + time1);
             int status = response.getStatus();
             if (status != HttpServletResponse.SC_OK) {
               System.out.println("Warning: " + response + " for " + uri);
             }
-            long time2 = System.currentTimeMillis();
-            response = client.GET(uri);
-            status = response.getStatus();
-            if (status != HttpServletResponse.SC_OK) {
-              System.out.println("Warning: " + response + " for " + uri);
-            }
-            time2 = System.currentTimeMillis() - time2;
-
-            // System.out.println("Speedup: " + (time1 / (float) time2));
           }
         } finally {
           client.stop();
