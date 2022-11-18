@@ -12,14 +12,17 @@ import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 
+import com.kohlschutter.dumbo.liqp.LiqpDumboInsertions;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Document;
@@ -30,9 +33,13 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import liqp.Insertion;
+import liqp.ParseSettings;
 import liqp.ProtectionSettings;
 import liqp.RenderSettings;
 import liqp.Template;
+import liqp.filters.Filter;
+import liqp.parser.Flavor;
 
 public class MarkdownServlet extends HttpServlet {
   private static final char[] FRONT_MATTER_LINE = new char[] {'-', '-', '-', '\n'};
@@ -45,8 +52,11 @@ public class MarkdownServlet extends HttpServlet {
   private LoadSettings loadSettings;
 
   // liqp
+  private ParseSettings parseSettings;
   private ProtectionSettings protectionSettings;
   private RenderSettings renderSettings;
+  private List<Insertion> insertions;
+  private List<Filter> filters;
 
   // flexmark-java
   private Parser parser;
@@ -65,8 +75,11 @@ public class MarkdownServlet extends HttpServlet {
     loadSettings = LoadSettings.builder().setAllowDuplicateKeys(true).build();
 
     // liqp
+    parseSettings = new ParseSettings.Builder().withFlavor(Flavor.JEKYLL).build();
     protectionSettings = new ProtectionSettings.Builder().build();
     renderSettings = new RenderSettings.Builder().build();
+    insertions = new ArrayList<>(LiqpDumboInsertions.getInsertions().values());
+    filters = new ArrayList<>(Filter.getFilters(Flavor.JEKYLL).values());
 
     // flexmark-java
     parser = Parser.builder().build();
@@ -74,6 +87,7 @@ public class MarkdownServlet extends HttpServlet {
 
     commonVariables.clear();
     commonDumboVariables.clear();
+    commonDumboVariables.put(".app", app);
     commonVariables.put("dumbo", commonDumboVariables);
   }
 
@@ -190,8 +204,8 @@ public class MarkdownServlet extends HttpServlet {
     final String layout;
     if (haveFrontMatter) {
       // enables Liquid templates
-      Template parse = Template.parse(markdown).withProtectionSettings(protectionSettings)
-          .withRenderSettings(renderSettings);
+      Template parse = Template.parse(markdown, insertions, filters, parseSettings, renderSettings)
+          .withProtectionSettings(protectionSettings);
       markdown = parse.render(variables);
 
       layout = getVariableAsString(variables, "page", "layout");
@@ -214,8 +228,8 @@ public class MarkdownServlet extends HttpServlet {
 
           try (InputStream in = layoutURL.openStream()) {
             output = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-            Template parse = Template.parse(output).withProtectionSettings(protectionSettings)
-                .withRenderSettings(renderSettings);
+            Template parse = Template.parse(output, insertions, filters, parseSettings,
+                renderSettings).withProtectionSettings(protectionSettings);
             output = parse.render(variables);
           }
         }

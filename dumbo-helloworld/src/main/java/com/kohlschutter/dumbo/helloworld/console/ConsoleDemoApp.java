@@ -19,6 +19,7 @@ package com.kohlschutter.dumbo.helloworld.console;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.DumboSession;
 import com.kohlschutter.dumbo.Extensions;
@@ -63,6 +64,7 @@ public class ConsoleDemoApp extends ServerApp {
       int count = 0; // this is an application-level state (i.e., shared across pages!)
 
       @Override
+      @SuppressFBWarnings("NN_NAKED_NOTIFY")
       public void sendLine(String line) {
         DumboSession session = DumboSession.getSession();
         session.getOrCreatePageAttribute(State.class, State::new).enteredCommand = true;

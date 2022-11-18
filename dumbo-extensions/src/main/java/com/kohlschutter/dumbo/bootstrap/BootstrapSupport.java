@@ -51,6 +51,7 @@ public final class BootstrapSupport extends Extension {
    *          library is provided.
    */
   public BootstrapSupport(boolean extras) {
+    super();
     this.extras = extras;
   }
 

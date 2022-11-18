@@ -22,8 +22,8 @@ import jakarta.servlet.http.HttpServletResponse;
  * </p>
  * <p>
  * <code> 
- * const contextPath = '<%@page session="false" contentType="application/javascript" %><%=
- * application.getContextPath() %>';
+ * const contextPath = '&lt;%@page session="false" contentType="application/javascript" %&gt;&lt;%=
+ * application.getContextPath() %&gt;';
  * </code>
  * </p>
  * 

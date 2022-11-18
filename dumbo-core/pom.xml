@@ -85,13 +85,12 @@
         <dependency>
             <groupId>nl.big-o</groupId>
             <artifactId>liqp</artifactId>
-            <version>0.8.3.2</version>
+            <version>0.8.3.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.snakeyaml</groupId>
             <artifactId>snakeyaml-engine</artifactId>
             <version>2.5</version>
-            <type>bundle</type>
         </dependency>
     </dependencies>
 
