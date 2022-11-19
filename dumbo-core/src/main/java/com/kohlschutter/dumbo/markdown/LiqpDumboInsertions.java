@@ -1,4 +1,4 @@
-package com.kohlschutter.dumbo.liqp;
+package com.kohlschutter.dumbo.markdown;
 
 import java.util.Collections;
 import java.util.HashMap;

@@ -1,4 +1,4 @@
-package com.kohlschutter.dumbo.liqp;
+package com.kohlschutter.dumbo.markdown;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -18,10 +18,11 @@ import liqp.tags.Tag;
 public class DumboInclude extends Tag {
   public static String DEFAULT_EXTENSION = ".liquid";
 
-  DumboInclude() {
+  public DumboInclude() {
     super("include");
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public Object render(TemplateContext context, LNode... nodes) {
     @SuppressWarnings("unchecked")
@@ -45,10 +46,17 @@ public class DumboInclude extends Tag {
       try (InputStream in = resource.openStream()) {
         str = new String(in.readAllBytes(), StandardCharsets.UTF_8);
       }
-      Template template = Template.parse(str, context.parseSettings, context.renderSettings);
+      
+      Template template;
+      if (context.getParser().isLegacyMode()) {
+          template = Template.parse(str, context.getParseSettings(), context
+                  .getRenderSettings());
+      } else {
+          template = context.getParser().parse(str);
+      }
 
       if (nodes.length > 1) {
-        if (context.parseSettings.flavor != Flavor.JEKYLL) {
+        if (context.getParseSettings().flavor != Flavor.JEKYLL) {
           // check if there's a optional "with expression"
           Object value = nodes[1].render(context);
           context.put(includeResource, value);
