@@ -1,21 +1,23 @@
 package com.kohlschutter.dumbo;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import com.kohlschutter.dumbo.markdown.LiquidMarkdownSupport;
+import com.kohlschutter.dumbo.markdown.LiquidSupport;
 import com.kohlschutter.dumbo.markdown.MarkdownConfig;
 import com.kohlschutter.dumbo.markdown.YAMLSupport;
 import com.kohlschutter.dumbo.util.MultiplexedAppendable.SuppressErrorsAppendable;
 import com.kohlschutter.dumbo.util.SuccessfulCloseWriter;
+import com.kohlschutter.stringhold.StringHolder;
 import com.vladsch.flexmark.util.ast.Document;
 
 import jakarta.servlet.ServletContext;
@@ -23,7 +25,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import liqp.Template;
 import liqp.TemplateParser;
 
 public class MarkdownServlet extends HttpServlet {
@@ -32,9 +33,9 @@ public class MarkdownServlet extends HttpServlet {
 
   private ServerApp app;
 
-  private LiquidMarkdownSupport liquidMarkdown;
-
   private TemplateParser liqpParser = MarkdownConfig.LIQP_PARSER;
+  private LiquidSupport liquid;
+  private LiquidMarkdownSupport liquidMarkdown;
 
   private final Map<String, Object> commonVariables = new HashMap<>();
   private final Map<String, Object> commonDumboVariables = new HashMap<>();
@@ -45,24 +46,13 @@ public class MarkdownServlet extends HttpServlet {
 
     this.app = AppHTTPServer.getServerApp(servletContext);
 
-    this.liquidMarkdown = new LiquidMarkdownSupport(liqpParser);
+    this.liquid = new LiquidSupport(app, liqpParser);
+    this.liquidMarkdown = new LiquidMarkdownSupport(liquid);
 
     commonVariables.clear();
     commonDumboVariables.clear();
     commonDumboVariables.put(".app", app);
     commonVariables.put("dumbo", commonDumboVariables);
-  }
-
-  private InputStream layoutStream(String layout) throws IOException {
-    if (layout == null || layout.isBlank() || app == null) {
-      return null;
-    }
-    URL layoutURL = app.getResource("markdown/_layouts/" + layout + ".html");
-    if (layoutURL == null) {
-      return null;
-    } else {
-      return layoutURL.openStream();
-    }
   }
 
   private SuccessfulCloseWriter mdReloadWriter(String path, HttpServletRequest req)
@@ -100,6 +90,17 @@ public class MarkdownServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
       IOException {
+    try {
+      doGet0(req, resp);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
+  protected void doGet0(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
+      IOException {
+
     String path = servletContext.getRealPath(req.getServletPath());
     if (path == null) {
       return;
@@ -126,31 +127,31 @@ public class MarkdownServlet extends HttpServlet {
     dumboVariables.put("htmlHead", com.kohlschutter.dumbo.JSPSupport.htmlHead(req.getSession()));
     dumboVariables.put("htmlBodyTop", com.kohlschutter.dumbo.JSPSupport.htmlBodyTop(req
         .getSession()));
+    dumboVariables.put("includedLayouts", new LinkedHashSet<>());
 
-    Document document = liquidMarkdown.parse(mdFile, variables, true);
+    Document document = liquidMarkdown.parse(mdFile, variables);
 
     resp.setContentType("text/html;charset=UTF-8");
     resp.setCharacterEncoding("UTF-8");
 
-    try (PrintWriter servletOut = resp.getWriter();
-        SuccessfulCloseWriter mdReloadOut = mdReloadWriter(path, req)) {
+    // do not add to try-catch block, otherwise we won't see error messages
+    PrintWriter servletOut = resp.getWriter();
 
+    try (SuccessfulCloseWriter mdReloadOut = mdReloadWriter(path, req)) {
       final Appendable appendable = SuppressErrorsAppendable.multiplexIfNecessary(servletOut,
           mdReloadOut);
 
-      try (InputStream layoutStream = layoutStream(YAMLSupport.getVariableAsString(variables,
-          "page", "layout"))) {
-        String content = liquidMarkdown.render(document);
+      String layoutId = YAMLSupport.getVariableAsString(variables, "page", "layout");
+      try (BufferedReader layoutIn = liquid.layoutReader(layoutId)) {
+        // the main content
+        StringHolder contentSupply = StringHolder.withSupplierExpectedLength(document
+            .getTextLength(), () -> liquidMarkdown.render(document));
 
-        if (layoutStream != null) {
-          variables.clear();
-          variables.putAll(commonVariables);
-          variables.put("content", content);
-          Template template = liqpParser.parse(layoutStream);
-
-          content = template.render(variables);
+        if (layoutIn != null) {
+          // the main content has a layout declared
+          contentSupply = liquid.renderLayout(layoutId, layoutIn, contentSupply, variables);
         }
-        appendable.append(content);
+        contentSupply.appendTo(appendable);
       }
 
       if (appendable instanceof SuppressErrorsAppendable) {

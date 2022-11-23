@@ -1,13 +1,15 @@
 package com.kohlschutter.dumbo.markdown;
 
 import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.stringhold.StringHolder;
 
 import liqp.Template;
 import liqp.TemplateContext;
@@ -25,6 +27,10 @@ public class DumboInclude extends Tag {
   @SuppressWarnings("deprecation")
   @Override
   public Object render(TemplateContext context, LNode... nodes) {
+    if (context.getParser().isLegacyMode()) {
+      throw new UnsupportedOperationException();
+    }
+    
     @SuppressWarnings("unchecked")
     ServerApp app = (ServerApp) ((Map<String, Object>) context.getVariables().get("dumbo")).get(
         ".app");
@@ -42,36 +48,28 @@ public class DumboInclude extends Tag {
         throw new FileNotFoundException("Can't include " + includeResource);
       }
 
-      String str;
-      try (InputStream in = resource.openStream()) {
-        str = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-      }
-      
-      Template template;
-      if (context.getParser().isLegacyMode()) {
-          template = Template.parse(str, context.getParseSettings(), context
-                  .getRenderSettings());
-      } else {
-          template = context.getParser().parse(str);
-      }
+      Map<String, Object> variables = new HashMap<String, Object>();
 
-      if (nodes.length > 1) {
-        if (context.getParseSettings().flavor != Flavor.JEKYLL) {
-          // check if there's a optional "with expression"
-          Object value = nodes[1].render(context);
-          context.put(includeResource, value);
-        } else {
-          Map<String, Object> variables = new HashMap<String, Object>();
-          for (int i = 1, n = nodes.length; i < n; i++) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> var = (Map<String, Object>) nodes[i].render(context);
-            variables.putAll(var);
+      try (Reader in = new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8)) {
+        Template template;
+        template = context.getParser().parse(in);
+        if (nodes.length > 1) {
+          if (context.getParseSettings().flavor != Flavor.JEKYLL) {
+            // check if there's a optional "with expression"
+            Object value = nodes[1].render(context);
+            context.put(includeResource, value);
+          } else {
+            for (int i = 1, n = nodes.length; i < n; i++) {
+              @SuppressWarnings("unchecked")
+              Map<String, Object> var = (Map<String, Object>) nodes[i].render(context);
+              variables.putAll(var);
+            }
           }
-          return template.renderUnguarded(variables, context, true);
         }
-      }
 
-      return template.renderUnguarded(context);
+         StringHolder ss = template.prerenderUnguarded(variables, context, true);
+         return ss;
+      }
     } catch (Exception e) {
       if (context.renderSettings.showExceptionsFromInclude) {
         throw new RuntimeException("problem with evaluating include", e);
