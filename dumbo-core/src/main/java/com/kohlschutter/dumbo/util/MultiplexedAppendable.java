@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Christian Kohlschütter
+ * Copyright 2014,2015 Evernote Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.kohlschutter.dumbo.util;
 
 import java.io.IOException;
@@ -7,7 +23,7 @@ import java.util.Map;
 
 /**
  * An {@link Appendable} that multiplexes calls to zero or more {@link Appendable}s.
- * 
+ *
  * @author Christian Kohlschütter
  * @see SuppressErrorsAppendable a good subclass
  */
@@ -19,7 +35,7 @@ public class MultiplexedAppendable implements Appendable {
    * Creates a new {@link MultiplexedAppendable} for the given targets. Entries that are
    * {@code null} are automatically ignored. The list of targets is effectively empty, this instance
    * acts as a dummy {@link Appendable} that does not trigger any error.
-   * 
+   *
    * @param targets The list of targets.
    */
   public MultiplexedAppendable(Appendable... targets) {
@@ -45,7 +61,7 @@ public class MultiplexedAppendable implements Appendable {
   /**
    * Returns a {@link MultiplexedAppendable} for the given targets, unless there's only one non-null
    * {@link Appendable} in the array, in which case that one is returned.
-   * 
+   *
    * @param targets The targets.
    * @return An {@link Appendable} that either is a {@link MultiplexedAppendable}, or not.
    */
@@ -61,15 +77,15 @@ public class MultiplexedAppendable implements Appendable {
   /**
    * A {@link MultiplexedAppendable} that suppresses exceptions when they are thrown upon
    * {@code append}, for them to be checked later if necessary.
-   * 
+   *
    * This is particularly useful if you're generating some content, and you want the caller to not
    * handle exceptions if one out of multiple {@link Appendable}s has a problem.
-   * 
+   *
    * Use {@link #checkError()}, {@link #checkError(Appendable)}, {@link #hasError()},
    * {@link #hasError(Appendable)}, {@link #getFirstError()}, {@link #getError(Appendable)},
    * {@link #getFirstAppendableWithError()}, {@link #getFirstErrorWithAppendable()} to check/handle
    * exceptions.
-   * 
+   *
    * @author Christian Kohlschütter
    */
   public static final class SuppressErrorsAppendable extends MultiplexedAppendable {
@@ -79,7 +95,7 @@ public class MultiplexedAppendable implements Appendable {
      * Creates a new {@link SuppressErrorsAppendable} for the given targets. Entries that are
      * {@code null} are automatically ignored. The list of targets is effectively empty, this
      * instance acts as a dummy {@link Appendable} that does not trigger any error.
-     * 
+     *
      * @param targets The list of targets.
      */
     public SuppressErrorsAppendable(Appendable... targets) {
@@ -90,7 +106,7 @@ public class MultiplexedAppendable implements Appendable {
     /**
      * Returns a {@link SuppressErrorsAppendable} for the given targets, unless there's only one
      * non-null {@link Appendable} in the array, in which case that one is returned.
-     * 
+     *
      * @param targets The targets.
      * @return An {@link Appendable} that either is a {@link SuppressErrorsAppendable}, or not.
      */
@@ -115,11 +131,11 @@ public class MultiplexedAppendable implements Appendable {
      * Called upon encountering an error (an {@link IOException}, {@link RuntimeException} or
      * {@link Error}) during {@link #append(char)}, {@link #append(CharSequence)} or
      * {@link #append(CharSequence, int, int)}.
-     * 
+     *
      * In this implementation, the error is not thrown immediately, but recorded, and optionally
      * thrown later via {@link #checkError()}. Moreover, the affected {@link Appendable} is excluded
      * from the list of multiplexed targets, to prevent errors from piling up.
-     * 
+     *
      * @param target The target.
      * @param index The index of the {@link Appendable} in the array of targets.
      * @param t The error.
@@ -133,7 +149,7 @@ public class MultiplexedAppendable implements Appendable {
 
     /**
      * Returns the first error, or {@code null} if no error.
-     * 
+     *
      * @return The error (a throwable which is either a {@link IOException},
      *         {@link RuntimeException} or {@link Error}.
      */
@@ -148,7 +164,7 @@ public class MultiplexedAppendable implements Appendable {
 
     /**
      * Returns the first {@link Appendable} that has an error.
-     * 
+     *
      * @return The {@link Appendable}, or {@code null} if no error.
      * @see #getFirstErrorWithAppendable() to get both {@link Appendable} and error in one call.
      */
@@ -166,7 +182,7 @@ public class MultiplexedAppendable implements Appendable {
     /**
      * If there is an error, an {@link java.util.Map.Entry} of {@link Appendable} to
      * {@link Throwable} is returned. {@code null} otherwise.
-     * 
+     *
      * @return The {@link java.util.Map.Entry}.
      */
     public Map.Entry<Appendable, Throwable> getFirstErrorWithAppendable() {
@@ -182,7 +198,7 @@ public class MultiplexedAppendable implements Appendable {
 
     /**
      * Returns the first error that occurred.
-     * 
+     *
      * @return The {@link Appendable}, or {@code null} if no error.
      * @see #getFirstErrorWithAppendable() to get both {@link Appendable} and error in one call.
      */
@@ -199,7 +215,7 @@ public class MultiplexedAppendable implements Appendable {
 
     /**
      * Checks if the given {@link Appendable} has an error.
-     * 
+     *
      * @param target The {@link Appendable}.
      * @return {@code true} if an error occurred.
      */
@@ -209,7 +225,7 @@ public class MultiplexedAppendable implements Appendable {
 
     /**
      * Checks if any error occurred.
-     * 
+     *
      * @return {@code true} if an error occurred.
      */
     public boolean hasError() {
@@ -219,7 +235,7 @@ public class MultiplexedAppendable implements Appendable {
     /**
      * Checks if any {@link Appendable} has an error, and throws the error (which either is an
      * {@link IOException}, {@link RuntimeException} or {@link Error}).
-     * 
+     *
      * @throws IOException on error.
      */
     public void checkError() throws IOException {
@@ -232,7 +248,7 @@ public class MultiplexedAppendable implements Appendable {
     /**
      * Checks if the given {@link Appendable} has an error, and throws the error (which either is an
      * {@link IOException}, {@link RuntimeException} or {@link Error}).
-     * 
+     *
      * @throws IOException on error.
      */
     public void checkError(Appendable target) throws IOException {
@@ -305,7 +321,7 @@ public class MultiplexedAppendable implements Appendable {
 
   /**
    * Marks the given {@link Appendable} as excluded.
-   * 
+   *
    * @param target The target.
    * @param index The index of the {@link Appendable} in the array of targets.
    */
@@ -331,9 +347,9 @@ public class MultiplexedAppendable implements Appendable {
    * Called upon encountering an error (an {@link IOException}, {@link RuntimeException} or
    * {@link Error}) during {@link #append(char)}, {@link #append(CharSequence)} or
    * {@link #append(CharSequence, int, int)}.
-   * 
+   *
    * By default, the error is thrown.
-   * 
+   *
    * @param target The target.
    * @param index The index of the {@link Appendable} in the array of targets.
    * @param t The error.

@@ -227,9 +227,9 @@ abstract class ServerAppBase implements Closeable, Cloneable {
   /**
    * Returns how many concurrent pageIds should be maintained per HTTP session; use {@code -1} for
    * "unlimited", {@code 0} for "none" (which is probably not what you want).
-   * 
+   *
    * By default, a sensible limit is returned.
-   * 
+   *
    * @return The maximum, {@code -1} for unlimited, {@code 0} for none
    */
   public int getMaximumPagesPerSession() {

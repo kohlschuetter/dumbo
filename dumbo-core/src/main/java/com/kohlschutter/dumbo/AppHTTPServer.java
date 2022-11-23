@@ -536,7 +536,7 @@ public class AppHTTPServer {
 
   /**
    * Returns a Jetty {@link ServerConnector} that listens on the given UNIX socket address.
-   * 
+   *
    * @param targetServer The server this connector is assigned to.
    * @param address The socket address.
    * @return The connector.

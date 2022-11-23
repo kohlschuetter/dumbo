@@ -68,7 +68,7 @@ public abstract class ServerApp extends ServerAppBase {
 
   /**
    * Look up a resource in the resource path of the app and any registered {@link Extension}.
-   * 
+   *
    * @param path The path to look up (usually relative).
    * @return The {@link URL} pointing to the resource, or {@code null} if not found/not accessible.
    */

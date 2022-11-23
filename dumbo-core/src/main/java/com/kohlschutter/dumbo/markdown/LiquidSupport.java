@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Christian Kohlschütter
+ * Copyright 2014,2015 Evernote Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.kohlschutter.dumbo.markdown;
 
 import java.io.BufferedReader;
@@ -136,8 +152,7 @@ public class LiquidSupport {
     Set<String> includedLayouts = (Set<String>) ((Map<String, Object>) variables.get("dumbo")).get(
         "includedLayouts");
     do {
-      System.out.println("RENDER LAYOUT "
-          +layoutId);
+      System.out.println("RENDER LAYOUT " + layoutId);
       if (!includedLayouts.add(layoutId)) {
         throw new IOException("Circular reference detected: Layout " + layoutId
             + " already detected: " + includedLayouts);
@@ -156,15 +171,13 @@ public class LiquidSupport {
       }
 
       Template template = liqpParser.parse(in);
-      System.out.println("PRERENDER "+System.currentTimeMillis());
+      System.out.println("PRERENDER " + System.currentTimeMillis());
       contentSupply = template.prerender(variables);
       System.out.println("PRERENDER DONE");
 
       in.close();
-      
-      System.out.println("RENDER LAYOUT DONE "
-          +layoutId);
 
+      System.out.println("RENDER LAYOUT DONE " + layoutId);
 
       // the layout can have another layout
       layoutId = YAMLSupport.getVariableAsString(variables, "layout", "layout");

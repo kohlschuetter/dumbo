@@ -80,7 +80,7 @@ public abstract class Extension {
 
   /**
    * Called by the app to initialize the {@link Extension} for the given {@link AppHTTPServer}.
-   * 
+   *
    * @throws IOException on error.
    */
   final void doInit(AppHTTPServer app) throws IOException {
