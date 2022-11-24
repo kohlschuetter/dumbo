@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.markdown;
+package com.kohlschutter.dumbo.jek.liqp.tags;
 
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
@@ -23,9 +23,10 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import com.kohlschutter.dumbo.ServerApp;
-import com.kohlschutter.stringhold.StringHolder;
+import com.kohlschutter.dumbo.jek.LiquidSupport;
 
 import liqp.Template;
 import liqp.TemplateContext;
@@ -46,12 +47,13 @@ public class DumboInclude extends Tag {
     if (context.getParser().isLegacyMode()) {
       throw new UnsupportedOperationException();
     }
+    
+    ServerApp app = (ServerApp) Objects.requireNonNull(context.getEnvironmentMap().get(
+        LiquidSupport.ENVIRONMENT_KEY_DUMBO_APP));
 
-    @SuppressWarnings("unchecked")
-    ServerApp app = (ServerApp) ((Map<String, Object>) context.getVariables().get("dumbo")).get(
-        ".app");
+    String includeResource = null;
     try {
-      String includeResource = super.asString(nodes[0].render(context), context);
+      includeResource = super.asString(nodes[0].render(context), context);
       if (includeResource.isEmpty()) {
         throw new FileNotFoundException("Can't include " + nodes[0] + " (empty string)");
       }
@@ -63,7 +65,7 @@ public class DumboInclude extends Tag {
       if (resource == null) {
         throw new FileNotFoundException("Can't include " + includeResource);
       }
-
+      
       Map<String, Object> variables = new HashMap<String, Object>();
 
       try (Reader in = new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8)) {
@@ -78,17 +80,19 @@ public class DumboInclude extends Tag {
             for (int i = 1, n = nodes.length; i < n; i++) {
               @SuppressWarnings("unchecked")
               Map<String, Object> var = (Map<String, Object>) nodes[i].render(context);
-              variables.putAll(var);
+              
+              Map<String, Object> includeMap = new HashMap<>(var);
+              variables.put("include", includeMap);
             }
           }
         }
 
-        StringHolder ss = template.prerenderUnguarded(variables, context, true);
-        return ss;
+        return template.prerenderUnguarded(variables, context, true);
       }
     } catch (Exception e) {
+      e.printStackTrace();
       if (context.renderSettings.showExceptionsFromInclude) {
-        throw new RuntimeException("problem with evaluating include", e);
+        throw new RuntimeException("problem with evaluating include: " + includeResource, e);
       } else {
         return "";
       }

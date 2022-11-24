@@ -35,18 +35,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
 
-public class CachingJspServlet extends JettyJspServlet {
+final class JspCachingServlet extends JettyJspServlet {
 
   private static final long serialVersionUID = 1L;
-  private ServletContext context;
-
-  @Override
-  public void init() throws ServletException {
-    context = getServletContext();
-  }
 
   private boolean checkCache(String path, String generatedPath, HttpServletRequest req,
       HttpServletResponse resp) throws ServletException, IOException {
+    ServletContext context = getServletContext();
+
     if (generatedPath == null || context.getRealPath(path) == null) {
       return false;
     }
@@ -132,6 +128,7 @@ public class CachingJspServlet extends JettyJspServlet {
           super.addIntHeader(name, value);
         }
       };
+
       super.service(req, respWrapped);
     } finally {
       try {
@@ -172,8 +169,13 @@ public class CachingJspServlet extends JettyJspServlet {
       generatedPath = path.substring(0, path.length() - ".jsp.js".length()) + ".js";
     }
 
-    if (!checkCache(path, generatedPath, req, resp)) {
-      super.service(req, resp);
+    if (generatedPath == null || !checkCache(path, generatedPath, req, resp)) {
+      try {
+        super.service(req, resp);
+      } catch (IOException | ServletException | RuntimeException e) {
+        e.printStackTrace();
+        throw e;
+      }
     }
   }
 }

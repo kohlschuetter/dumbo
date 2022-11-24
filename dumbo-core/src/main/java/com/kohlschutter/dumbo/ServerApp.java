@@ -16,42 +16,128 @@
  */
 package com.kohlschutter.dumbo;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.kohlschutter.dumbo.console.ConsoleService;
+import com.kohlschutter.dumbo.util.IteratorIterable;
 
 /**
- * Internal base class for a lightweight Server-based application that is configurable using Java
- * annotations
+ * Internal base class for a lightweight Server-based application.
  */
-@Extensions({})
-public abstract class ServerApp extends ServerAppBase {
-  private static final Logger LOG = Logger.getLogger(ServerApp.class);
+public abstract class ServerApp extends Component implements Closeable, Cloneable {
+  private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
+  private final LinkedHashMap<Class<?>, Extension> extensions = new LinkedHashMap<>();
 
-  private final Set<Class<Extension>> annotatedExtensions;
-  private final Set<Class<Object>> annotatedServices;
+  private AtomicBoolean initDone = new AtomicBoolean(false);
+  private volatile boolean closed = false;
+  private RPCRegistry rpcRegistry;
+
+  private boolean staticDesignMode = false;
 
   protected ServerApp() {
     super();
-
-    this.annotatedExtensions = new LinkedHashSet<>(getClassesFromAnnotation(Extensions.class,
-        Extension.class));
-    this.annotatedServices = new LinkedHashSet<>(getClassesFromAnnotation(Services.class,
-        Object.class));
+    resolveExtensions();
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  protected final void initRPC(final RPCRegistry registry) {
-    for (Class<Object> extClass : annotatedServices) {
-      Class<?>[] interfaces = extClass.getInterfaces();
-      registry.registerRPCService((Class<Object>) interfaces[0], newInstance(extClass));
+  private void resolveExtensions() throws ExtensionDependencyException {
+    LinkedHashMap<Class<?>, AtomicInteger> extensionClasses = new LinkedHashMap<>();
+    registerExtensions(extensionClasses, getClass());
+
+    ArrayList<Entry<Class<?>, AtomicInteger>> extensionsRanked = new ArrayList<>(extensionClasses
+        .entrySet());
+    extensionsRanked.sort((a, b) -> (b.getValue().get() - a.getValue().get()));
+
+    for (Class<?> extClass : IteratorIterable.of(extensionsRanked.stream().map((o) -> o.getKey())
+        .iterator())) {
+      Extension ext = (Extension) newInstance(extClass);
+      extensions.put(extClass, ext);
+    }
+
+    Set<Class<?>> extCopy = Collections.unmodifiableSet(extensions.keySet());
+
+    for (Extension ext : extensions.values()) {
+      ext.verifyDependencies(this, extCopy);
+    }
+  }
+
+  final void init(AppHTTPServer server) throws IOException {
+    if (!initDone.compareAndSet(false, true)) {
+      throw new IllegalStateException("App is already initialized");
+    }
+
+    for (Extension ext : extensions.values()) {
+      ext.doInit(server);
+    }
+  }
+
+  /**
+   * Initializes {@link Extension} components.
+   */
+  private final void registerExtensions(LinkedHashMap<Class<?>, AtomicInteger> extensionClasses,
+      Class<?> annotatedInClass) {
+    LinkedHashMap<Class<? extends Extension>, AtomicInteger> foundExtensions = Component
+        .getAnnotatedExtensions(annotatedInClass);
+    if (foundExtensions.isEmpty()) {
+      return;
+    }
+
+    // BaseSupport is implied.
+    foundExtensions.computeIfAbsent(BaseSupport.class, (key) -> new AtomicInteger(0)).addAndGet(
+        foundExtensions.size());
+
+    for (Map.Entry<Class<? extends Extension>, AtomicInteger> en : foundExtensions.entrySet()) {
+      extensionClasses.computeIfAbsent(en.getKey(), (key) -> new AtomicInteger(0)).addAndGet(en
+          .getValue().intValue());
+      registerExtensions(extensionClasses, en.getKey());
+    }
+  }
+
+  private final List<Closeable> closeables = Collections.synchronizedList(
+      new ArrayList<Closeable>());
+
+  /**
+   * Registers the designated RPC services.
+   *
+   * @param registry The target RPC registry.
+   */
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  final void initRPC(RPCRegistry registry) {
+    this.rpcRegistry = registry;
+
+    registry.registerRPCService(ConsoleService.class, new ConsoleService() {
+
+      @Override
+      public Object requestNextChunk() {
+        DumboSession session = DumboSession.getSession();
+
+        return ((ConsoleImpl) session.getConsole()).getConsoleService().requestNextChunk();
+      }
+    });
+
+    LinkedHashSet<Class<?>> serviceClasses = new LinkedHashSet<>();
+    for (Class<?> extClass : extensions.keySet()) {
+      serviceClasses.addAll(getAnnotatedServices(extClass));
+    }
+    for (Class<?> serviceClass : serviceClasses) {
+      Class<?>[] interfaces = serviceClass.getInterfaces();
+      registry.registerRPCService((Class) interfaces[0], newInstance(serviceClass));
     }
     onRPCInit(registry);
   }
@@ -59,11 +145,108 @@ public abstract class ServerApp extends ServerAppBase {
   protected void onRPCInit(RPCRegistry registry) {
   }
 
+  /**
+   * Registers a {@link Closeable} instance that should be closed automatically when the application
+   * shuts down.
+   *
+   * @param cl The {@link Closeable} to add.
+   * @return The {@link Closeable} itself.
+   */
+  public <T extends Closeable> T registerCloseable(final T cl) {
+    closeables.add(cl);
+    return cl;
+  }
+
+  /**
+   * Called when an instance of this app has loaded.
+   *
+   * @param session The session for this instance.
+   */
+  protected void onAppLoaded(final DumboSession session) {
+  }
+
   @Override
-  protected final void initExtensions() {
-    for (Class<Extension> extClass : annotatedExtensions) {
-      registerExtension(newInstance(extClass));
+  public void close() throws IOException {
+    if (closed) {
+      return;
     }
+    for (ListIterator<Closeable> lit = closeables.listIterator(closeables.size()); lit
+        .hasPrevious();) {
+      @SuppressWarnings("resource")
+      Closeable cl = lit.previous();
+      try {
+        cl.close();
+      } catch (Exception e) {
+        LOG.info("Error while closing object of type " + cl.getClass(), e);
+      }
+    }
+    closed = true;
+  }
+
+  /**
+   * Called when the application has been quit, for example when all browser windows have been
+   * closed.
+   */
+  protected void onQuit() {
+    try {
+      close();
+    } catch (IOException e) {
+      LOG.info("Could not close app", e);
+    }
+  }
+
+  /**
+   * Checks whether this app has been closed already.
+   *
+   * @return {@code true} if closed.
+   */
+  public boolean isClosed() {
+    return closed;
+  }
+
+  /**
+   * Returns the extensions registered with this app.
+   *
+   * @return The collection of extensions.
+   */
+  Collection<Extension> getExtensions() {
+    return extensions.values();
+  }
+
+  @SuppressWarnings("unchecked")
+  <T extends Extension> T getExtension(Class<T> clazz) {
+    return (T) extensions.get(clazz);
+  }
+
+  /**
+   * Checks whether static design mode is enabled.
+   *
+   * If enabled, {@link #onStart()} will not be called.
+   *
+   * @return {@code true} if static design mode is enabled.
+   */
+  boolean isStaticDesignMode() {
+    return staticDesignMode;
+  }
+
+  void setStaticDesignMode(boolean on) {
+    this.staticDesignMode = on;
+  }
+
+  RPCRegistry getRPCRegistry() {
+    return rpcRegistry;
+  }
+
+  /**
+   * Returns how many concurrent pageIds should be maintained per HTTP session; use {@code -1} for
+   * "unlimited", {@code 0} for "none" (which is probably not what you want).
+   *
+   * By default, a sensible limit is returned.
+   *
+   * @return The maximum, {@code -1} for unlimited, {@code 0} for none
+   */
+  public int getMaximumPagesPerSession() {
+    return 16;
   }
 
   /**
@@ -77,8 +260,8 @@ public abstract class ServerApp extends ServerAppBase {
     if (resource != null) {
       return resource;
     }
-    for (Class<Extension> extClass : annotatedExtensions) {
-      resource = extClass.getResource(path);
+    for (Extension ext : getExtensions()) {
+      resource = ext.getResource(path);
       if (resource != null) {
         return resource;
       }
@@ -86,71 +269,21 @@ public abstract class ServerApp extends ServerAppBase {
     return null;
   }
 
-  private <T> T newInstance(Class<T> clazz) {
-    try {
-      try {
-        return clazz.getConstructor(ServerAppBase.class).newInstance(this);
-      } catch (NoSuchMethodException e) {
-      }
-      try {
-        clazz.getConstructor();
-        return clazz.getDeclaredConstructor().newInstance();
-      } catch (NoSuchMethodException e) {
-      }
-    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-        | InvocationTargetException | SecurityException e) {
-      LOG.info(e);
-    }
-
-    throw new IllegalStateException("Could not find a way to initialize " + clazz);
-  }
-
-  @SuppressWarnings("unchecked")
-  protected final <T> List<Class<T>> getClassesFromAnnotation(
-      Class<? extends Annotation> annotationClass, Class<T> basicType) {
-
-    List<Class<T>> list = new LinkedList<>();
-
-    Class<?> clazz = getClass();
-
-    do {
-      if (clazz.isAnnotationPresent(annotationClass)) {
-        Annotation annotation = clazz.getAnnotation(annotationClass);
-
-        final Class<?>[] value;
-        if (annotation instanceof Services) {
-          value = ((Services) annotation).value();
-        } else if (annotation instanceof Extensions) {
-          value = ((Extensions) annotation).value();
-        } else {
-          throw new IllegalStateException("Unsupported annotation type: " + annotationClass);
-        }
-
-        for (Class<?> en : value) {
-          list.add(0, (Class<T>) en);
-        }
-      }
-
-      if (clazz == ServerApp.class) {
-        break;
-      }
-
-      clazz = clazz.getSuperclass();
-    } while (clazz != null && clazz != Object.class);
-
-    return list;
-  }
-
-  @Override
+  /**
+   * Called after initialization, unless static design mode is enabled.
+   *
+   * This is the place where you want to start the "main" operations.
+   *
+   * @see #initRPC(RPCRegistry)
+   */
   protected final void onStart() {
-    super.onStart();
     new Thread() {
       @Override
       public void run() {
         try {
           onAppStart();
         } catch (Exception e) {
-          LOG.error(e);
+          LOG.error("Error upon app start", e);
         }
       };
     }.start();

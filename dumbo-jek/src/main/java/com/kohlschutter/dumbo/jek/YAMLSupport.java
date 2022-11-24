@@ -14,12 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.markdown;
+package com.kohlschutter.dumbo.jek;
 
 import java.util.Collection;
 import java.util.Map;
 
-public class YAMLSupport {
+import org.snakeyaml.engine.v2.api.LoadSettings;
+
+public final class YAMLSupport {
+
+  public static final LoadSettings DEFAULT_LOAD_SETTINGS = LoadSettings.builder()
+      .setAllowDuplicateKeys(true).build();
 
   public static String getVariableAsString(Map<String, Object> variables, String... pathElements) {
     Object obj = variables;

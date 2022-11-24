@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.markdown;
+package com.kohlschutter.dumbo.jek;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,32 +35,47 @@ import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 
 import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.dumbo.jek.liqp.filters.Markdownify;
+import com.kohlschutter.dumbo.jek.liqp.filters.NumberOfWords;
+import com.kohlschutter.dumbo.jek.liqp.filters.Slugify;
+import com.kohlschutter.dumbo.jek.liqp.tags.AssetPath;
+import com.kohlschutter.dumbo.jek.liqp.tags.DumboInclude;
+import com.kohlschutter.dumbo.jek.liqp.tags.Seo;
 import com.kohlschutter.stringhold.CachedIOSupplier;
 import com.kohlschutter.stringhold.IOExceptionHandler.ExceptionResponse;
 import com.kohlschutter.stringhold.IOSupplier;
 import com.kohlschutter.stringhold.StringHolder;
 
+import liqp.ParseSettings;
+import liqp.RenderSettings;
+import liqp.RenderSettings.RenderMode;
 import liqp.Template;
 import liqp.TemplateParser;
+import liqp.parser.Flavor;
 
 public class LiquidSupport {
   private static final char[] FRONT_MATTER_LINE = new char[] {'-', '-', '-', '\n'};
 
+  public static final String ENVIRONMENT_KEY_DUMBO_APP = ".dumbo.app";
+
   // snakeyaml
-  private final LoadSettings loadSettings = LoadSettings.builder().setAllowDuplicateKeys(true)
-      .build();
+  private final LoadSettings loadSettings = YAMLSupport.DEFAULT_LOAD_SETTINGS;
 
   private final TemplateParser liqpParser;
 
   private final ServerApp app;
 
-  public LiquidSupport(ServerApp app, TemplateParser liqpParser) {
+  public LiquidSupport(ServerApp app) {
     this.app = app;
-    this.liqpParser = liqpParser;
+    this.liqpParser = newLiqpParser(app);
   }
 
-  public StringHolder prerender(File file, Map<String, Object> variables)
-      throws FileNotFoundException, IOException {
+  public TemplateParser getLiqpParser() {
+    return liqpParser;
+  }
+
+  public Object prerender(File file, Map<String, Object> variables) throws FileNotFoundException,
+      IOException {
     return prerender(() -> new BufferedReader(new InputStreamReader(new FileInputStream(file),
         StandardCharsets.UTF_8)), (int) file.length(), variables);
   }
@@ -75,8 +90,8 @@ public class LiquidSupport {
     return haveFrontMatter;
   }
 
-  public StringHolder prerender(IOSupplier<Reader> inSup, int estimatedLen,
-      Map<String, Object> variables) throws IOException {
+  public Object prerender(IOSupplier<Reader> inSup, int estimatedLen, Map<String, Object> variables)
+      throws IOException {
     Reader in = inSup.get();
 
     if (checkFrontMatter(in)) {
@@ -146,13 +161,12 @@ public class LiquidSupport {
     }
   }
 
-  public StringHolder renderLayout(String layoutId, BufferedReader in, StringHolder contentSupply,
+  public Object renderLayout(String layoutId, BufferedReader in, Object contentSupply,
       Map<String, Object> variables) throws IOException {
     @SuppressWarnings("unchecked")
     Set<String> includedLayouts = (Set<String>) ((Map<String, Object>) variables.get("dumbo")).get(
         "includedLayouts");
     do {
-      System.out.println("RENDER LAYOUT " + layoutId);
       if (!includedLayouts.add(layoutId)) {
         throw new IOException("Circular reference detected: Layout " + layoutId
             + " already detected: " + includedLayouts);
@@ -170,14 +184,9 @@ public class LiquidSupport {
         parseFrontMatter(in, layoutVariables);
       }
 
-      Template template = liqpParser.parse(in);
-      System.out.println("PRERENDER " + System.currentTimeMillis());
-      contentSupply = template.prerender(variables);
-      System.out.println("PRERENDER DONE");
+      contentSupply = liqpParser.parse(in).prerenderUnguarded(variables);
 
       in.close();
-
-      System.out.println("RENDER LAYOUT DONE " + layoutId);
 
       // the layout can have another layout
       layoutId = YAMLSupport.getVariableAsString(variables, "layout", "layout");
@@ -188,5 +197,28 @@ public class LiquidSupport {
     } while (true);
 
     return contentSupply;
+  }
+
+  public static TemplateParser newLiqpParser(ServerApp app) {
+    return new TemplateParser.Builder() //
+        .withParseSettings(new ParseSettings.Builder() //
+            .with(Flavor.JEKYLL.defaultParseSettings()) //
+            // filters
+            .with(new Markdownify()) //
+            .with(new Slugify()) //
+            .with(new NumberOfWords())
+            // tags
+            .with(new DumboInclude()) //
+            .with(new Seo()) //
+            .with(new AssetPath()) //
+            .build()) //
+        .withRenderSettings(new RenderSettings.Builder() //
+//            .withRenderMode(RenderMode.STRINGHOLDER) //
+            .withRenderMode(RenderMode.STRING) //
+            .withShowExceptionsFromInclude(true) //
+            .withEnvironmentMapConfigurator((env) -> {
+              env.put(ENVIRONMENT_KEY_DUMBO_APP, app);
+            }).build()) //
+        .build();
   }
 }

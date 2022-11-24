@@ -14,14 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.markdown;
+package com.kohlschutter.dumbo;
 
-import liqp.ParseSettings;
-import liqp.TemplateParser;
-import liqp.parser.Flavor;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class MarkdownConfig {
-  public static final TemplateParser LIQP_PARSER = new TemplateParser.Builder().withParseSettings(
-      new ParseSettings.Builder().with(Flavor.JEKYLL.defaultParseSettings()).with(
-          new DumboInclude()).build()).build();
+/**
+ * Specifies a set of servlet mappings
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Servlets {
+  ServletMapping[] value() default {};
 }

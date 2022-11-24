@@ -21,7 +21,13 @@ import java.net.URL;
 /**
  * Adds required base resources, such as jQuery and json-rpc.
  */
+@Servlets({ //
+    @ServletMapping(map = "*.js", to = JspJsServlet.class, initOrder = 0),
+    @ServletMapping(map = "*.jsp", to = JspCachingServlet.class, initOrder = 0),
+    //
+})
 final class BaseSupport extends Extension {
+
   @Override
   protected void initResources() {
     registerJavaScript("js/jquery.min.js");

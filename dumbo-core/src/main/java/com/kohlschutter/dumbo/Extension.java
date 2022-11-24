@@ -24,8 +24,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -35,7 +35,7 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Provides support for HTML/CSS/JavaScript-based extensions that simplify app development.
  */
-public abstract class Extension {
+public abstract class Extension extends Component {
   private final String extensionPath;
   private String serverContextPath;
   private String contextPath;
@@ -45,10 +45,9 @@ public abstract class Extension {
   private final Collection<String> resCSS = new LinkedHashSet<>();
 
   private final AtomicBoolean initialized = new AtomicBoolean();
-  private boolean initResourcesDone = false;
   private String htmlHead;
 
-  protected Extension() {
+  public Extension() {
     this.extensionPath = initPath();
   }
 
@@ -85,12 +84,9 @@ public abstract class Extension {
    */
   final void doInit(AppHTTPServer app) throws IOException {
     if (!initialized.compareAndSet(false, true)) {
-      return;
+      throw new IllegalStateException("Already initialized");
     }
-    if (!initResourcesDone) {
-      initResources();
-      initResourcesDone = true;
-    }
+    initResources();
     init(app);
   }
 
@@ -103,9 +99,6 @@ public abstract class Extension {
   protected abstract void initResources();
 
   private void register(Collection<String> targetCollection, String path) {
-    if (initResourcesDone) {
-      throw new IllegalStateException("Cannot register resource at this point.");
-    }
     targetCollection.add(path);
   }
 
@@ -148,7 +141,7 @@ public abstract class Extension {
     if (extensionPath != null) {
       URL webappUrl = initExtensionResourceURL();
       if (webappUrl != null) {
-        WebAppContext wac = server.registerContext(extensionPath, webappUrl);
+        WebAppContext wac = server.registerContext(this, extensionPath, webappUrl);
         contextPath = wac.getContextPath().replaceFirst("/$", "");
       }
     }
@@ -220,13 +213,13 @@ public abstract class Extension {
   }
 
   /**
-   * Performs dependency resolution/checks.
+   * Performs dependency checks.
    *
    * @param app The server app
    * @param extensions The extensions to check.
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public void resolveDependencies(final ServerAppBase app, List<Extension> extensions)
+  public void verifyDependencies(final ServerApp app, Set<Class<?>> extensions)
       throws ExtensionDependencyException {
   }
 
@@ -241,5 +234,9 @@ public abstract class Extension {
 
   String getExtensionPath() {
     return extensionPath;
+  }
+
+  public URL getResource(String name) {
+    return getClass().getResource(name);
   }
 }

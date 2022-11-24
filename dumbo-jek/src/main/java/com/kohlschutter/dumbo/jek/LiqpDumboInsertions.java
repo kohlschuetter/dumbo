@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.markdown;
+package com.kohlschutter.dumbo.jek;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.kohlschutter.dumbo.jek.liqp.tags.DumboInclude;
 
 import liqp.Insertion;
 import liqp.blocks.Capture;

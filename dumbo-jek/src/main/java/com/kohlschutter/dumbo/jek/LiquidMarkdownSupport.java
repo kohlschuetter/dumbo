@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.markdown;
+package com.kohlschutter.dumbo.jek;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -56,8 +56,12 @@ public class LiquidMarkdownSupport {
 
   public Document parse(IOSupplier<Reader> in, int estimatedLen, Map<String, Object> variables)
       throws IOException {
-    StringHolder liquid = liquidSupport.prerender(in, estimatedLen, variables);
-    return parser.parseReader(liquid.toReader());
+    Object liquid = liquidSupport.prerender(in, estimatedLen, variables);
+    if(liquid instanceof StringHolder) {
+      return parser.parseReader(((StringHolder)liquid).toReader());
+    } else {
+      return parser.parse(liquid.toString());
+    }
   }
 
   public String render(Document document) {

@@ -34,6 +34,8 @@ import org.jabsorb.serializer.response.results.FailedResult;
 import org.jabsorb.serializer.response.results.JSONRPCResult;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.console.ConsoleService;
 
@@ -48,7 +50,8 @@ import jakarta.servlet.http.HttpSession;
 /**
  * A Jabsorb-based JSON-RPC Servlet.
  */
-public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
+class JabsorbJSONRPCBridgeServlet extends HttpServlet {
+  private static final Logger LOG = LoggerFactory.getLogger(JabsorbJSONRPCBridgeServlet.class);
   private static final long serialVersionUID = 1L;
   private static final Charset UTF_8 = Charset.forName("UTF-8");
   private JSONRPCBridge bridge;
@@ -70,8 +73,7 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
 
         @Override
         public Object transform(Throwable t) {
-          System.err.println("Error during JSON method call: " + tlMethod.get());
-          t.printStackTrace();
+          LOG.warn("Error during JSON method call: " + tlMethod.get(), t);
           if (t instanceof PermanentRPCException) {
             throw (PermanentRPCException) t;
           }
@@ -80,7 +82,7 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       });
 
       registry = new JSONRPCRegistryImpl(bridge);
-      app.initRPCInternal(registry);
+
       app.initRPC(registry);
 
       if (app.isStaticDesignMode()) {
@@ -90,7 +92,7 @@ public class JabsorbJSONRPCBridgeServlet extends HttpServlet {
 
       app.onStart();
     } catch (RuntimeException | Error e) {
-      e.printStackTrace();
+      LOG.error("Failure on init", e);
       throw e;
     }
   }

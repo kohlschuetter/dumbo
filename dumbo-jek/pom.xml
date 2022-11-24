@@ -1,0 +1,52 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.kohlschutter.dumbo</groupId>
+        <artifactId>dumbo-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>dumbo-jek</artifactId>
+
+    <properties>
+        <kohlschutter.project.base.directory>${project.basedir}/..</kohlschutter.project.base.directory>
+        <mainClass>com.kohlschutter.dumbo.helloworld.HelloWorldApp</mainClass>
+        <dumbo.project.basedir>${project.basedir}/..</dumbo.project.basedir>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.kohlschutter.dumbo</groupId>
+            <artifactId>dumbo-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kohlschutter.dumbo</groupId>
+            <artifactId>dumbo-extensions</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Mardown parser -->
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.64.0</version>
+        </dependency>
+
+        <!-- Liquid parser -->
+        <dependency>
+            <groupId>nl.big-o</groupId>
+            <artifactId>liqp</artifactId>
+            <version>0.8.3.3-SNAPSHOT</version>
+        </dependency>
+
+        <!-- YAML parser -->
+        <dependency>
+            <groupId>org.snakeyaml</groupId>
+            <artifactId>snakeyaml-engine</artifactId>
+            <version>2.5</version>
+        </dependency>
+    </dependencies>
+</project>

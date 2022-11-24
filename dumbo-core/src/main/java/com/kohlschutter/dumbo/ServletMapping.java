@@ -16,22 +16,22 @@
  */
 package com.kohlschutter.dumbo;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import jakarta.servlet.Servlet;
+
 /**
- * Thrown during extension dependency resolution to signal that a non-recoverable problem occurred,
- * e.g., a dependency conflict.
+ * Specifies a string-to-class mapping
  */
-public class ExtensionDependencyException extends IllegalStateException {
-  private static final long serialVersionUID = 1L;
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ServletMapping {
+  Class<? extends Servlet> to();
 
-  public ExtensionDependencyException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public ExtensionDependencyException(String message) {
-    super(message);
-  }
-
-  public ExtensionDependencyException(Throwable cause) {
-    super(cause);
-  }
+  String map();
+  
+  int initOrder() default -1;
 }

@@ -19,7 +19,6 @@ package com.kohlschutter.dumbo;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletHolder;
 
@@ -45,18 +44,18 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Christian Kohlschütter
  */
-public class JspJsServlet extends HttpServlet {
+final class JspJsServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private DefaultServlet defaultServlet;
-  private JettyJspServlet jspServlet;
+  private JspCachingServlet jspServlet;
   private static final Pattern PAT_JS = Pattern.compile("\\.js$");
 
   @Override
   public void init() throws ServletException {
     defaultServlet = (DefaultServlet) ((ServletHolder) getServletContext().getAttribute("holder."
         + DefaultServlet.class.getName())).getServlet();
-    jspServlet = (JettyJspServlet) ((ServletHolder) getServletContext().getAttribute("holder."
-        + JettyJspServlet.class.getName())).getServlet();
+    jspServlet = (JspCachingServlet) ((ServletHolder) getServletContext().getAttribute("holder."
+        + JspCachingServlet.class.getName())).getServlet();
   }
 
   @Override
