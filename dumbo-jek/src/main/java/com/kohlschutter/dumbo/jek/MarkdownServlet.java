@@ -189,6 +189,6 @@ public class MarkdownServlet extends HttpServlet {
     }
 
     time = System.currentTimeMillis() - time;
-    LOG.info("Request time: "+time+"ms");
+    LOG.info("Request time: " + time + "ms");
   }
 }

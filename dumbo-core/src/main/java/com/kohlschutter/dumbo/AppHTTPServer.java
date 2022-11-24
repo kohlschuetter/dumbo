@@ -208,7 +208,7 @@ public class AppHTTPServer {
   private void scanWebApp(String contextPrefix, String dirPrefix, Resource dir) throws IOException {
     File file = dir.getFile();
     if (file == null || !file.canWrite()) {
-      LOG.warn("FIXME Cannot visit file: "+dir);
+      LOG.warn("FIXME Cannot visit file: " + dir);
       return;
     }
 

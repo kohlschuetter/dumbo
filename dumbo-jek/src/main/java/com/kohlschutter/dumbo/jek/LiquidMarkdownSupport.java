@@ -57,8 +57,8 @@ public class LiquidMarkdownSupport {
   public Document parse(IOSupplier<Reader> in, int estimatedLen, Map<String, Object> variables)
       throws IOException {
     Object liquid = liquidSupport.prerender(in, estimatedLen, variables);
-    if(liquid instanceof StringHolder) {
-      return parser.parseReader(((StringHolder)liquid).toReader());
+    if (liquid instanceof StringHolder) {
+      return parser.parseReader(((StringHolder) liquid).toReader());
     } else {
       return parser.parse(liquid.toString());
     }

@@ -32,6 +32,6 @@ public @interface ServletMapping {
   Class<? extends Servlet> to();
 
   String map();
-  
+
   int initOrder() default -1;
 }

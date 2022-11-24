@@ -213,7 +213,7 @@ public class LiquidSupport {
             .with(new AssetPath()) //
             .build()) //
         .withRenderSettings(new RenderSettings.Builder() //
-//            .withRenderMode(RenderMode.STRINGHOLDER) //
+            // .withRenderMode(RenderMode.STRINGHOLDER) //
             .withRenderMode(RenderMode.STRING) //
             .withShowExceptionsFromInclude(true) //
             .withEnvironmentMapConfigurator((env) -> {

@@ -47,7 +47,7 @@ public class DumboInclude extends Tag {
     if (context.getParser().isLegacyMode()) {
       throw new UnsupportedOperationException();
     }
-    
+
     ServerApp app = (ServerApp) Objects.requireNonNull(context.getEnvironmentMap().get(
         LiquidSupport.ENVIRONMENT_KEY_DUMBO_APP));
 
@@ -65,7 +65,7 @@ public class DumboInclude extends Tag {
       if (resource == null) {
         throw new FileNotFoundException("Can't include " + includeResource);
       }
-      
+
       Map<String, Object> variables = new HashMap<String, Object>();
 
       try (Reader in = new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8)) {
@@ -80,7 +80,7 @@ public class DumboInclude extends Tag {
             for (int i = 1, n = nodes.length; i < n; i++) {
               @SuppressWarnings("unchecked")
               Map<String, Object> var = (Map<String, Object>) nodes[i].render(context);
-              
+
               Map<String, Object> includeMap = new HashMap<>(var);
               variables.put("include", includeMap);
             }
