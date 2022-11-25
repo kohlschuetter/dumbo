@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.jek.liqp.tags;
+package com.kohlschutter.dumbo.markdown.liqp;
 
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.kohlschutter.dumbo.ServerApp;
-import com.kohlschutter.dumbo.jek.LiquidSupport;
+import com.kohlschutter.dumbo.markdown.LiquidHelper;
 
 import liqp.Template;
 import liqp.TemplateContext;
@@ -34,10 +34,10 @@ import liqp.nodes.LNode;
 import liqp.parser.Flavor;
 import liqp.tags.Tag;
 
-public class DumboInclude extends Tag {
+public class DumboIncludeTag extends Tag {
   public static String DEFAULT_EXTENSION = ".liquid";
 
-  public DumboInclude() {
+  public DumboIncludeTag() {
     super("include");
   }
 
@@ -49,7 +49,7 @@ public class DumboInclude extends Tag {
     }
 
     ServerApp app = (ServerApp) Objects.requireNonNull(context.getEnvironmentMap().get(
-        LiquidSupport.ENVIRONMENT_KEY_DUMBO_APP));
+        LiquidHelper.ENVIRONMENT_KEY_DUMBO_APP));
 
     String includeResource = null;
     try {

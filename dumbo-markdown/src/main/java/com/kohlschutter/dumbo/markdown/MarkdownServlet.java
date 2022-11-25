@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.jek;
+package com.kohlschutter.dumbo.markdown;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,15 +26,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.dumbo.markdown.site.SiteObject;
 import com.kohlschutter.dumbo.util.MultiplexedAppendable.SuppressErrorsAppendable;
 import com.kohlschutter.dumbo.util.SuccessfulCloseWriter;
 import com.kohlschutter.stringhold.StringHolder;
+import com.kohlschutter.stringhold.StringHolderSequence;
 import com.vladsch.flexmark.util.ast.Document;
 
 import jakarta.servlet.ServletContext;
@@ -50,8 +53,8 @@ public class MarkdownServlet extends HttpServlet {
 
   private ServerApp app;
 
-  private LiquidSupport liquid;
-  private LiquidMarkdownSupport liquidMarkdown;
+  private LiquidHelper liquid;
+  private LiquidMarkdownHelper liquidMarkdown;
 
   private final Map<String, Object> commonVariables = new HashMap<>();
   private final Map<String, Object> commonDumboVariables = new HashMap<>();
@@ -60,16 +63,16 @@ public class MarkdownServlet extends HttpServlet {
   public void init() throws ServletException {
     servletContext = getServletContext();
 
-    this.app = AppHTTPServer.getServerApp(servletContext);
+    this.app = Objects.requireNonNull(AppHTTPServer.getServerApp(servletContext));
 
-    this.liquid = new LiquidSupport(app);
-    this.liquidMarkdown = new LiquidMarkdownSupport(liquid);
+    this.liquid = new LiquidHelper(app);
+    this.liquidMarkdown = new LiquidMarkdownHelper(liquid);
 
     commonVariables.clear();
     commonDumboVariables.clear();
     commonVariables.put("dumbo", commonDumboVariables);
 
-    commonVariables.put("site", SiteConfig.init(app));
+    commonVariables.put("site", new SiteObject(app, liquid));
   }
 
   private SuccessfulCloseWriter mdReloadWriter(String path, HttpServletRequest req)
@@ -146,7 +149,7 @@ public class MarkdownServlet extends HttpServlet {
         .getSession()));
     dumboVariables.put("includedLayouts", new LinkedHashSet<>());
 
-    Document document = liquidMarkdown.parse(mdFile, variables);
+    Document document = liquidMarkdown.parseLiquidMarkdown(mdFile, variables);
 
     resp.setContentType("text/html;charset=UTF-8");
     resp.setCharacterEncoding("UTF-8");
@@ -163,19 +166,19 @@ public class MarkdownServlet extends HttpServlet {
       String layoutId = YAMLSupport.getVariableAsString(variables, "page", "layout");
       try (BufferedReader layoutIn = liquid.layoutReader(layoutId)) {
         // the main content
-        Object contentSupply = StringHolder.withSupplierExpectedLength(document.getTextLength(),
-            () -> liquidMarkdown.render(document));
+        StringHolderSequence seq = new StringHolderSequence();
+        seq.setExpectedLength(document.getTextLength());
+        liquidMarkdown.render(document, seq);
+
+        StringHolder contentSupply = seq;
 
         if (layoutIn != null) {
           // the main content has a layout declared
-          contentSupply = liquid.renderLayout(layoutId, layoutIn, contentSupply, variables);
+          contentSupply = StringHolder.withContent(liquid.renderLayout(layoutId, layoutIn,
+              contentSupply, variables));
         }
 
-        if (contentSupply instanceof StringHolder) {
-          ((StringHolder) contentSupply).appendTo(appendable);
-        } else {
-          appendable.append(contentSupply.toString());
-        }
+        contentSupply.appendTo(appendable);
       }
 
       if (appendable instanceof SuppressErrorsAppendable) {

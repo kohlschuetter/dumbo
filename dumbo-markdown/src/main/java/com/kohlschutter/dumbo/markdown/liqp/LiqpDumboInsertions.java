@@ -14,13 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.jek;
+package com.kohlschutter.dumbo.markdown.liqp;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.kohlschutter.dumbo.jek.liqp.tags.DumboInclude;
 
 import liqp.Insertion;
 import liqp.blocks.Capture;
@@ -59,7 +57,7 @@ public final class LiqpDumboInsertions {
     registerInsertion(new Ifchanged());
 
     // registerInsertion(new Include());
-    registerInsertion(new DumboInclude());
+    registerInsertion(new DumboIncludeTag());
 
     registerInsertion(new Increment());
     registerInsertion(new Raw());

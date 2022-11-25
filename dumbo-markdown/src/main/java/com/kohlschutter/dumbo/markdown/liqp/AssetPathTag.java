@@ -14,15 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.jek.liqp.tags;
+package com.kohlschutter.dumbo.markdown.liqp;
 
 import liqp.TemplateContext;
 import liqp.nodes.LNode;
 import liqp.tags.Tag;
 
-public class AssetPath extends Tag {
+public class AssetPathTag extends Tag {
 
-  public AssetPath() {
+  public AssetPathTag() {
     super("asset_path");
   }
 

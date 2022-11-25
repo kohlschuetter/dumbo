@@ -18,10 +18,6 @@ package com.kohlschutter.dumbo;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Objects;
@@ -29,6 +25,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jetty.webapp.WebAppContext;
+
+import com.kohlschutter.dumbo.util.NameObfuscator;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -67,14 +65,8 @@ public abstract class Extension extends Component {
 
   protected String initExtensionPath() {
     String name = getClass().getName();
-    MessageDigest md;
-    try {
-      md = MessageDigest.getInstance("SHA-1");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
-    return "/app_/" + Base64.getEncoder().encodeToString(md.digest(name.getBytes(
-        StandardCharsets.UTF_8))).replace('/', '_');
+
+    return "/app_/" + NameObfuscator.obfuscate(name);
   }
 
   /**

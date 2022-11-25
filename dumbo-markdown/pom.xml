@@ -8,7 +8,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>dumbo-jek</artifactId>
+    <artifactId>dumbo-markdown</artifactId>
 
     <properties>
         <kohlschutter.project.base.directory>${project.basedir}/..</kohlschutter.project.base.directory>

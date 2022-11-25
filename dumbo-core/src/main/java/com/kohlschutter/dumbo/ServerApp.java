@@ -43,6 +43,7 @@ import com.kohlschutter.dumbo.util.IteratorIterable;
  */
 public abstract class ServerApp extends Component implements Closeable, Cloneable {
   private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
+
   private final LinkedHashMap<Class<?>, Extension> extensions = new LinkedHashMap<>();
 
   private AtomicBoolean initDone = new AtomicBoolean(false);

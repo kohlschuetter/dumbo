@@ -27,6 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jetty.jsp.JettyJspServlet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -36,24 +38,31 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
 
 final class JspCachingServlet extends JettyJspServlet {
-
   private static final long serialVersionUID = 1L;
+  private static final Logger LOG = LoggerFactory.getLogger(JspCachingServlet.class);
+
+  private ServletContext context;
+
+  @Override
+  public void init() throws ServletException {
+    this.context = getServletContext();
+  }
 
   private boolean checkCache(String path, String generatedPath, HttpServletRequest req,
       HttpServletResponse resp) throws ServletException, IOException {
-    ServletContext context = getServletContext();
 
-    if (generatedPath == null || context.getRealPath(path) == null) {
+    if (generatedPath == null || context.getRealPath(path) == null || path.contains("..")) {
       return false;
     }
 
     File generatedFile = new File(context.getRealPath(generatedPath));
-    if (/* generatedFile.exists() && */ !"true".equals(req.getParameter("reload"))) {
+    if ((generatedFile.exists() && !"true".equals(req.getParameter("reload")))) {
       return false;
     }
 
     File generatedFileParent = generatedFile.getParentFile();
     if (!generatedFileParent.canWrite()) {
+      LOG.warn("Cannot write to location: " + generatedFile);
       return false;
     }
 

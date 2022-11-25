@@ -14,12 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.jek.liqp.filters;
+package com.kohlschutter.dumbo.markdown.liqp;
 
 import liqp.TemplateContext;
 import liqp.filters.Filter;
 
-public class Markdownify extends Filter {
+public class SlugifyFilter extends Filter {
+  public SlugifyFilter() {
+    super("slugify");
+  }
 
   @Override
   public Object apply(Object value, TemplateContext context, Object... params) {
@@ -29,7 +32,7 @@ public class Markdownify extends Filter {
       return content;
     }
 
-    System.out.println("FIXME MARKDOWNIFY: " + content);
+    System.out.println("FIXME SLUGIFY: " + content + "; " + content.length());
 
     return content;
   }

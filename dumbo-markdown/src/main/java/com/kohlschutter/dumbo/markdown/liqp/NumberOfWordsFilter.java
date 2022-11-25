@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.jek.liqp.filters;
+package com.kohlschutter.dumbo.markdown.liqp;
 
 import liqp.TemplateContext;
 import liqp.filters.Filter;
 
-public class NumberOfWords extends Filter {
-  public NumberOfWords() {
+public class NumberOfWordsFilter extends Filter {
+  public NumberOfWordsFilter() {
     super("number_of_words");
   }
 

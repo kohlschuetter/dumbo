@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.jek;
+package com.kohlschutter.dumbo.markdown;
 
 import com.kohlschutter.dumbo.Extension;
 import com.kohlschutter.dumbo.Extensions;
@@ -30,7 +30,7 @@ import com.kohlschutter.dumbo.ext.AppDefaultsSupport;
     //
 })
 @Extensions({AppDefaultsSupport.class, BootstrapSupport.class, ConsoleSupport.class})
-public class DumboJekSupport extends Extension {
+public class DumboMarkdownSupport extends Extension {
 
   @Override
   protected void initResources() {

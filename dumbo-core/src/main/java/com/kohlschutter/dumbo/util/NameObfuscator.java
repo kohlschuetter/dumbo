@@ -14,23 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.jek.liqp.filters;
+package com.kohlschutter.dumbo.util;
 
-import liqp.TemplateContext;
-import liqp.filters.Filter;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
-public class Slugify extends Filter {
+public final class NameObfuscator {
+  private static final MessageDigest SHA1;
 
-  @Override
-  public Object apply(Object value, TemplateContext context, Object... params) {
-    String content = super.asString(value, context);
-
-    if (content.isEmpty()) {
-      return content;
+  static {
+    try {
+      SHA1 = MessageDigest.getInstance("SHA-1");
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
     }
 
-    System.out.println("FIXME SLUGIFY: " + content + "; " + content.length());
+  }
 
-    return content;
+  private NameObfuscator() {
+    throw new IllegalStateException("No instances");
+  }
+
+  public static String obfuscate(String s) {
+    return Base64.getUrlEncoder().encodeToString(SHA1.digest(s.getBytes(StandardCharsets.UTF_8)));
   }
 }

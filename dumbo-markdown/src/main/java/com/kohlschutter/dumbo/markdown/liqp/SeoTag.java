@@ -14,13 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.jek.liqp.tags;
+package com.kohlschutter.dumbo.markdown.liqp;
 
 import liqp.TemplateContext;
 import liqp.nodes.LNode;
 import liqp.tags.Tag;
 
-public class Seo extends Tag {
+public class SeoTag extends Tag {
+
+  public SeoTag() {
+    super("seo");
+  }
 
   @Override
   public Object render(TemplateContext context, LNode... nodes) {
