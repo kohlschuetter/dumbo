@@ -33,7 +33,7 @@ import com.kohlschutter.stringhold.IOSupplier;
 
 /**
  * Provides a Jekyll-compatible site collection object (e.g., site.posts)
- * 
+ *
  * @author Christian Kohlschütter
  */
 public final class SiteCollection implements List<Object> {

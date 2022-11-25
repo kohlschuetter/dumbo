@@ -68,7 +68,8 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
 
     getMap().put("posts", new SiteCollection(liquid, new HashMap<>(), getCollection(app, "posts")));
     getMap().put("tabs", new SiteCollection(liquid, new HashMap<>(), getCollection(app, "tabs")));
-    getMap().put("drafts", new SiteCollection(liquid, new HashMap<>(), getCollection(app, "drafts")));
+    getMap().put("drafts", new SiteCollection(liquid, new HashMap<>(), getCollection(app,
+        "drafts")));
   }
 
   private static List<IOSupplier<Reader>> getCollection(ServerApp app, String collectionId)

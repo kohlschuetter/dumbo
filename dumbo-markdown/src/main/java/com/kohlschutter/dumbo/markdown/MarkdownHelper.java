@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Christian Kohlschütter
+ * Copyright 2014,2015 Evernote Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.kohlschutter.dumbo.markdown;
 
 import java.io.IOException;
@@ -36,7 +52,7 @@ public class MarkdownHelper {
 
   /**
    * Renders the parsed Markdown document to string.
-   * 
+   *
    * @param document The document.
    * @return The rendered document as a string.
    */
@@ -46,7 +62,7 @@ public class MarkdownHelper {
 
   /**
    * Renders the parsed Markdown document to an {@link Appendable}.
-   * 
+   *
    * @param document The document.
    */
   public void render(Document document, Appendable appendable) {

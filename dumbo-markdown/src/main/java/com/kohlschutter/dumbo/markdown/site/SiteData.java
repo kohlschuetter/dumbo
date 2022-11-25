@@ -30,7 +30,7 @@ import com.kohlschutter.dumbo.markdown.YAMLSupport;
 
 /**
  * Provides a Jekyll-compatible site.data object.
- * 
+ *
  * @author Christian Kohlschütter
  */
 public class SiteData extends FilterMap.ReadOnlyFilterMap<String, Object> {

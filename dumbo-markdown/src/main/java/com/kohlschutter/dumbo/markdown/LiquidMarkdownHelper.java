@@ -38,9 +38,9 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
 
   /**
    * Parses the given Markdown file so it can be rendered.
-   * 
+   *
    * The file can have an optional front matter.
-   * 
+   *
    * @param mdFile The markdown file.
    * @param variables The variables to use in the scope of the file.
    * @return The parsed markdown object, ready to be rendered.
@@ -55,9 +55,9 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
 
   /**
    * Parses the given Markdown source so it can be rendered.
-   * 
+   *
    * The file can have an optional front matter.
-   * 
+   *
    * @param in The markdown source.
    * @param variables The variables to use in the scope of the file.
    * @return The parsed markdown object, ready to be rendered.
