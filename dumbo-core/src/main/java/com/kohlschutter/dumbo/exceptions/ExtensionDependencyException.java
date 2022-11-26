@@ -14,18 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.kohlschutter.dumbo.exceptions;
 
 /**
- * Specifies a set of servlet mappings
+ * Thrown during extension dependency resolution to signal that a non-recoverable problem occurred,
+ * e.g., a dependency conflict.
  */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Servlets {
-  ServletMapping[] value() default {};
+public class ExtensionDependencyException extends IllegalStateException {
+  private static final long serialVersionUID = 1L;
+
+  public ExtensionDependencyException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public ExtensionDependencyException(String message) {
+    super(message);
+  }
+
+  public ExtensionDependencyException(Throwable cause) {
+    super(cause);
+  }
 }

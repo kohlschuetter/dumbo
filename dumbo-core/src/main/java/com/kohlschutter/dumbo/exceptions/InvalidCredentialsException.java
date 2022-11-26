@@ -14,24 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
+package com.kohlschutter.dumbo.exceptions;
 
-/**
- * Thrown during extension dependency resolution to signal that a non-recoverable problem occurred,
- * e.g., a dependency conflict.
- */
-public class ExtensionDependencyException extends IllegalStateException {
+public class InvalidCredentialsException extends PermanentRPCException {
   private static final long serialVersionUID = 1L;
 
-  public ExtensionDependencyException(String message, Throwable cause) {
+  public InvalidCredentialsException() {
+    super();
+  }
+
+  public InvalidCredentialsException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public ExtensionDependencyException(String message) {
-    super(message);
+  public InvalidCredentialsException(String s) {
+    super(s);
   }
 
-  public ExtensionDependencyException(Throwable cause) {
+  public InvalidCredentialsException(Throwable cause) {
     super(cause);
   }
 }

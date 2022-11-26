@@ -25,8 +25,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.kohlschutter.dumbo.Component;
-import com.kohlschutter.dumbo.Extensions;
-import com.kohlschutter.dumbo.Services;
+import com.kohlschutter.dumbo.ext.Extensions;
+import com.kohlschutter.dumbo.ext.Services;
 
 public final class AnnotationUtil {
   private AnnotationUtil() {

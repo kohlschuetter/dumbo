@@ -21,12 +21,12 @@ import java.io.PrintWriter;
 
 import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.DumboSession;
-import com.kohlschutter.dumbo.Extensions;
 import com.kohlschutter.dumbo.ServerApp;
-import com.kohlschutter.dumbo.Services;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 import com.kohlschutter.dumbo.console.Console;
 import com.kohlschutter.dumbo.console.ConsoleSupport;
+import com.kohlschutter.dumbo.ext.Extensions;
+import com.kohlschutter.dumbo.ext.Services;
 import com.kohlschutter.dumbo.helloworld.DemoServiceImpl;
 import com.kohlschutter.dumbo.util.DevTools;
 

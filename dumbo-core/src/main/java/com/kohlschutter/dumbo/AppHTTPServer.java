@@ -61,6 +61,9 @@ import org.newsclub.net.unix.jetty.AFSocketServerConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
+import com.kohlschutter.dumbo.ext.ServletMapping;
+import com.kohlschutter.dumbo.ext.Servlets;
 import com.kohlschutter.dumbo.util.DevTools;
 
 import jakarta.servlet.Servlet;

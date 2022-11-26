@@ -31,6 +31,8 @@ import java.util.function.Supplier;
 import org.eclipse.jdt.annotation.NonNull;
 
 import com.kohlschutter.dumbo.console.Console;
+import com.kohlschutter.dumbo.exceptions.InvalidSessionException;
+import com.kohlschutter.dumbo.exceptions.NoSessionException;
 
 import jakarta.servlet.http.HttpSession;
 

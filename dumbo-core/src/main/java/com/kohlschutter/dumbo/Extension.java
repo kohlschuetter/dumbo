@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jetty.webapp.WebAppContext;
 
+import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 import com.kohlschutter.dumbo.util.NameObfuscator;
 
 import jakarta.servlet.http.HttpSession;

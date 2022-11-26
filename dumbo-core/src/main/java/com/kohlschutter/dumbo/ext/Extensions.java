@@ -14,24 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
+package com.kohlschutter.dumbo.ext;
 
-public class InvalidSessionException extends PermanentRPCException {
-  private static final long serialVersionUID = 1L;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-  public InvalidSessionException() {
-    super();
-  }
+import com.kohlschutter.dumbo.Extension;
 
-  public InvalidSessionException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public InvalidSessionException(String s) {
-    super(s);
-  }
-
-  public InvalidSessionException(Throwable cause) {
-    super(cause);
-  }
+/**
+ * Specifies a set of {@link Extension}s.
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Extensions {
+  Class<? extends Extension>[] value();
 }

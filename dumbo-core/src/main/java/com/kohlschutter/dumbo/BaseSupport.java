@@ -18,6 +18,9 @@ package com.kohlschutter.dumbo;
 
 import java.net.URL;
 
+import com.kohlschutter.dumbo.ext.ServletMapping;
+import com.kohlschutter.dumbo.ext.Servlets;
+
 /**
  * Adds required base resources, such as jQuery and json-rpc.
  */

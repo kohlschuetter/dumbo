@@ -14,24 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
+package com.kohlschutter.dumbo.exceptions;
 
-public class InvalidCredentialsException extends PermanentRPCException {
+public class NoSessionException extends PermanentRPCException {
   private static final long serialVersionUID = 1L;
 
-  public InvalidCredentialsException() {
+  public NoSessionException() {
     super();
   }
 
-  public InvalidCredentialsException(String message, Throwable cause) {
+  public NoSessionException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public InvalidCredentialsException(String s) {
-    super(s);
+  public NoSessionException(String message) {
+    super(message);
   }
 
-  public InvalidCredentialsException(Throwable cause) {
+  public NoSessionException(Throwable cause) {
     super(cause);
   }
 }

@@ -14,24 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
+package com.kohlschutter.dumbo.exceptions;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class InvalidSessionException extends PermanentRPCException {
+  private static final long serialVersionUID = 1L;
 
-import jakarta.servlet.Servlet;
+  public InvalidSessionException() {
+    super();
+  }
 
-/**
- * Specifies a string-to-class mapping
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ServletMapping {
-  Class<? extends Servlet> to();
+  public InvalidSessionException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-  String map();
+  public InvalidSessionException(String s) {
+    super(s);
+  }
 
-  int initOrder() default -1;
+  public InvalidSessionException(Throwable cause) {
+    super(cause);
+  }
 }

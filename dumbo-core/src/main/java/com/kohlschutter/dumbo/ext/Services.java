@@ -14,24 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
+package com.kohlschutter.dumbo.ext;
 
-public class NoSessionException extends PermanentRPCException {
-  private static final long serialVersionUID = 1L;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-  public NoSessionException() {
-    super();
-  }
-
-  public NoSessionException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public NoSessionException(String message) {
-    super(message);
-  }
-
-  public NoSessionException(Throwable cause) {
-    super(cause);
-  }
+/**
+ * Specifies a set of RPC services.
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Services {
+  Class<?>[] value();
 }

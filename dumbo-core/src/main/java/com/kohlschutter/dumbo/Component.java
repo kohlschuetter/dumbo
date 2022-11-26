@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.kohlschutter.dumbo.ext.Extensions;
+import com.kohlschutter.dumbo.ext.Services;
+import com.kohlschutter.dumbo.ext.Servlets;
 import com.kohlschutter.dumbo.util.AnnotationUtil;
 
 /**

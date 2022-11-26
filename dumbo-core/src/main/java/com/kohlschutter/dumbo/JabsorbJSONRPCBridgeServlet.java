@@ -38,6 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.console.ConsoleService;
+import com.kohlschutter.dumbo.exceptions.NoSessionException;
+import com.kohlschutter.dumbo.exceptions.PermanentRPCException;
 
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
