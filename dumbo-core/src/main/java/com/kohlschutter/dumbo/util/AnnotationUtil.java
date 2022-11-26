@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
 
-import com.kohlschutter.dumbo.annotations.Component;
+import com.kohlschutter.dumbo.api.Component;
 
 public final class AnnotationUtil {
   private AnnotationUtil() {

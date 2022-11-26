@@ -21,7 +21,6 @@ import java.io.IOException;
 
 import com.kohlschutter.dumbo.markdown.MarkdownHelper;
 import com.kohlschutter.stringhold.StringHolder;
-import com.kohlschutter.stringhold.StringHolderSequence;
 
 import liqp.TemplateContext;
 import liqp.filters.Filter;
@@ -38,13 +37,13 @@ public class MarkdownifyFilter extends Filter {
   public Object apply(Object value, TemplateContext context, Object... params) {
     if (value == null) {
       // FIXME this is probably a bug
-      throw new NullPointerException("markdownify got null value");
+      // throw new NullPointerException("refusing to markdownify null");
+      System.err.println("markdownify got null value");
+      value = "";
     }
-    System.out.println("MAKDOWNIFY " + value.getClass() + " "
-        + (value instanceof StringHolderSequence ? ((StringHolderSequence) value).numberOfAppends()
-            : false));
 
-    value = value instanceof StringHolder ? value : super.asString(value, context);
+    value = value instanceof StringHolder ? ((StringHolder) value).asContent() : super.asString(
+        value, context);
     if (value instanceof CharSequence && ((CharSequence) value).isEmpty()) {
       return "";
     }

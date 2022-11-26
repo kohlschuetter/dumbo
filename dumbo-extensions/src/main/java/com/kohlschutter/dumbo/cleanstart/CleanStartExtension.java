@@ -17,8 +17,8 @@
 package com.kohlschutter.dumbo.cleanstart;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
-import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
+import com.kohlschutter.dumbo.api.Component;
 
 /**
  * Hide the page BODY until the app is ready.

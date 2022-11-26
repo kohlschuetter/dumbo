@@ -16,9 +16,9 @@
  */
 package com.kohlschutter.dumbo.disableoverscroll;
 
-import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
+import com.kohlschutter.dumbo.api.Component;
 
 /**
  * Disable the "rubber band" / "overscrolling" annoyance in Google Chrome on OS X when scrolling

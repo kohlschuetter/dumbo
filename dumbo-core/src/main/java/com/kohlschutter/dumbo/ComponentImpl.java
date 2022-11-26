@@ -16,8 +16,8 @@
  */
 package com.kohlschutter.dumbo;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,15 +25,21 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import com.kohlschutter.dumbo.annotations.Component;
+import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 import com.kohlschutter.dumbo.util.AnnotationUtil;
 
 class ComponentImpl implements BaseSupport {
+
+  private final AtomicBoolean initialized = new AtomicBoolean();
+
   private final Class<? extends Component> componentClass;
 
   private LinkedHashSet<Class<?>> reachableComponents = null;
@@ -47,32 +53,25 @@ class ComponentImpl implements BaseSupport {
   }
 
   /**
-   * Creates a new instance of the given class, trying several construction methods, starting with a
-   * constructor that takes this {@link ComponentImpl} as the only parameter.
-   *
-   * @param <T> The instance type.
-   * @param clazz The class to instantiate.
-   * @return The instance.
-   * @throws IllegalStateException if the class could not be initialized.
+   * Retrieves a list of reachable {@link Component}s.
+   * 
+   * @param extra An additional class to retrieve {@link Component}s from.
+   * @return A collection of {@link Component} instances, in dependency order.
    */
-  final <T> T newInstance(Class<T> clazz) throws IllegalStateException {
-    try {
-      try {
-        return clazz.getConstructor(ComponentImpl.class).newInstance(this);
-      } catch (NoSuchMethodException e) {
-        // ignore
+  LinkedHashSet<Class<?>> getReachableComponents(Class<?> extra) {
+    if (reachableComponents == null) {
+      reachableComponents = new LinkedHashSet<>();
+      reachableComponents.add(BaseSupport.class);
+      reachableComponents.add(componentClass);
+      reachableComponents.addAll(linearizeComponentHierarchy(componentClass));
+
+      if (extra != null) {
+        reachableComponents.add(extra);
+        reachableComponents.addAll(linearizeComponentHierarchy(extra));
       }
-      try {
-        return clazz.getDeclaredConstructor().newInstance();
-      } catch (NoSuchMethodException e) {
-        // ignore
-      }
-    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-        | InvocationTargetException | SecurityException e) {
-      throw new IllegalStateException("Could not initialize " + clazz, e);
     }
 
-    throw new IllegalStateException("Could not find a way to initialize " + clazz);
+    return reachableComponents;
   }
 
   <T extends Annotation> LinkedHashSet<T> getAnnotations(Class<T> annotationClass) {
@@ -103,22 +102,6 @@ class ComponentImpl implements BaseSupport {
     return getReachableComponents(null);
   }
 
-  LinkedHashSet<Class<?>> getReachableComponents(Class<?> extra) {
-    if (reachableComponents == null) {
-      reachableComponents = new LinkedHashSet<>();
-      reachableComponents.add(BaseSupport.class);
-      reachableComponents.add(componentClass);
-      reachableComponents.addAll(linearizeComponentHierarchy(componentClass));
-
-      if (extra != null) {
-        reachableComponents.add(extra);
-        reachableComponents.addAll(linearizeComponentHierarchy(extra));
-      }
-    }
-
-    return reachableComponents;
-  }
-
   final <T extends Annotation> LinkedHashSet<T> getAnnotatedMappingsFromAllReachableComponents(
       Class<T> annotationClass) {
     LinkedHashSet<T> annotations = new LinkedHashSet<>();
@@ -132,10 +115,6 @@ class ComponentImpl implements BaseSupport {
     LinkedHashMap<Class<?>, AtomicInteger> countMap = new LinkedHashMap<>();
 
     traverseComponentHierarchy(leafClass, countMap);
-
-    for (Map.Entry<Class<?>, AtomicInteger> en : countMap.entrySet()) {
-      System.out.println(en.getKey() + ": " + en.getValue());
-    }
 
     List<Map.Entry<Class<?>, AtomicInteger>> list = new ArrayList<>(countMap.entrySet());
     list.sort((a, b) -> b.getValue().get() - a.getValue().get());
@@ -163,5 +142,27 @@ class ComponentImpl implements BaseSupport {
 
   URL getComponentResource(String name) {
     return getComponentClass().getResource(name);
+  }
+
+  /**
+   * Performs dependency checks.
+   *
+   * @param app The server app
+   * @param extensions The extensions to check.
+   * @throws ExtensionDependencyException on dependency conflict.
+   */
+  void verifyDependencies(final ServerApp app, Set<Class<?>> extensions)
+      throws ExtensionDependencyException {
+  }
+
+  /**
+   * Called by the app to initialize the {@link ExtensionImpl} for the given {@link AppHTTPServer}.
+   *
+   * @throws IOException on error.
+   */
+  void doInit(AppHTTPServer app) throws IOException {
+    if (!initialized.compareAndSet(false, true)) {
+      throw new IllegalStateException("Already initialized");
+    }
   }
 }

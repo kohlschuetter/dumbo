@@ -32,10 +32,10 @@ import org.snakeyaml.engine.v2.api.Load;
 
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.markdown.LiquidHelper;
-import com.kohlschutter.dumbo.markdown.ResourcePathTraverser;
 import com.kohlschutter.dumbo.markdown.YAMLSupport;
 import com.kohlschutter.stringhold.IOReaderSupplier;
 import com.kohlschutter.stringhold.IOSupplier;
+import com.kohlschutter.util.ResourcePathTraverser;
 
 import jakarta.servlet.ServletException;
 
@@ -77,7 +77,7 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
       throws ServletException {
     Collection<URL> urls;
     try {
-      urls = ResourcePathTraverser.findURLs(app.getClass(), "markdown/_" + collectionId, false, (
+      urls = ResourcePathTraverser.findURLs(app.getApplicationClass(), "markdown/_" + collectionId, false, (
           n) -> n.endsWith(".md")).values();
     } catch (IOException e) {
       throw new ServletException(e);

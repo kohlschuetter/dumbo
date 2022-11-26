@@ -18,14 +18,17 @@ package com.kohlschutter.dumbo;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,10 +36,12 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kohlschutter.dumbo.annotations.Application;
-import com.kohlschutter.dumbo.annotations.Component;
-import com.kohlschutter.dumbo.annotations.DumboSession;
+import com.kohlschutter.dumbo.annotations.EventHandlers;
 import com.kohlschutter.dumbo.annotations.Services;
+import com.kohlschutter.dumbo.api.Application;
+import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboSession;
+import com.kohlschutter.dumbo.api.EventHandler;
 import com.kohlschutter.dumbo.console.ConsoleService;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 
@@ -47,6 +52,8 @@ public final class ServerApp implements Closeable, Cloneable {
   private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
 
   private final LinkedHashMap<Class<?>, ExtensionImpl> extensions = new LinkedHashMap<>();
+  private final Map<Class<?>, Object> instances = new HashMap<>();
+  private final List<EventHandler> eventHandlers = new ArrayList<>();
 
   private AtomicBoolean initDone = new AtomicBoolean(false);
   private volatile boolean closed = false;
@@ -56,18 +63,13 @@ public final class ServerApp implements Closeable, Cloneable {
 
   private final Class<? extends Application> applicationClass;
   private final ComponentImpl applicationComponentImpl;
-  private final Application application;
 
   public ServerApp(Class<? extends Application> applicationClass) {
     this.applicationClass = applicationClass;
     this.applicationComponentImpl = new ComponentImpl(applicationClass);
     resolveExtensions(applicationClass);
 
-    for (Class<?> ext : extensions.keySet()) {
-      System.out.println(ext);
-    }
-
-    this.application = applicationComponentImpl.newInstance(applicationClass);
+    initEventHandlers();
   }
 
   private void resolveExtensions(Class<? extends Component> mainComponent)
@@ -82,6 +84,16 @@ public final class ServerApp implements Closeable, Cloneable {
 
     for (ExtensionImpl ext : extensions.values()) {
       ext.verifyDependencies(this, extensions.keySet());
+    }
+  }
+
+  private void initEventHandlers() {
+    List<Class<? extends EventHandler>> eventHandlerClasses = applicationComponentImpl
+        .getAnnotations(EventHandlers.class).stream().map((s) -> s.value()).flatMap(Stream::of)
+        .distinct().collect(Collectors.toList());
+
+    for (Class<? extends EventHandler> c : eventHandlerClasses) {
+      eventHandlers.add(getInstance(c));
     }
   }
 
@@ -121,8 +133,7 @@ public final class ServerApp implements Closeable, Cloneable {
         .map((s) -> s.value()).flatMap(Stream::of).distinct().collect(Collectors.toList());
     for (Class<?> serviceClass : serviceClasses) {
       Class<?>[] interfaces = serviceClass.getInterfaces();
-      registry.registerRPCService((Class) interfaces[0], applicationComponentImpl.newInstance(
-          serviceClass));
+      registry.registerRPCService((Class) interfaces[0], getInstance(serviceClass));
     }
   }
 
@@ -144,7 +155,7 @@ public final class ServerApp implements Closeable, Cloneable {
    * @param session The session for this instance.
    */
   void onAppLoaded(final DumboSession session) {
-    application.onAppLoaded(session);
+    eventHandlers.forEach((eh) -> eh.onAppLoaded(session));
   }
 
   @Override
@@ -245,7 +256,7 @@ public final class ServerApp implements Closeable, Cloneable {
     if (resource != null) {
       return resource;
     }
-    for (ExtensionImpl ext : getExtensions()) {
+    for (ComponentImpl ext : getExtensions()) {
       resource = ext.getComponentResource(path);
       if (resource != null) {
         return resource;
@@ -272,6 +283,38 @@ public final class ServerApp implements Closeable, Cloneable {
         }
       };
     }.start();
+  }
+
+  /**
+   * Gets the app's instance (or creates a new instance of) the given class, trying several
+   * construction methods, starting with a constructor that takes no parameters.
+   *
+   * @param <T> The instance type.
+   * @param clazz The class to instantiate.
+   * @return The instance.
+   * @throws IllegalStateException if the class could not be initialized.
+   */
+  synchronized <T> T getInstance(Class<T> clazz) throws IllegalStateException {
+    @SuppressWarnings("unchecked")
+    T instance = (T) instances.get(clazz);
+    if (instance != null) {
+      return instance;
+    }
+
+    try {
+      try {
+        instance = clazz.getDeclaredConstructor().newInstance();
+        instances.put(clazz, instance);
+        return instance;
+      } catch (NoSuchMethodException e) {
+        // ignore
+      }
+    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+        | InvocationTargetException | SecurityException e) {
+      throw new IllegalStateException("Could not initialize " + clazz, e);
+    }
+
+    throw new IllegalStateException("Could not find a way to initialize " + clazz);
   }
 
   /**

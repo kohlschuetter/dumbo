@@ -16,7 +16,7 @@
  */
 package com.kohlschutter.dumbo.helloworld.console;
 
-import com.kohlschutter.dumbo.annotations.Console;
+import com.kohlschutter.dumbo.api.Console;
 
 /**
  * A simple message that we send via the {@link Console}.

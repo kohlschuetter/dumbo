@@ -39,7 +39,7 @@ import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kohlschutter.dumbo.annotations.DumboSession;
+import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.console.ConsoleService;
 import com.kohlschutter.dumbo.exceptions.NoSessionException;
 import com.kohlschutter.dumbo.exceptions.PermanentRPCException;

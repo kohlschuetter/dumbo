@@ -41,6 +41,7 @@ public final class JSPSupport {
 
     StringBuilder sb = new StringBuilder();
     for (ExtensionImpl ext : app.getExtensions()) {
+      // FIXME precompute
       String v = ext.htmlHead(session);
       if (v != null) {
         sb.append(v);
@@ -65,6 +66,7 @@ public final class JSPSupport {
 
     StringBuilder sb = new StringBuilder();
     for (ExtensionImpl ext : app.getExtensions()) {
+      // FIXME precompute
       String v = ext.htmlBodyTop(session);
       if (v != null) {
         sb.append(v);

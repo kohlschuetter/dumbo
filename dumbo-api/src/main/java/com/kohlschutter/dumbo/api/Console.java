@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.annotations;
+package com.kohlschutter.dumbo.api;
 
 import java.io.Closeable;
 import java.io.PrintWriter;
@@ -61,7 +61,9 @@ public interface Console extends Closeable {
   /**
    * Requests the application to gracefully shutdown.
    */
-  void shutdown();
+  default void shutdown() {
+    shutdown(true);
+  }
 
   /**
    * Requests the application to gracefully shutdown.

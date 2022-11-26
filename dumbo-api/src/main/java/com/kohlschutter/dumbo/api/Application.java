@@ -14,21 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.console;
-
-import com.kohlschutter.dumbo.api.Console;
+package com.kohlschutter.dumbo.api;
 
 /**
- * Provides access to an object-oriented console ("System.out")
- *
- * @see Console
+ * Marks the main component of a Dumbo application.
+ * 
+ * @author Christian Kohlschütter
  */
-public interface ConsoleService {
-  /**
-   * Requests the next chunk of input readable from the console.
-   *
-   * @return The next chunk, or the empty string if no chunk was readable, or {@code null} if the
-   *         console has been closed.
-   */
-  Object requestNextChunk();
+public interface Application extends Component {
 }

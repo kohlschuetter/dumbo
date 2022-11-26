@@ -18,9 +18,9 @@ package com.kohlschutter.dumbo.bootstrap;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.CSSResources;
-import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.HTMLResource;
 import com.kohlschutter.dumbo.annotations.HTMLResource.Target;
+import com.kohlschutter.dumbo.api.Component;
 import com.kohlschutter.dumbo.annotations.HTMLResources;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;

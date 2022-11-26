@@ -114,7 +114,7 @@ public class MarkdownServlet extends HttpServlet {
     try {
       doGet0(req, resp);
     } catch (IOException e) {
-      e.printStackTrace();
+//      e.printStackTrace();
       throw e;
     }
   }

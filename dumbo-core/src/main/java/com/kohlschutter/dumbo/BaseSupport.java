@@ -16,11 +16,11 @@
  */
 package com.kohlschutter.dumbo;
 
-import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
+import com.kohlschutter.dumbo.api.Component;
 
 /**
  * Base resources, such as jQuery and json-rpc.

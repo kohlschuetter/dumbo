@@ -8,7 +8,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>dumbo-annotations</artifactId>
+    <artifactId>dumbo-api</artifactId>
 
     <properties>
         <kohlschutter.project.base.directory>${project.basedir}/..</kohlschutter.project.base.directory>

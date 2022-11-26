@@ -23,21 +23,18 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.CSSResources;
-import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.HTMLResource;
 import com.kohlschutter.dumbo.annotations.HTMLResource.Target;
 import com.kohlschutter.dumbo.annotations.HTMLResources;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
-import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
+import com.kohlschutter.dumbo.api.Component;
 import com.kohlschutter.dumbo.util.NameObfuscator;
 
 import jakarta.servlet.http.HttpSession;
@@ -56,7 +53,6 @@ final class ExtensionImpl extends ComponentImpl {
   private final Collection<String> resHEAD = new LinkedHashSet<>();
   private final Collection<String> resBODY = new LinkedHashSet<>();
 
-  private final AtomicBoolean initialized = new AtomicBoolean();
   private String htmlHead = "";
   private String htmlBodyTop = "";
 
@@ -95,10 +91,9 @@ final class ExtensionImpl extends ComponentImpl {
    *
    * @throws IOException on error.
    */
+  @Override
   void doInit(AppHTTPServer app) throws IOException {
-    if (!initialized.compareAndSet(false, true)) {
-      throw new IllegalStateException("Already initialized");
-    }
+    super.doInit(app);
     initResources();
     init(app);
   }
@@ -256,17 +251,6 @@ final class ExtensionImpl extends ComponentImpl {
    */
   String htmlBodyTop(final HttpSession context) {
     return htmlBodyTop;
-  }
-
-  /**
-   * Performs dependency checks.
-   *
-   * @param app The server app
-   * @param extensions The extensions to check.
-   * @throws ExtensionDependencyException on dependency conflict.
-   */
-  void verifyDependencies(final ServerApp app, Set<Class<?>> extensions)
-      throws ExtensionDependencyException {
   }
 
   private static String xmlEntities(final String in) {

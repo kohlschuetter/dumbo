@@ -54,7 +54,7 @@
 
     <modules>
         <module>dumbo-jabsorb</module>
-        <module>dumbo-annotations</module>
+        <module>dumbo-api</module>
         <module>dumbo-core</module>
         <module>dumbo-extensions</module>
         <module>dumbo-markdown</module>

@@ -16,8 +16,18 @@
  */
 package com.kohlschutter.dumbo.annotations;
 
-public interface Application extends Component {
-  default void onAppLoaded(DumboSession session) {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-  }
+import com.kohlschutter.dumbo.api.EventHandler;
+
+/**
+ * Specifies a set of {@link EventHandler}s.
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface EventHandlers {
+  Class<? extends EventHandler>[] value() default {};
 }

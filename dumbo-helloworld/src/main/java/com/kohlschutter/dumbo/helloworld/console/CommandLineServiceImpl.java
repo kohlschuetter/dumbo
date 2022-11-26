@@ -17,7 +17,7 @@
 package com.kohlschutter.dumbo.helloworld.console;
 
 import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
-import com.kohlschutter.dumbo.annotations.DumboSession;
+import com.kohlschutter.dumbo.api.DumboSession;
 
 public class CommandLineServiceImpl implements CommandLineService {
   final String[] colors = new String[] {"red", "coral", "gold", "green", "blue", "fuchsia"};

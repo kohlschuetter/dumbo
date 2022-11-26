@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.annotations;
+package com.kohlschutter.dumbo.api;
 
 import java.util.function.Function;
 import java.util.function.Supplier;

@@ -21,7 +21,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Collection;
 
-import com.kohlschutter.dumbo.annotations.Console;
+import com.kohlschutter.dumbo.api.Console;
 
 public abstract class MultiplexingConsole implements Console {
   public MultiplexingConsole() {

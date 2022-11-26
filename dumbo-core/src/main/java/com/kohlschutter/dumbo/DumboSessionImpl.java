@@ -29,8 +29,8 @@ import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.NonNull;
 
-import com.kohlschutter.dumbo.annotations.Console;
-import com.kohlschutter.dumbo.annotations.DumboSession;
+import com.kohlschutter.dumbo.api.Console;
+import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.exceptions.InvalidSessionException;
 
 import jakarta.servlet.http.HttpSession;

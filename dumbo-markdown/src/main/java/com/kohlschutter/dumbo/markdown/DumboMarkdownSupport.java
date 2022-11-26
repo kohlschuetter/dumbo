@@ -18,9 +18,9 @@
 package com.kohlschutter.dumbo.markdown;
 
 import com.kohlschutter.dumbo.ConsoleSupport;
-import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
+import com.kohlschutter.dumbo.api.Component;
 import com.kohlschutter.dumbo.appdefaults.AppDefaultsSupport;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 

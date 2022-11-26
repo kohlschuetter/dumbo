@@ -22,10 +22,11 @@ import java.io.PrintWriter;
 import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.ConsoleSupport;
 import com.kohlschutter.dumbo.ServerApp;
-import com.kohlschutter.dumbo.annotations.Application;
-import com.kohlschutter.dumbo.annotations.Console;
-import com.kohlschutter.dumbo.annotations.DumboSession;
 import com.kohlschutter.dumbo.annotations.Services;
+import com.kohlschutter.dumbo.api.Application;
+import com.kohlschutter.dumbo.api.Console;
+import com.kohlschutter.dumbo.api.DumboSession;
+import com.kohlschutter.dumbo.api.EventHandler;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 import com.kohlschutter.dumbo.helloworld.DemoServiceImpl;
 import com.kohlschutter.dumbo.util.DevTools;
@@ -34,7 +35,8 @@ import com.kohlschutter.dumbo.util.DevTools;
  * This demo shows how one can use the Console.
  */
 @Services({DemoServiceImpl.class})
-public class ConsoleOutDemoApp implements Application, BootstrapSupport, ConsoleSupport {
+public class ConsoleOutDemoApp implements Application, BootstrapSupport, ConsoleSupport,
+    EventHandler {
   public static void main(String[] args) throws IOException {
     new AppHTTPServer(new ServerApp(ConsoleOutDemoApp.class), "/out/", ConsoleOutDemoApp.class
         .getResource("/com/kohlschutter/dumbo/helloworld/webapp/")) {

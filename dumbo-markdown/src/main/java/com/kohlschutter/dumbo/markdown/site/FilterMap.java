@@ -95,7 +95,7 @@ public abstract class FilterMap<K, V> implements Map<K, V> {
 
   public static abstract class ReadOnlyFilterMap<K, V> extends FilterMap<K, V> {
 
-    protected ReadOnlyFilterMap(Map map) {
+    protected ReadOnlyFilterMap(Map<K,V> map) {
       super(map);
     }
 

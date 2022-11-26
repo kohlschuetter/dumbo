@@ -24,8 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.kohlschutter.dumbo.annotations.Console;
-import com.kohlschutter.dumbo.annotations.DumboSession;
+import com.kohlschutter.dumbo.api.Console;
+import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.console.ClearConsole;
 import com.kohlschutter.dumbo.console.ConsoleService;
 

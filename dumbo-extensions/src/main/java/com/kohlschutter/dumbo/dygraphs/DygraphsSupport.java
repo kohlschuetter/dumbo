@@ -16,9 +16,9 @@
  */
 package com.kohlschutter.dumbo.dygraphs;
 
-import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
+import com.kohlschutter.dumbo.api.Component;
 
 /*
  * Helper class to add dygraphs support to the demo server.

@@ -14,7 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.annotations;
+package com.kohlschutter.dumbo.api;
+
+import com.kohlschutter.dumbo.annotations.CSSResource;
+import com.kohlschutter.dumbo.annotations.CSSResources;
+import com.kohlschutter.dumbo.annotations.HTMLResource;
+import com.kohlschutter.dumbo.annotations.HTMLResources;
+import com.kohlschutter.dumbo.annotations.JavaScriptResource;
+import com.kohlschutter.dumbo.annotations.JavaScriptResources;
+import com.kohlschutter.dumbo.annotations.Services;
+import com.kohlschutter.dumbo.annotations.Servlets;
 
 import jakarta.servlet.Servlet;
 
