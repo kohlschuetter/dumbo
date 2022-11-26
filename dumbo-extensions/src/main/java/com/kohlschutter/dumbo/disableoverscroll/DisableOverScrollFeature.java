@@ -16,7 +16,7 @@
  */
 package com.kohlschutter.dumbo.disableoverscroll;
 
-import com.kohlschutter.dumbo.Component;
+import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 

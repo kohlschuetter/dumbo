@@ -14,16 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
-
-import com.kohlschutter.dumbo.annotations.CSSResource;
-import com.kohlschutter.dumbo.annotations.CSSResources;
-import com.kohlschutter.dumbo.annotations.HTMLResource;
-import com.kohlschutter.dumbo.annotations.HTMLResources;
-import com.kohlschutter.dumbo.annotations.JavaScriptResource;
-import com.kohlschutter.dumbo.annotations.JavaScriptResources;
-import com.kohlschutter.dumbo.annotations.Services;
-import com.kohlschutter.dumbo.annotations.Servlets;
+package com.kohlschutter.dumbo.annotations;
 
 import jakarta.servlet.Servlet;
 
@@ -31,7 +22,6 @@ import jakarta.servlet.Servlet;
  * A component is something that can have annotations of the following types:
  *
  * <ul>
- * <li>{@link Components} — Component depends on these other components</li>
  * <li>{@link Services} — Component exposes a Java/JSON RPC service</li>
  * <li>{@link Servlets} — Component exposes a {@link Servlet}</li>
  * <li>{@link CSSResources} — Component uses a set of {@link CSSResource}s</li>

@@ -16,7 +16,7 @@
  */
 package com.kohlschutter.dumbo.chartjs;
 
-import com.kohlschutter.dumbo.Component;
+import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 
 /**

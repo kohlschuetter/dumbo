@@ -19,7 +19,6 @@ package com.kohlschutter.dumbo.helloworld;
 import java.io.IOException;
 
 import com.kohlschutter.dumbo.AppHTTPServer;
-import com.kohlschutter.dumbo.Components;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.annotations.Services;
 import com.kohlschutter.dumbo.appdefaults.AppDefaultsSupport;
@@ -28,9 +27,8 @@ import com.kohlschutter.dumbo.util.DevTools;
 /**
  * A simple "Hello world" demo app.
  */
-@Components({AppDefaultsSupport.class})
 @Services({DemoServiceImpl.class})
-public class HelloWorldApp extends ServerApp {
+public class HelloWorldApp extends ServerApp implements AppDefaultsSupport {
   public static void main(String[] args) throws IOException {
     new AppHTTPServer(new HelloWorldApp()) {
 

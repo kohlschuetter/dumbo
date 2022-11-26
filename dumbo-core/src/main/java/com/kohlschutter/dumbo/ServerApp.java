@@ -26,18 +26,17 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.dumbo.annotations.Component;
+import com.kohlschutter.dumbo.annotations.Services;
 import com.kohlschutter.dumbo.console.ConsoleService;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
-import com.kohlschutter.dumbo.util.IteratorIterable;
 
 /**
  * Internal base class for a lightweight Server-based application.
@@ -59,25 +58,18 @@ public abstract class ServerApp extends ComponentImpl implements Component, Clos
   }
 
   private void resolveExtensions() throws ExtensionDependencyException {
-    LinkedHashMap<Class<? extends Component>, AtomicInteger> extensionClasses =
-        new LinkedHashMap<>();
-    registerComponents(extensionClasses, getClass());
+    LinkedHashSet<Class<?>> reachableComponents = getReachableComponents();
 
-    ArrayList<Entry<Class<? extends Component>, AtomicInteger>> extensionsRanked = new ArrayList<>(
-        extensionClasses.entrySet());
-    extensionsRanked.sort((a, b) -> (b.getValue().get() - a.getValue().get()));
-
-    for (Class<? extends Component> extClass : IteratorIterable.of(extensionsRanked.stream().map((
-        o) -> o.getKey()).iterator())) {
-
-      ExtensionImpl ext = new ExtensionImpl(extClass);
-      extensions.put(extClass, ext);
+    for (Class<?> compClass : reachableComponents) {
+      if (compClass.isInterface()) {
+        @SuppressWarnings("unchecked")
+        ExtensionImpl ext = new ExtensionImpl((Class<? extends Component>) compClass);
+        extensions.put(compClass, ext);
+      }
     }
 
-    Set<Class<?>> extCopy = Collections.unmodifiableSet(extensions.keySet());
-
     for (ExtensionImpl ext : extensions.values()) {
-      ext.verifyDependencies(this, extCopy);
+      ext.verifyDependencies(this, extensions.keySet());
     }
   }
 
@@ -88,29 +80,6 @@ public abstract class ServerApp extends ComponentImpl implements Component, Clos
 
     for (ExtensionImpl ext : extensions.values()) {
       ext.doInit(server);
-    }
-  }
-
-  /**
-   * Initializes {@link ExtensionImpl} components.
-   */
-  private final void registerComponents(
-      LinkedHashMap<Class<? extends Component>, AtomicInteger> componentClasses,
-      Class<?> annotatedInClass) {
-    LinkedHashMap<Class<? extends Component>, AtomicInteger> foundComponents = ComponentImpl
-        .getAnnotatedComponents(annotatedInClass);
-    if (foundComponents.isEmpty()) {
-      return;
-    }
-
-    // BaseSupport is implied.
-    foundComponents.computeIfAbsent(BaseSupport.class, (key) -> new AtomicInteger(0)).addAndGet(
-        foundComponents.size());
-
-    for (Map.Entry<Class<? extends Component>, AtomicInteger> en : foundComponents.entrySet()) {
-      componentClasses.computeIfAbsent(en.getKey(), (key) -> new AtomicInteger(0)).addAndGet(en
-          .getValue().intValue());
-      registerComponents(componentClasses, en.getKey());
     }
   }
 
@@ -136,14 +105,13 @@ public abstract class ServerApp extends ComponentImpl implements Component, Clos
       }
     });
 
-    LinkedHashSet<Class<?>> serviceClasses = new LinkedHashSet<>();
-    for (Class<?> extClass : extensions.keySet()) {
-      serviceClasses.addAll(getAnnotatedServices(extClass));
-    }
+    List<Class<?>> serviceClasses = getAnnotations(Services.class).stream().map((s) -> s.value())
+        .flatMap(Stream::of).distinct().collect(Collectors.toList());
     for (Class<?> serviceClass : serviceClasses) {
       Class<?>[] interfaces = serviceClass.getInterfaces();
       registry.registerRPCService((Class) interfaces[0], newInstance(serviceClass));
     }
+
     onRPCInit(registry);
   }
 

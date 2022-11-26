@@ -21,6 +21,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.kohlschutter.dumbo.annotations.Component;
+
 /**
  * Specifies the servlet context path of this {@link Component} to use instead of an automatically
  * generated one.

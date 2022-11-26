@@ -16,8 +16,8 @@
  */
 package com.kohlschutter.dumbo.appdefaults;
 
-import com.kohlschutter.dumbo.Component;
 import com.kohlschutter.dumbo.annotations.CSSResource;
+import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 
 /**

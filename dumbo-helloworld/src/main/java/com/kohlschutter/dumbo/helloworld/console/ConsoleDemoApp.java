@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.AppHTTPServer;
-import com.kohlschutter.dumbo.Components;
 import com.kohlschutter.dumbo.ConsoleSupport;
 import com.kohlschutter.dumbo.DumboSession;
 import com.kohlschutter.dumbo.RPCRegistry;
@@ -33,8 +32,7 @@ import com.kohlschutter.dumbo.util.DevTools;
 /**
  * This demo shows how one can use the Console.
  */
-@Components({BootstrapSupport.class, ConsoleSupport.class})
-public class ConsoleDemoApp extends ServerApp {
+public class ConsoleDemoApp extends ServerApp implements BootstrapSupport, ConsoleSupport {
   public static void main(String[] args) throws IOException {
     final ConsoleDemoApp app = new ConsoleDemoApp();
     new AppHTTPServer(app, "/", ConsoleDemoApp.class.getResource(

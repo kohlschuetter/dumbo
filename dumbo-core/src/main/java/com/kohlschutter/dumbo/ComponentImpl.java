@@ -18,29 +18,18 @@ package com.kohlschutter.dumbo;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import com.kohlschutter.dumbo.annotations.Services;
-import com.kohlschutter.dumbo.annotations.Servlets;
+import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.util.AnnotationUtil;
 
-/**
- * A component is something that can have {@link Services}, {@link Components} and {@link Servlets}
- * annotations
- *
- * @author Christian Kohlschütter
- */
-public abstract class ComponentImpl implements Component {
+abstract class ComponentImpl implements Component {
   private final Class<? extends Component> componentClass;
 
-  private Set<Class<?>> reachableExtensions = null;
+  private LinkedHashSet<Class<?>> reachableComponents = null;
 
   protected ComponentImpl(Class<? extends Component> compClass) {
     this.componentClass = compClass == null ? getClass() : compClass;
@@ -79,15 +68,15 @@ public abstract class ComponentImpl implements Component {
     throw new IllegalStateException("Could not find a way to initialize " + clazz);
   }
 
-  static LinkedHashMap<Class<? extends Component>, AtomicInteger> getAnnotatedComponents(
-      Class<?> fromClass) {
-    return AnnotationUtil.getClassesFromAnnotationWithCount(fromClass, Components.class,
-        Component.class);
-  }
-
-  static Set<Class<? extends Object>> getAnnotatedServices(Class<?> fromClass) {
-    return AnnotationUtil.getClassesFromAnnotationWithCount(fromClass, Services.class, Object.class)
-        .keySet();
+  <T extends Annotation> LinkedHashSet<T> getAnnotations(Class<T> annotationClass) {
+    LinkedHashSet<T> set = new LinkedHashSet<>();
+    for (Class<?> comp : getReachableComponents()) {
+      T ann = comp.getAnnotation(annotationClass);
+      if (ann != null) {
+        set.add(ann);
+      }
+    }
+    return set;
   }
 
   <T extends Annotation> @Nullable T getMostRecentComponentAnnotation(Class<T> annotationClass) {
@@ -103,21 +92,22 @@ public abstract class ComponentImpl implements Component {
     return AnnotationUtil.getAnnotations(componentClass, annotationClass);
   }
 
-  final <T extends Annotation> LinkedHashSet<T> getAnnotatedMappingsFromAllReachableComponents(
-      Class<T> annotationClass) {
+  protected LinkedHashSet<Class<?>> getReachableComponents() {
+    if (reachableComponents == null) {
+      reachableComponents = new LinkedHashSet<>();
+      reachableComponents.add(componentClass);
+      reachableComponents.add(BaseSupport.class);
 
-    if (reachableExtensions == null) {
-      reachableExtensions = new HashSet<>();
-      reachableExtensions.add(componentClass);
-      reachableExtensions.add(BaseSupport.class);
-      for (Class<?> ext : AnnotationUtil.getClassesFromAnnotationWithCount(componentClass,
-          Components.class, ExtensionImpl.class).keySet()) {
-        reachableExtensions.add(ext);
-      }
+      reachableComponents.addAll(AnnotationUtil.linearizeComponentHierarchy(componentClass));
     }
 
+    return reachableComponents;
+  }
+
+  final <T extends Annotation> LinkedHashSet<T> getAnnotatedMappingsFromAllReachableComponents(
+      Class<T> annotationClass) {
     LinkedHashSet<T> annotations = new LinkedHashSet<>();
-    for (Class<?> klazz : reachableExtensions) {
+    for (Class<?> klazz : getReachableComponents()) {
       annotations.addAll(AnnotationUtil.getAnnotations(klazz, annotationClass));
     }
     return annotations;

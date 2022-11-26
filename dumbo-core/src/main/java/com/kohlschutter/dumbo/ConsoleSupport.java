@@ -17,6 +17,7 @@
 package com.kohlschutter.dumbo;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
+import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 
 /**

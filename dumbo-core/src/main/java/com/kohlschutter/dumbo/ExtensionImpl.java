@@ -31,6 +31,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.CSSResources;
+import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.annotations.HTMLResource;
 import com.kohlschutter.dumbo.annotations.HTMLResource.Target;
 import com.kohlschutter.dumbo.annotations.HTMLResources;
@@ -264,7 +265,7 @@ final class ExtensionImpl extends ComponentImpl {
    * @param extensions The extensions to check.
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public void verifyDependencies(final ServerApp app, Set<Class<?>> extensions)
+  void verifyDependencies(final ServerApp app, Set<Class<?>> extensions)
       throws ExtensionDependencyException {
   }
 
