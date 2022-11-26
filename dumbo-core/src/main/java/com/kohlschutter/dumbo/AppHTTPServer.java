@@ -61,9 +61,9 @@ import org.newsclub.net.unix.jetty.AFSocketServerConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.dumbo.annotations.ServletMapping;
+import com.kohlschutter.dumbo.annotations.Servlets;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
-import com.kohlschutter.dumbo.ext.ServletMapping;
-import com.kohlschutter.dumbo.ext.Servlets;
 import com.kohlschutter.dumbo.util.DevTools;
 
 import jakarta.servlet.Servlet;
@@ -261,7 +261,7 @@ public class AppHTTPServer {
    * @return The context.
    * @throws IOException
    */
-  public WebAppContext registerContext(Component comp, final String contextPrefix,
+  public WebAppContext registerContext(ComponentImpl comp, final String contextPrefix,
       final URL pathToWebApp) throws IOException {
     Resource res = Resource.newResource(pathToWebApp);
     WebAppContext wac = new WebAppContext(res, (contextPath + contextPrefix).replaceAll("//+",
@@ -271,7 +271,7 @@ public class AppHTTPServer {
     return registerContext(wac);
   }
 
-  private void initWebAppContext(Component comp, WebAppContext wac) throws IOException {
+  private void initWebAppContext(ComponentImpl comp, WebAppContext wac) throws IOException {
     wac.setDefaultRequestCharacterEncoding("UTF-8");
     wac.setDefaultResponseCharacterEncoding("UTF-8");
 
@@ -298,9 +298,9 @@ public class AppHTTPServer {
     mapServlets(comp, sc, sh);
   }
 
-  private void mapServlets(Component comp, ServletContext sc, ServletHandler sh) {
+  private void mapServlets(ComponentImpl comp, ServletContext sc, ServletHandler sh) {
     Map<String, ServletMapping> mappings = new HashMap<>();
-    for (Servlets s : comp.getAnnotatedMappings(Servlets.class)) {
+    for (Servlets s : comp.getAnnotatedMappingsFromAllReachableComponents(Servlets.class)) {
       for (ServletMapping mapping : s.value()) {
         String mapPath = mapping.map();
         ServletMapping effectiveMapping = mappings.computeIfAbsent(mapPath, (k) -> mapping);

@@ -17,15 +17,25 @@
 package com.kohlschutter.dumbo;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.Objects;
+import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import org.eclipse.jetty.webapp.WebAppContext;
 
+import com.kohlschutter.dumbo.annotations.CSSResource;
+import com.kohlschutter.dumbo.annotations.CSSResources;
+import com.kohlschutter.dumbo.annotations.HTMLResource;
+import com.kohlschutter.dumbo.annotations.HTMLResource.Target;
+import com.kohlschutter.dumbo.annotations.HTMLResources;
+import com.kohlschutter.dumbo.annotations.JavaScriptResource;
+import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 import com.kohlschutter.dumbo.util.NameObfuscator;
 
@@ -34,7 +44,7 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Provides support for HTML/CSS/JavaScript-based extensions that simplify app development.
  */
-public abstract class Extension extends Component {
+final class ExtensionImpl extends ComponentImpl {
   private final String extensionPath;
   private String serverContextPath;
   private String contextPath;
@@ -42,11 +52,15 @@ public abstract class Extension extends Component {
   private final Collection<String> resJavaScript = new LinkedHashSet<>();
   private final Collection<String> resAsyncJavaScript = new LinkedHashSet<>();
   private final Collection<String> resCSS = new LinkedHashSet<>();
+  private final Collection<String> resHEAD = new LinkedHashSet<>();
+  private final Collection<String> resBODY = new LinkedHashSet<>();
 
   private final AtomicBoolean initialized = new AtomicBoolean();
-  private String htmlHead;
+  private String htmlHead = "";
+  private String htmlBodyTop = "";
 
-  public Extension() {
+  ExtensionImpl(Class<? extends Component> comp) {
+    super(comp);
     this.extensionPath = initPath();
   }
 
@@ -64,18 +78,23 @@ public abstract class Extension extends Component {
     }
   }
 
-  protected String initExtensionPath() {
-    String name = getClass().getName();
+  String initExtensionPath() {
+    ServletContextPath path = getMostRecentComponentAnnotation(ServletContextPath.class);
+    if (path != null) {
+      return path.value();
+    }
+
+    String name = getComponentClass().getName();
 
     return "/app_/" + NameObfuscator.obfuscate(name);
   }
 
   /**
-   * Called by the app to initialize the {@link Extension} for the given {@link AppHTTPServer}.
+   * Called by the app to initialize the {@link ExtensionImpl} for the given {@link AppHTTPServer}.
    *
    * @throws IOException on error.
    */
-  final void doInit(AppHTTPServer app) throws IOException {
+  void doInit(AppHTTPServer app) throws IOException {
     if (!initialized.compareAndSet(false, true)) {
       throw new IllegalStateException("Already initialized");
     }
@@ -89,37 +108,42 @@ public abstract class Extension extends Component {
    * @see #registerCSS(String)
    * @see #registerJavaScript(String)
    */
-  protected abstract void initResources();
+  private void initResources() {
+    List<JavaScriptResource> jsResources = getComponentAnnotations(JavaScriptResource.class);
+    getComponentAnnotations(JavaScriptResources.class).stream().map((k) -> k.value()).flatMap(
+        Stream::of).collect(() -> jsResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
+
+    List<CSSResource> cssResources = getComponentAnnotations(CSSResource.class);
+    getComponentAnnotations(CSSResources.class).stream().map((k) -> k.value()).flatMap(Stream::of)
+        .collect(() -> cssResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
+
+    List<HTMLResource> htmlResources = getComponentAnnotations(HTMLResource.class);
+    getComponentAnnotations(HTMLResources.class).stream().map((k) -> k.value()).flatMap(Stream::of)
+        .collect(() -> htmlResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
+
+    for (JavaScriptResource js : jsResources) {
+      Collection<String> res = js.async() ? resAsyncJavaScript : resJavaScript;
+      for (String path : js.value()) {
+        register(res, path);
+      }
+    }
+
+    for (CSSResource css : cssResources) {
+      for (String path : css.value()) {
+        register(resCSS, path);
+      }
+    }
+
+    for (HTMLResource html : htmlResources) {
+      Collection<String> res = html.target() == Target.HEAD ? resHEAD : resBODY;
+      for (String path : html.value()) {
+        register(res, path);
+      }
+    }
+  }
 
   private void register(Collection<String> targetCollection, String path) {
     targetCollection.add(path);
-  }
-
-  /**
-   * Registers a JavaScript resource by its HTTP path.
-   *
-   * @param path The path.
-   */
-  protected final void registerJavaScript(final String path) {
-    register(resJavaScript, path);
-  }
-
-  /**
-   * Registers an asynchronous JavaScript resource by its HTTP path.
-   *
-   * @param path The path.
-   */
-  protected final void registerAsyncJavaScript(final String path) {
-    register(resAsyncJavaScript, path);
-  }
-
-  /**
-   * Registers a CSS resource by its HTTP path.
-   *
-   * @param path The path.
-   */
-  protected final void registerCSS(final String path) {
-    register(resCSS, path);
   }
 
   /**
@@ -128,7 +152,7 @@ public abstract class Extension extends Component {
    * @param server The server instance to work with.
    * @throws IOException on error.
    */
-  public void init(final AppHTTPServer server) throws IOException {
+  void init(final AppHTTPServer server) throws IOException {
     serverContextPath = server.getContextPath().replaceFirst("/$", "");
     contextPath = serverContextPath;
     if (extensionPath != null) {
@@ -140,6 +164,7 @@ public abstract class Extension extends Component {
     }
 
     htmlHead = this.initHtmlHead();
+    htmlBodyTop = this.initHtmlBodyTop();
   }
 
   /**
@@ -147,8 +172,13 @@ public abstract class Extension extends Component {
    *
    * @return The URL (default to the "webapp/" folder relative to the extension's class name)
    */
-  protected URL initExtensionResourceURL() {
-    return getClass().getResource("webapp/");
+  URL initExtensionResourceURL() {
+    ResourcePath path = getMostRecentComponentAnnotation(ResourcePath.class);
+    if (path != null) {
+      return getComponentResource(path.value());
+    }
+
+    return getComponentResource("webapp/");
   }
 
   private String toAbsolutePath(String path) {
@@ -161,7 +191,7 @@ public abstract class Extension extends Component {
     }
   }
 
-  private String initHtmlHead() {
+  private String initHtmlHead() throws IOException {
     StringBuilder sb = new StringBuilder();
 
     for (String path : resCSS) {
@@ -177,7 +207,29 @@ public abstract class Extension extends Component {
           toAbsolutePath(path)) + "\"></script>\n");
     }
 
+    for (String path : resHEAD) {
+      sb.append(getContentsOfResource(path));
+    }
+
     return sb.toString();
+  }
+
+  private String initHtmlBodyTop() throws IOException {
+    if (resHEAD.isEmpty()) {
+      return "";
+    }
+    StringBuilder sb = new StringBuilder();
+    for (String path : resHEAD) {
+      sb.append(getContentsOfResource(path));
+    }
+    return sb.toString();
+  }
+
+  private String getContentsOfResource(String path) throws IOException {
+    try (InputStream in = getComponentResource("include/noLongerCurrent.html").openStream();
+        Scanner sc = new Scanner(in, "UTF-8")) {
+      return sc.useDelimiter("\\Z").next();
+    }
   }
 
   /**
@@ -190,8 +242,8 @@ public abstract class Extension extends Component {
    * @param context The context of the page.
    * @return The HTML string.
    */
-  public String htmlHead(final HttpSession context) {
-    return Objects.requireNonNull(htmlHead);
+  String htmlHead(final HttpSession context) {
+    return htmlHead;
   }
 
   /**
@@ -201,8 +253,8 @@ public abstract class Extension extends Component {
    * @param context The context of the page.
    * @return The HTML string.
    */
-  public String htmlBodyTop(final HttpSession context) {
-    return null;
+  String htmlBodyTop(final HttpSession context) {
+    return htmlBodyTop;
   }
 
   /**
@@ -229,7 +281,7 @@ public abstract class Extension extends Component {
     return extensionPath;
   }
 
-  public URL getResource(String name) {
-    return getClass().getResource(name);
+  URL getComponentResource(String name) {
+    return getComponentClass().getResource(name);
   }
 }

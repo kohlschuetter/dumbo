@@ -17,24 +17,20 @@
  */
 package com.kohlschutter.dumbo.markdown;
 
-import com.kohlschutter.dumbo.Extension;
+import com.kohlschutter.dumbo.Component;
+import com.kohlschutter.dumbo.Components;
+import com.kohlschutter.dumbo.ConsoleSupport;
+import com.kohlschutter.dumbo.annotations.ServletMapping;
+import com.kohlschutter.dumbo.annotations.Servlets;
+import com.kohlschutter.dumbo.appdefaults.AppDefaultsSupport;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
-import com.kohlschutter.dumbo.console.ConsoleSupport;
-import com.kohlschutter.dumbo.ext.AppDefaultsSupport;
-import com.kohlschutter.dumbo.ext.Extensions;
-import com.kohlschutter.dumbo.ext.ServletMapping;
-import com.kohlschutter.dumbo.ext.Servlets;
 
 @Servlets({ //
     @ServletMapping(map = "*.html", to = HtmlJspServlet.class),
     @ServletMapping(map = "*.md", to = MarkdownServlet.class),
     //
 })
-@Extensions({AppDefaultsSupport.class, BootstrapSupport.class, ConsoleSupport.class})
-public class DumboMarkdownSupport extends Extension {
+@Components({AppDefaultsSupport.class, BootstrapSupport.class, ConsoleSupport.class})
+public interface DumboMarkdownSupport extends Component {
 
-  @Override
-  protected void initResources() {
-
-  }
 }

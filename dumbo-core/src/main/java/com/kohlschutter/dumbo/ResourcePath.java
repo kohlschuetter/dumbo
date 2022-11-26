@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.ext;
+package com.kohlschutter.dumbo;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,10 +22,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies a set of servlet mappings
+ * Specifies the resource path (relative to the component) to use instead of the default one.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Servlets {
-  ServletMapping[] value() default {};
+@interface ResourcePath {
+  String value();
 }

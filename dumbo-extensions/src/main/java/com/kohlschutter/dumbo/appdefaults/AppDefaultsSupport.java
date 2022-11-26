@@ -14,25 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
+package com.kohlschutter.dumbo.appdefaults;
 
+import com.kohlschutter.dumbo.Component;
+import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
-import com.kohlschutter.dumbo.annotations.JavaScriptResources;
-import com.kohlschutter.dumbo.annotations.ServletMapping;
-import com.kohlschutter.dumbo.annotations.Servlets;
 
 /**
- * Base resources, such as jQuery and json-rpc.
+ * Simplifies app development by automatically providing references to the app's default JavaScript
+ * and CSS files.
  */
-@Servlets({ //
-    @ServletMapping(map = "*.js", to = JspJsServlet.class, initOrder = 0),
-    @ServletMapping(map = "*.jsp", to = JspCachingServlet.class, initOrder = 0),
-    //
-})
-@JavaScriptResources({
-    @JavaScriptResource({"js/jquery.min.js"}), @JavaScriptResource({"js/jsonrpc.js"}),
-    @JavaScriptResource({"js/app.js"}),})
-@ServletContextPath("/app_/base")
-@ResourcePath("/com/kohlschutter/dumbo/appbase/")
-interface BaseSupport extends Component {
+@JavaScriptResource("js/app.js")
+@CSSResource("css/default.css")
+public interface AppDefaultsSupport extends Component {
+
 }

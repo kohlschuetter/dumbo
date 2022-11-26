@@ -16,23 +16,15 @@
  */
 package com.kohlschutter.dumbo;
 
+import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
-import com.kohlschutter.dumbo.annotations.JavaScriptResources;
-import com.kohlschutter.dumbo.annotations.ServletMapping;
-import com.kohlschutter.dumbo.annotations.Servlets;
 
 /**
- * Base resources, such as jQuery and json-rpc.
+ * Helper class to add required console-specific resources.
  */
-@Servlets({ //
-    @ServletMapping(map = "*.js", to = JspJsServlet.class, initOrder = 0),
-    @ServletMapping(map = "*.jsp", to = JspCachingServlet.class, initOrder = 0),
-    //
-})
-@JavaScriptResources({
-    @JavaScriptResource({"js/jquery.min.js"}), @JavaScriptResource({"js/jsonrpc.js"}),
-    @JavaScriptResource({"js/app.js"}),})
+@CSSResource("css/app-console.css")
+@JavaScriptResource("js/app-console.js")
 @ServletContextPath("/app_/base")
 @ResourcePath("/com/kohlschutter/dumbo/appbase/")
-interface BaseSupport extends Component {
+public interface ConsoleSupport extends Component {
 }

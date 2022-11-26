@@ -16,82 +16,33 @@
  */
 package com.kohlschutter.dumbo;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.kohlschutter.dumbo.annotations.CSSResource;
+import com.kohlschutter.dumbo.annotations.CSSResources;
+import com.kohlschutter.dumbo.annotations.HTMLResource;
+import com.kohlschutter.dumbo.annotations.HTMLResources;
+import com.kohlschutter.dumbo.annotations.JavaScriptResource;
+import com.kohlschutter.dumbo.annotations.JavaScriptResources;
+import com.kohlschutter.dumbo.annotations.Services;
+import com.kohlschutter.dumbo.annotations.Servlets;
 
-import com.kohlschutter.dumbo.ext.Extensions;
-import com.kohlschutter.dumbo.ext.Services;
-import com.kohlschutter.dumbo.ext.Servlets;
-import com.kohlschutter.dumbo.util.AnnotationUtil;
+import jakarta.servlet.Servlet;
 
 /**
- * A component is something that can have {@link Services}, {@link Extensions} and {@link Servlets}
- * annotations
+ * A component is something that can have annotations of the following types:
+ *
+ * <ul>
+ * <li>{@link Components} — Component depends on these other components</li>
+ * <li>{@link Services} — Component exposes a Java/JSON RPC service</li>
+ * <li>{@link Servlets} — Component exposes a {@link Servlet}</li>
+ * <li>{@link CSSResources} — Component uses a set of {@link CSSResource}s</li>
+ * <li>{@link CSSResource} — Component uses the following CSS resources</li>
+ * <li>{@link HTMLResources} — Component uses a set of {@link HTMLResource}s</li>
+ * <li>{@link HTMLResource} — Component uses the following HTML resources</li>
+ * <li>{@link JavaScriptResources} — Component uses a set of {@link JavaScriptResource}s</li>
+ * <li>{@link JavaScriptResource} — Component uses the following JavaScript resources</li>
+ * </ul>
  *
  * @author Christian Kohlschütter
  */
-public abstract class Component {
-  private Set<Class<?>> reachableExtensions = null;
-
-  protected Component() {
-  }
-
-  protected <T> T newInstance(Class<T> clazz) {
-    try {
-      try {
-        return clazz.getConstructor(Component.class).newInstance(this);
-      } catch (NoSuchMethodException e) {
-        // ignore
-      }
-      try {
-        return clazz.getDeclaredConstructor().newInstance();
-      } catch (NoSuchMethodException e) {
-        // ignore
-      }
-    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-        | InvocationTargetException | SecurityException e) {
-      e.printStackTrace();
-    }
-
-    throw new IllegalStateException("Could not find a way to initialize " + clazz);
-  }
-
-  static LinkedHashMap<Class<? extends Extension>, AtomicInteger> getAnnotatedExtensions(
-      Class<?> fromClass) {
-    return AnnotationUtil.getClassesFromAnnotationWithCount(fromClass, Extensions.class,
-        Extension.class);
-  }
-
-  static Set<Class<? extends Object>> getAnnotatedServices(Class<?> fromClass) {
-    return AnnotationUtil.getClassesFromAnnotationWithCount(fromClass, Services.class, Object.class)
-        .keySet();
-  }
-
-  protected final <T extends Annotation> Collection<T> getAnnotatedMappings(
-      Class<T> annotationClass) {
-    synchronized (this) {
-      if (reachableExtensions == null) {
-        reachableExtensions = new HashSet<>();
-        reachableExtensions.add(getClass());
-        reachableExtensions.add(BaseSupport.class);
-        for (Class<?> ext : AnnotationUtil.getClassesFromAnnotationWithCount(getClass(),
-            Extensions.class, Extension.class).keySet()) {
-          reachableExtensions.add(ext);
-        }
-      }
-    }
-
-    List<T> annotations = new ArrayList<>();
-    for (Class<?> klazz : reachableExtensions) {
-      annotations.addAll(AnnotationUtil.getAnnotations(klazz, annotationClass));
-    }
-    return annotations;
-  }
+public interface Component {
 }

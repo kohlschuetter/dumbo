@@ -16,59 +16,27 @@
  */
 package com.kohlschutter.dumbo.bootstrap;
 
-import java.util.Scanner;
-
-import com.kohlschutter.dumbo.Extension;
-
-import jakarta.servlet.http.HttpSession;
+import com.kohlschutter.dumbo.Component;
+import com.kohlschutter.dumbo.annotations.CSSResource;
+import com.kohlschutter.dumbo.annotations.CSSResources;
+import com.kohlschutter.dumbo.annotations.HTMLResource;
+import com.kohlschutter.dumbo.annotations.HTMLResource.Target;
+import com.kohlschutter.dumbo.annotations.HTMLResources;
+import com.kohlschutter.dumbo.annotations.JavaScriptResource;
+import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 
 /**
  * Helper class to add Bootstrap.js support to the demo server.
  *
  * See {@code dumbo-helloworld}.
  */
-@SuppressWarnings("resource")
-public final class BootstrapSupport extends Extension {
-  private static final String HTML_NO_LONGER_CURRENT;
-  private final boolean extras;
+@CSSResources({//
+    @CSSResource({"css/bootstrap.min.css", "css/bootstrap-extras.css"}) //
+})
+@JavaScriptResources({//
+    @JavaScriptResource({"js/bootstrap.bundle.min.js", "js/bootstrap-extras.js"}) //
+})
+@HTMLResources({@HTMLResource(value = "include/noLongerCurrent.html", target = Target.BODY)})
+public interface BootstrapSupport extends Component {
 
-  static {
-    HTML_NO_LONGER_CURRENT = new Scanner(BootstrapSupport.class.getResourceAsStream(
-        "include/noLongerCurrent.html"), "UTF-8").useDelimiter("\\Z").next();
-  }
-
-  /**
-   * Initializes bootstrap support with some custom additions.
-   */
-  public BootstrapSupport() {
-    this(true);
-  }
-
-  /**
-   * Initializes bootstrap support.
-   *
-   * @param extras If {@code true}, custom additions will be enabled. If {@code false}, only the
-   *          library is provided.
-   */
-  public BootstrapSupport(boolean extras) {
-    super();
-    this.extras = extras;
-  }
-
-  @Override
-  protected void initResources() {
-    registerCSS("css/bootstrap.min.css");
-    registerCSS("css/bootstrap-extras.css");
-    registerJavaScript("js/bootstrap.bundle.min.js");
-    registerJavaScript("js/bootstrap-extras.js");
-  }
-
-  @Override
-  public String htmlBodyTop(final HttpSession context) {
-    if (extras) {
-      return HTML_NO_LONGER_CURRENT;
-    } else {
-      return "";
-    }
-  }
 }

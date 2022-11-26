@@ -14,20 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.disableoverscroll;
+package com.kohlschutter.dumbo.annotations;
 
-import com.kohlschutter.dumbo.Component;
-import com.kohlschutter.dumbo.annotations.JavaScriptResource;
-import com.kohlschutter.dumbo.annotations.JavaScriptResources;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Disable the "rubber band" / "overscrolling" annoyance in Google Chrome on OS X when scrolling
- * over the top of a page (e.g., two-finger touch-and-drag downwards).
- *
- * For improved smoothness, you may want to add the CSS style {@code overflow: hidden;} to the
- * {@code BODY} tag.
+ * Specifies a set of {@code HTML} resources for use with an extension.
  */
-@JavaScriptResources(@JavaScriptResource(value = "js/disableoverscroll.js", async = true))
-public interface DisableOverScrollFeature extends Component {
-
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface HTMLResources {
+  HTMLResource[] value();
 }

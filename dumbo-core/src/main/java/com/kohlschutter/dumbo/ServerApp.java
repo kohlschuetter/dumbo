@@ -42,10 +42,10 @@ import com.kohlschutter.dumbo.util.IteratorIterable;
 /**
  * Internal base class for a lightweight Server-based application.
  */
-public abstract class ServerApp extends Component implements Closeable, Cloneable {
+public abstract class ServerApp extends ComponentImpl implements Component, Closeable, Cloneable {
   private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
 
-  private final LinkedHashMap<Class<?>, Extension> extensions = new LinkedHashMap<>();
+  private final LinkedHashMap<Class<?>, ExtensionImpl> extensions = new LinkedHashMap<>();
 
   private AtomicBoolean initDone = new AtomicBoolean(false);
   private volatile boolean closed = false;
@@ -54,27 +54,29 @@ public abstract class ServerApp extends Component implements Closeable, Cloneabl
   private boolean staticDesignMode = false;
 
   protected ServerApp() {
-    super();
+    super(null);
     resolveExtensions();
   }
 
   private void resolveExtensions() throws ExtensionDependencyException {
-    LinkedHashMap<Class<?>, AtomicInteger> extensionClasses = new LinkedHashMap<>();
-    registerExtensions(extensionClasses, getClass());
+    LinkedHashMap<Class<? extends Component>, AtomicInteger> extensionClasses =
+        new LinkedHashMap<>();
+    registerComponents(extensionClasses, getClass());
 
-    ArrayList<Entry<Class<?>, AtomicInteger>> extensionsRanked = new ArrayList<>(extensionClasses
-        .entrySet());
+    ArrayList<Entry<Class<? extends Component>, AtomicInteger>> extensionsRanked = new ArrayList<>(
+        extensionClasses.entrySet());
     extensionsRanked.sort((a, b) -> (b.getValue().get() - a.getValue().get()));
 
-    for (Class<?> extClass : IteratorIterable.of(extensionsRanked.stream().map((o) -> o.getKey())
-        .iterator())) {
-      Extension ext = (Extension) newInstance(extClass);
+    for (Class<? extends Component> extClass : IteratorIterable.of(extensionsRanked.stream().map((
+        o) -> o.getKey()).iterator())) {
+
+      ExtensionImpl ext = new ExtensionImpl(extClass);
       extensions.put(extClass, ext);
     }
 
     Set<Class<?>> extCopy = Collections.unmodifiableSet(extensions.keySet());
 
-    for (Extension ext : extensions.values()) {
+    for (ExtensionImpl ext : extensions.values()) {
       ext.verifyDependencies(this, extCopy);
     }
   }
@@ -84,30 +86,31 @@ public abstract class ServerApp extends Component implements Closeable, Cloneabl
       throw new IllegalStateException("App is already initialized");
     }
 
-    for (Extension ext : extensions.values()) {
+    for (ExtensionImpl ext : extensions.values()) {
       ext.doInit(server);
     }
   }
 
   /**
-   * Initializes {@link Extension} components.
+   * Initializes {@link ExtensionImpl} components.
    */
-  private final void registerExtensions(LinkedHashMap<Class<?>, AtomicInteger> extensionClasses,
+  private final void registerComponents(
+      LinkedHashMap<Class<? extends Component>, AtomicInteger> componentClasses,
       Class<?> annotatedInClass) {
-    LinkedHashMap<Class<? extends Extension>, AtomicInteger> foundExtensions = Component
-        .getAnnotatedExtensions(annotatedInClass);
-    if (foundExtensions.isEmpty()) {
+    LinkedHashMap<Class<? extends Component>, AtomicInteger> foundComponents = ComponentImpl
+        .getAnnotatedComponents(annotatedInClass);
+    if (foundComponents.isEmpty()) {
       return;
     }
 
     // BaseSupport is implied.
-    foundExtensions.computeIfAbsent(BaseSupport.class, (key) -> new AtomicInteger(0)).addAndGet(
-        foundExtensions.size());
+    foundComponents.computeIfAbsent(BaseSupport.class, (key) -> new AtomicInteger(0)).addAndGet(
+        foundComponents.size());
 
-    for (Map.Entry<Class<? extends Extension>, AtomicInteger> en : foundExtensions.entrySet()) {
-      extensionClasses.computeIfAbsent(en.getKey(), (key) -> new AtomicInteger(0)).addAndGet(en
+    for (Map.Entry<Class<? extends Component>, AtomicInteger> en : foundComponents.entrySet()) {
+      componentClasses.computeIfAbsent(en.getKey(), (key) -> new AtomicInteger(0)).addAndGet(en
           .getValue().intValue());
-      registerExtensions(extensionClasses, en.getKey());
+      registerComponents(componentClasses, en.getKey());
     }
   }
 
@@ -211,13 +214,8 @@ public abstract class ServerApp extends Component implements Closeable, Cloneabl
    *
    * @return The collection of extensions.
    */
-  Collection<Extension> getExtensions() {
+  Collection<ExtensionImpl> getExtensions() {
     return extensions.values();
-  }
-
-  @SuppressWarnings("unchecked")
-  <T extends Extension> T getExtension(Class<T> clazz) {
-    return (T) extensions.get(clazz);
   }
 
   /**
@@ -252,18 +250,18 @@ public abstract class ServerApp extends Component implements Closeable, Cloneabl
   }
 
   /**
-   * Look up a resource in the resource path of the app and any registered {@link Extension}.
+   * Look up a resource in the resource path of the app and any registered {@link ExtensionImpl}.
    *
    * @param path The path to look up (usually relative).
    * @return The {@link URL} pointing to the resource, or {@code null} if not found/not accessible.
    */
   public URL getResource(String path) {
-    URL resource = getClass().getResource(path);
+    URL resource = getComponentClass().getResource(path);
     if (resource != null) {
       return resource;
     }
-    for (Extension ext : getExtensions()) {
-      resource = ext.getResource(path);
+    for (ExtensionImpl ext : getExtensions()) {
+      resource = ext.getComponentResource(path);
       if (resource != null) {
         return resource;
       }

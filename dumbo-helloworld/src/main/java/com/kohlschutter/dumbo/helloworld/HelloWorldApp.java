@@ -19,16 +19,16 @@ package com.kohlschutter.dumbo.helloworld;
 import java.io.IOException;
 
 import com.kohlschutter.dumbo.AppHTTPServer;
+import com.kohlschutter.dumbo.Components;
 import com.kohlschutter.dumbo.ServerApp;
-import com.kohlschutter.dumbo.ext.AppDefaultsSupport;
-import com.kohlschutter.dumbo.ext.Extensions;
-import com.kohlschutter.dumbo.ext.Services;
+import com.kohlschutter.dumbo.annotations.Services;
+import com.kohlschutter.dumbo.appdefaults.AppDefaultsSupport;
 import com.kohlschutter.dumbo.util.DevTools;
 
 /**
  * A simple "Hello world" demo app.
  */
-@Extensions({AppDefaultsSupport.class})
+@Components({AppDefaultsSupport.class})
 @Services({DemoServiceImpl.class})
 public class HelloWorldApp extends ServerApp {
   public static void main(String[] args) throws IOException {

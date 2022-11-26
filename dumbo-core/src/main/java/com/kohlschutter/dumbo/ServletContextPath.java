@@ -14,31 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.console;
+package com.kohlschutter.dumbo;
 
-import java.net.URL;
-
-import com.kohlschutter.dumbo.Extension;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Helper class to add required console-specific resources to the demo server.
- *
- * See {@code dumbo-helloworld}.
+ * Specifies the servlet context path of this {@link Component} to use instead of an automatically
+ * generated one.
  */
-public class ConsoleSupport extends Extension {
-  @Override
-  protected void initResources() {
-    registerCSS("css/app-console.css");
-    registerJavaScript("js/app-console.js");
-  }
-
-  @Override
-  protected String initExtensionPath() {
-    return "/app_/base";
-  }
-
-  @Override
-  protected URL initExtensionResourceURL() {
-    return ConsoleSupport.class.getResource("/com/kohlschutter/dumbo/appbase/");
-  }
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@interface ServletContextPath {
+  String value();
 }

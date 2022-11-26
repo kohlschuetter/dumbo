@@ -22,8 +22,8 @@
         <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
         <file.encoding>UTF-8</file.encoding>
         <maven.compile.encoding>UTF-8</maven.compile.encoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        
+        <kohlschutter.java.release>11</kohlschutter.java.release>
     </properties>
 
     <organization>
@@ -54,6 +54,7 @@
 
     <modules>
         <module>dumbo-jabsorb</module>
+        <module>dumbo-annotations</module>
         <module>dumbo-core</module>
         <module>dumbo-extensions</module>
         <module>dumbo-markdown</module>

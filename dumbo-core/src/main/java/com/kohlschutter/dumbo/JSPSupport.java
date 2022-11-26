@@ -19,7 +19,7 @@ package com.kohlschutter.dumbo;
 import jakarta.servlet.http.HttpSession;
 
 /**
- * {@link Extension}-hooks to be called from within a JSP page.
+ * {@link ExtensionImpl}-hooks to be called from within a JSP page.
  */
 public final class JSPSupport {
   private JSPSupport() {
@@ -40,7 +40,7 @@ public final class JSPSupport {
     }
 
     StringBuilder sb = new StringBuilder();
-    for (Extension ext : app.getExtensions()) {
+    for (ExtensionImpl ext : app.getExtensions()) {
       String v = ext.htmlHead(session);
       if (v != null) {
         sb.append(v);
@@ -64,7 +64,7 @@ public final class JSPSupport {
     }
 
     StringBuilder sb = new StringBuilder();
-    for (Extension ext : app.getExtensions()) {
+    for (ExtensionImpl ext : app.getExtensions()) {
       String v = ext.htmlBodyTop(session);
       if (v != null) {
         sb.append(v);

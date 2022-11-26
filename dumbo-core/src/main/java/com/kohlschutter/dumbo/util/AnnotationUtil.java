@@ -25,8 +25,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.kohlschutter.dumbo.Component;
-import com.kohlschutter.dumbo.ext.Extensions;
-import com.kohlschutter.dumbo.ext.Services;
+import com.kohlschutter.dumbo.Components;
 
 public final class AnnotationUtil {
   private AnnotationUtil() {
@@ -45,10 +44,8 @@ public final class AnnotationUtil {
       Annotation annotation = Objects.requireNonNull(classToInspect.getAnnotation(annotationClass));
 
       final Class<?>[] value;
-      if (annotation instanceof Services) {
-        value = ((Services) annotation).value();
-      } else if (annotation instanceof Extensions) {
-        value = ((Extensions) annotation).value();
+      if (annotation instanceof Components) {
+        value = ((Components) annotation).value();
       } else {
         throw new IllegalStateException("Unsupported annotation type: " + annotationClass);
       }

@@ -14,24 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.ext;
+package com.kohlschutter.dumbo.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jakarta.servlet.Servlet;
-
 /**
- * Specifies a string-to-class mapping
+ * Specifies an {@code HTML} resource for use with an extension.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ServletMapping {
-  Class<? extends Servlet> to();
+public @interface HTMLResource {
+  String[] value();
 
-  String map();
+  Target target() default Target.BODY;
 
-  int initOrder() default -1;
+  enum Target {
+    BODY, HEAD
+  }
 }
