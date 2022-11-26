@@ -14,6 +14,8 @@
         <kohlschutter.project.base.directory>${project.basedir}/..</kohlschutter.project.base.directory>
         <mainClass>com.kohlschutter.dumbo.helloworld.HelloWorldApp</mainClass>
         <dumbo.project.basedir>${project.basedir}/..</dumbo.project.basedir>
+
+        <kohlschutter.project.notice.file>${project.basedir}/NOTICE</kohlschutter.project.notice.file>
     </properties>
 
     <dependencies>
