@@ -24,8 +24,10 @@ public interface RPCRegistry {
   /**
    * Registers a service with the RPC subsystem.
    *
-   * @param interfaze The service interface.
+   * @param serviceInterface The service interface
    * @param instance The service implementation.
    */
-  <T> void registerRPCService(final Class<T> interfaze, final T instance);
+  <T> void registerRPCService(final Class<T> serviceInterface, final T instance);
+
+  <T> T getRPCService(final Class<T> serviceInterface);
 }

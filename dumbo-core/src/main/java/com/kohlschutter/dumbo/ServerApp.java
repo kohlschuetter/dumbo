@@ -33,7 +33,9 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.dumbo.annotations.Application;
 import com.kohlschutter.dumbo.annotations.Component;
+import com.kohlschutter.dumbo.annotations.DumboSession;
 import com.kohlschutter.dumbo.annotations.Services;
 import com.kohlschutter.dumbo.console.ConsoleService;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
@@ -41,7 +43,7 @@ import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 /**
  * Internal base class for a lightweight Server-based application.
  */
-public abstract class ServerApp extends ComponentImpl implements Component, Closeable, Cloneable {
+public final class ServerApp implements Closeable, Cloneable {
   private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
 
   private final LinkedHashMap<Class<?>, ExtensionImpl> extensions = new LinkedHashMap<>();
@@ -52,20 +54,30 @@ public abstract class ServerApp extends ComponentImpl implements Component, Clos
 
   private boolean staticDesignMode = false;
 
-  protected ServerApp() {
-    super(null);
-    resolveExtensions();
+  private final Class<? extends Application> applicationClass;
+  private final ComponentImpl applicationComponentImpl;
+  private final Application application;
+
+  public ServerApp(Class<? extends Application> applicationClass) {
+    this.applicationClass = applicationClass;
+    this.applicationComponentImpl = new ComponentImpl(applicationClass);
+    resolveExtensions(applicationClass);
+
+    for (Class<?> ext : extensions.keySet()) {
+      System.out.println(ext);
+    }
+
+    this.application = applicationComponentImpl.newInstance(applicationClass);
   }
 
-  private void resolveExtensions() throws ExtensionDependencyException {
-    LinkedHashSet<Class<?>> reachableComponents = getReachableComponents();
+  private void resolveExtensions(Class<? extends Component> mainComponent)
+      throws ExtensionDependencyException {
+    LinkedHashSet<Class<?>> reachableComponents = applicationComponentImpl.getReachableComponents();
 
     for (Class<?> compClass : reachableComponents) {
-      if (compClass.isInterface()) {
-        @SuppressWarnings("unchecked")
-        ExtensionImpl ext = new ExtensionImpl((Class<? extends Component>) compClass);
-        extensions.put(compClass, ext);
-      }
+      @SuppressWarnings("unchecked")
+      ExtensionImpl ext = new ExtensionImpl((Class<? extends Component>) compClass);
+      extensions.put(compClass, ext);
     }
 
     for (ExtensionImpl ext : extensions.values()) {
@@ -99,23 +111,19 @@ public abstract class ServerApp extends ComponentImpl implements Component, Clos
 
       @Override
       public Object requestNextChunk() {
-        DumboSession session = DumboSession.getSession();
+        DumboSession session = DumboSessionImpl.getSession();
 
         return ((ConsoleImpl) session.getConsole()).getConsoleService().requestNextChunk();
       }
     });
 
-    List<Class<?>> serviceClasses = getAnnotations(Services.class).stream().map((s) -> s.value())
-        .flatMap(Stream::of).distinct().collect(Collectors.toList());
+    List<Class<?>> serviceClasses = applicationComponentImpl.getAnnotations(Services.class).stream()
+        .map((s) -> s.value()).flatMap(Stream::of).distinct().collect(Collectors.toList());
     for (Class<?> serviceClass : serviceClasses) {
       Class<?>[] interfaces = serviceClass.getInterfaces();
-      registry.registerRPCService((Class) interfaces[0], newInstance(serviceClass));
+      registry.registerRPCService((Class) interfaces[0], applicationComponentImpl.newInstance(
+          serviceClass));
     }
-
-    onRPCInit(registry);
-  }
-
-  protected void onRPCInit(RPCRegistry registry) {
   }
 
   /**
@@ -135,7 +143,8 @@ public abstract class ServerApp extends ComponentImpl implements Component, Clos
    *
    * @param session The session for this instance.
    */
-  protected void onAppLoaded(final DumboSession session) {
+  void onAppLoaded(final DumboSession session) {
+    application.onAppLoaded(session);
   }
 
   @Override
@@ -217,6 +226,14 @@ public abstract class ServerApp extends ComponentImpl implements Component, Clos
     return 16;
   }
 
+  public Class<? extends Application> getApplicationClass() {
+    return applicationClass;
+  }
+
+  ComponentImpl getApplicationComponentImpl() {
+    return applicationComponentImpl;
+  }
+
   /**
    * Look up a resource in the resource path of the app and any registered {@link ExtensionImpl}.
    *
@@ -224,7 +241,7 @@ public abstract class ServerApp extends ComponentImpl implements Component, Clos
    * @return The {@link URL} pointing to the resource, or {@code null} if not found/not accessible.
    */
   public URL getResource(String path) {
-    URL resource = getComponentClass().getResource(path);
+    URL resource = applicationComponentImpl.getComponentClass().getResource(path);
     if (resource != null) {
       return resource;
     }

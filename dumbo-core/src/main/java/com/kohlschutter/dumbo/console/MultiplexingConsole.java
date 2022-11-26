@@ -21,7 +21,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Collection;
 
-import com.kohlschutter.dumbo.ShutdownNotice;
+import com.kohlschutter.dumbo.annotations.Console;
 
 public abstract class MultiplexingConsole implements Console {
   public MultiplexingConsole() {
@@ -111,9 +111,9 @@ public abstract class MultiplexingConsole implements Console {
   }
 
   @Override
-  public void shutdown(ShutdownNotice notice) {
+  public void shutdown(boolean clean) {
     for (Console c : getConsoles()) {
-      c.shutdown(notice);
+      c.shutdown(clean);
     }
   }
 }

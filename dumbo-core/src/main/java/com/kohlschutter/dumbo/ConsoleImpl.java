@@ -24,8 +24,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.kohlschutter.dumbo.annotations.Console;
+import com.kohlschutter.dumbo.annotations.DumboSession;
 import com.kohlschutter.dumbo.console.ClearConsole;
-import com.kohlschutter.dumbo.console.Console;
 import com.kohlschutter.dumbo.console.ConsoleService;
 
 /**
@@ -313,6 +314,10 @@ final class ConsoleImpl implements Console {
    * Requests the application to gracefully shutdown.
    */
   @Override
+  public void shutdown(boolean clean) {
+    shutdown(clean ? ShutdownNotice.CLEAN : ShutdownNotice.NOT_CLEAN);
+  }
+
   public void shutdown(ShutdownNotice notice) {
     if (shutdownNoticeSent.get()) {
       return;

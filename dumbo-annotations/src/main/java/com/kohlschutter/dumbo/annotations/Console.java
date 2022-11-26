@@ -14,12 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.console;
+package com.kohlschutter.dumbo.annotations;
 
 import java.io.Closeable;
 import java.io.PrintWriter;
-
-import com.kohlschutter.dumbo.ShutdownNotice;
 
 public interface Console extends Closeable {
   /**
@@ -68,5 +66,5 @@ public interface Console extends Closeable {
   /**
    * Requests the application to gracefully shutdown.
    */
-  void shutdown(ShutdownNotice notice);
+  void shutdown(boolean clean);
 }

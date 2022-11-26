@@ -98,13 +98,15 @@ public class AppHTTPServer {
   private static URL getWebappBaseURL(final ServerApp app) {
     URL u;
 
-    u = app.getClass().getResource("webapp/");
+    u = app.getApplicationComponentImpl().getComponentResource("webapp/");
     if (u != null) {
       return u;
     }
 
-    String path = "/" + app.getClass().getPackage().getName().replace('.', '/') + "/webapp/";
-    u = app.getClass().getResource(path);
+    // FIXME
+    String path = "/" + app.getApplicationClass().getPackage().getName().replace('.', '/')
+        + "/webapp/";
+    u = app.getApplicationClass().getResource(path);
     Objects.requireNonNull(u, () -> {
       return "Resource path is missing: " + path;
     });
@@ -192,7 +194,7 @@ public class AppHTTPServer {
       Resource res = Resource.newResource(webappBaseURL);
       final WebAppContext wac = new WebAppContext(res, contextPath);
 
-      initWebAppContext(app, wac);
+      initWebAppContext(app.getApplicationComponentImpl(), wac);
 
       ServletHolder sh = new ServletHolder(new JabsorbJSONRPCBridgeServlet());
       sh.setInitOrder(0); // initialize right upon start

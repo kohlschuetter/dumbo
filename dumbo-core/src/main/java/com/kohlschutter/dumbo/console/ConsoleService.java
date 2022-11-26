@@ -16,6 +16,8 @@
  */
 package com.kohlschutter.dumbo.console;
 
+import com.kohlschutter.dumbo.annotations.Console;
+
 /**
  * Provides access to an object-oriented console ("System.out")
  *

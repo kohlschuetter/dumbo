@@ -18,14 +18,9 @@ package com.kohlschutter.dumbo.util;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import com.kohlschutter.dumbo.annotations.Component;
 
@@ -64,33 +59,5 @@ public final class AnnotationUtil {
     } while (candidateClass != null && candidateClass != Object.class);
 
     return classesToInspect.listIterator(classesToInspect.size());
-  }
-
-  public static Collection<Class<?>> linearizeComponentHierarchy(Class<?> leafClass) {
-    LinkedHashMap<Class<?>, AtomicInteger> countMap = new LinkedHashMap<>();
-
-    traverseComponentHierarchy(leafClass, countMap);
-
-    List<Map.Entry<Class<?>, AtomicInteger>> list = new ArrayList<>(countMap.entrySet());
-    list.sort((a, b) -> b.getValue().get() - a.getValue().get());
-
-    return list.stream().map((e) -> e.getKey()).collect(Collectors.toList());
-  }
-
-  private static void traverseComponentHierarchy(Class<?> clazzToInspect,
-      LinkedHashMap<Class<?>, AtomicInteger> countMap) {
-
-    countMap.computeIfAbsent(clazzToInspect, (k) -> new AtomicInteger(0)).incrementAndGet();
-
-    Class<?> superClass = clazzToInspect.getSuperclass();
-    if (superClass != null && Component.class.isAssignableFrom(superClass)) {
-      traverseComponentHierarchy(superClass, countMap);
-    }
-
-    for (Class<?> intf : clazzToInspect.getInterfaces()) {
-      if (Component.class.isAssignableFrom(intf)) {
-        traverseComponentHierarchy(intf, countMap);
-      }
-    }
   }
 }

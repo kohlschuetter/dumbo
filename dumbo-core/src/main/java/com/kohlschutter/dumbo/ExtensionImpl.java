@@ -281,8 +281,4 @@ final class ExtensionImpl extends ComponentImpl {
   String getExtensionPath() {
     return extensionPath;
   }
-
-  URL getComponentResource(String name) {
-    return getComponentClass().getResource(name);
-  }
 }

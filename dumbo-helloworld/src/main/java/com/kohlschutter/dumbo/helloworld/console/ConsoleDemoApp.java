@@ -19,23 +19,23 @@ package com.kohlschutter.dumbo.helloworld.console;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
-import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.ConsoleSupport;
-import com.kohlschutter.dumbo.DumboSession;
-import com.kohlschutter.dumbo.RPCRegistry;
 import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.dumbo.annotations.Application;
+import com.kohlschutter.dumbo.annotations.Console;
+import com.kohlschutter.dumbo.annotations.DumboSession;
+import com.kohlschutter.dumbo.annotations.Services;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
-import com.kohlschutter.dumbo.console.Console;
 import com.kohlschutter.dumbo.util.DevTools;
 
 /**
  * This demo shows how one can use the Console.
  */
-public class ConsoleDemoApp extends ServerApp implements BootstrapSupport, ConsoleSupport {
+@Services(CommandLineServiceImpl.class)
+public class ConsoleDemoApp implements Application, BootstrapSupport, ConsoleSupport {
   public static void main(String[] args) throws IOException {
-    final ConsoleDemoApp app = new ConsoleDemoApp();
-    new AppHTTPServer(app, "/", ConsoleDemoApp.class.getResource(
+    new AppHTTPServer(new ServerApp(ConsoleDemoApp.class), "/", ConsoleDemoApp.class.getResource(
         "/com/kohlschutter/dumbo/helloworld/webapp/")) {
 
       @Override
@@ -46,38 +46,8 @@ public class ConsoleDemoApp extends ServerApp implements BootstrapSupport, Conso
     }.startAndWait();
   }
 
-  /**
-   * This is some state that is not shared across pages.
-   */
-  private static final class State {
-    boolean enteredCommand = false;
-    int n = -1;
-  }
-
   @Override
-  protected void onRPCInit(final RPCRegistry registry) {
-    registry.registerRPCService(CommandLineService.class, new CommandLineService() {
-      final String[] colors = new String[] {"red", "coral", "gold", "green", "blue", "fuchsia"};
-
-      int count = 0; // this is an application-level state (i.e., shared across pages!)
-
-      @Override
-      @SuppressFBWarnings("NN_NAKED_NOTIFY")
-      public void sendLine(String line) {
-        DumboSession session = DumboSession.getSession();
-        session.getOrCreatePageAttribute(State.class, State::new).enteredCommand = true;
-        final String color = colors[count++ % colors.length];
-
-        session.getConsole().add(new ColorMessage(line, color));
-        synchronized (session) {
-          session.notifyAll();
-        }
-      }
-    });
-  }
-
-  @Override
-  protected void onAppLoaded(DumboSession session) {
+  public void onAppLoaded(DumboSession session) {
     Console console = session.getConsole();
     State state = session.getOrCreatePageAttribute(State.class, State::new);
 

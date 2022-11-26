@@ -24,6 +24,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,6 +39,7 @@ import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.dumbo.annotations.DumboSession;
 import com.kohlschutter.dumbo.console.ConsoleService;
 import com.kohlschutter.dumbo.exceptions.NoSessionException;
 import com.kohlschutter.dumbo.exceptions.PermanentRPCException;
@@ -102,19 +105,34 @@ class JabsorbJSONRPCBridgeServlet extends HttpServlet {
   private static final class JSONRPCRegistryImpl implements RPCRegistry {
     private final JSONRPCBridge bridge;
     private ConsoleService consoleService;
+    private Map<Class<?>, Object> classToInstance = new HashMap<>();
 
     public JSONRPCRegistryImpl(final JSONRPCBridge bridge) {
       this.bridge = bridge;
     }
 
     @Override
-    public <T> void registerRPCService(Class<T> interfaze, T instance) {
-      Objects.requireNonNull(interfaze, "Interface class must not be null");
+    public <T extends Object> void registerRPCService(Class<T> serviceInterface, T instance) {
+      Objects.requireNonNull(serviceInterface, "Interface class must not be null");
       Objects.requireNonNull(instance, "Instance must not be null");
-      if (ConsoleService.class == interfaze && consoleService == null) {
+
+      if (classToInstance.containsKey(serviceInterface)) {
+        throw new IllegalStateException("Already registered");
+      }
+
+      // FIXME
+      if (ConsoleService.class == serviceInterface) {
         this.consoleService = (ConsoleService) instance;
       }
-      bridge.registerObject(interfaze.getSimpleName(), instance, interfaze);
+
+      classToInstance.put(serviceInterface, instance);
+      bridge.registerObject(serviceInterface.getSimpleName(), instance, serviceInterface);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T getRPCService(Class<T> serviceInterface) {
+      return (T) classToInstance.get(serviceInterface);
     }
   }
 
@@ -161,7 +179,7 @@ class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       String pageId = request.getParameter("pageId");
       if (pageId == null && maxPagesPerSession != 0) {
         triggerOnAppLoaded = true;
-        pageId = DumboSession.newPageId(context, maxPagesPerSession);
+        pageId = DumboSessionImpl.newPageId(context, maxPagesPerSession);
         newServerURL = request.getRequestURI();
         String qs = request.getQueryString();
         if (qs != null && !qs.isEmpty()) {
@@ -171,7 +189,7 @@ class JabsorbJSONRPCBridgeServlet extends HttpServlet {
         }
       }
 
-      dumboSession = DumboSession.getDumboSession(context, pageId);
+      dumboSession = DumboSessionImpl.getDumboSession(context, pageId);
       if (dumboSession == null) {
         response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid pageId");
         return;
@@ -180,7 +198,7 @@ class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       dumboSession = null;
     }
 
-    DumboSession.setSessionTL(dumboSession);
+    DumboSessionImpl.setSession(dumboSession);
     JSONRPCResult result;
     try {
       JSONTokener jt = new JSONTokener(request.getReader());
@@ -227,7 +245,7 @@ class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       triggerOnAppLoaded = false;
     } finally {
       tlMethod.set(null);
-      DumboSession.removeSessionTL();
+      DumboSessionImpl.removeSession();
     }
 
     ByteBuffer byteBuffer = UTF_8.encode(result.toJSONString(newServerURL));

@@ -14,27 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.helloworld.console;
+package com.kohlschutter.dumbo.annotations;
 
-import com.kohlschutter.dumbo.annotations.Console;
+public interface Application extends Component {
+  default void onAppLoaded(DumboSession session) {
 
-/**
- * A simple message that we send via the {@link Console}.
- */
-public final class ColorMessage {
-  final String message;
-  final String color;
-
-  ColorMessage(final String message, final String color) {
-    this.message = message;
-    this.color = color;
-  }
-
-  public String getMessage() {
-    return message;
-  }
-
-  public String getColor() {
-    return color;
   }
 }

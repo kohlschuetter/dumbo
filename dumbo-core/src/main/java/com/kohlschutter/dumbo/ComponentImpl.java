@@ -18,15 +18,22 @@ package com.kohlschutter.dumbo;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.Nullable;
 
 import com.kohlschutter.dumbo.annotations.Component;
 import com.kohlschutter.dumbo.util.AnnotationUtil;
 
-abstract class ComponentImpl implements Component {
+class ComponentImpl implements BaseSupport {
   private final Class<? extends Component> componentClass;
 
   private LinkedHashSet<Class<?>> reachableComponents = null;
@@ -93,12 +100,20 @@ abstract class ComponentImpl implements Component {
   }
 
   protected LinkedHashSet<Class<?>> getReachableComponents() {
+    return getReachableComponents(null);
+  }
+
+  LinkedHashSet<Class<?>> getReachableComponents(Class<?> extra) {
     if (reachableComponents == null) {
       reachableComponents = new LinkedHashSet<>();
-      reachableComponents.add(componentClass);
       reachableComponents.add(BaseSupport.class);
+      reachableComponents.add(componentClass);
+      reachableComponents.addAll(linearizeComponentHierarchy(componentClass));
 
-      reachableComponents.addAll(AnnotationUtil.linearizeComponentHierarchy(componentClass));
+      if (extra != null) {
+        reachableComponents.add(extra);
+        reachableComponents.addAll(linearizeComponentHierarchy(extra));
+      }
     }
 
     return reachableComponents;
@@ -111,5 +126,42 @@ abstract class ComponentImpl implements Component {
       annotations.addAll(AnnotationUtil.getAnnotations(klazz, annotationClass));
     }
     return annotations;
+  }
+
+  private static Collection<Class<?>> linearizeComponentHierarchy(Class<?> leafClass) {
+    LinkedHashMap<Class<?>, AtomicInteger> countMap = new LinkedHashMap<>();
+
+    traverseComponentHierarchy(leafClass, countMap);
+
+    for (Map.Entry<Class<?>, AtomicInteger> en : countMap.entrySet()) {
+      System.out.println(en.getKey() + ": " + en.getValue());
+    }
+
+    List<Map.Entry<Class<?>, AtomicInteger>> list = new ArrayList<>(countMap.entrySet());
+    list.sort((a, b) -> b.getValue().get() - a.getValue().get());
+
+    return list.stream().map((e) -> e.getKey()).collect(Collectors.toList());
+  }
+
+  private static void traverseComponentHierarchy(Class<?> clazzToInspect,
+      LinkedHashMap<Class<?>, AtomicInteger> countMap) {
+    if (!Component.class.isAssignableFrom(clazzToInspect)) {
+      return;
+    }
+
+    Class<?> superClass = clazzToInspect.getSuperclass();
+    if (superClass != null) {
+      traverseComponentHierarchy(superClass, countMap);
+    }
+
+    for (Class<?> intf : clazzToInspect.getInterfaces()) {
+      traverseComponentHierarchy(intf, countMap);
+    }
+
+    countMap.computeIfAbsent(clazzToInspect, (k) -> new AtomicInteger(0)).incrementAndGet();
+  }
+
+  URL getComponentResource(String name) {
+    return getComponentClass().getResource(name);
   }
 }

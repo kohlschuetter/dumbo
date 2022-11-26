@@ -16,25 +16,10 @@
  */
 package com.kohlschutter.dumbo.helloworld.console;
 
-import com.kohlschutter.dumbo.annotations.Console;
-
 /**
- * A simple message that we send via the {@link Console}.
+ * This is some state that is not shared across pages.
  */
-public final class ColorMessage {
-  final String message;
-  final String color;
-
-  ColorMessage(final String message, final String color) {
-    this.message = message;
-    this.color = color;
-  }
-
-  public String getMessage() {
-    return message;
-  }
-
-  public String getColor() {
-    return color;
-  }
+final class State {
+  boolean enteredCommand = false;
+  int n = -1;
 }
