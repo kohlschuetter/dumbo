@@ -103,7 +103,7 @@ public final class ServerApp implements Closeable, Cloneable {
     }
 
     for (ExtensionImpl ext : extensions.values()) {
-      ext.doInit(server);
+      ext.initComponent(server);
     }
   }
 

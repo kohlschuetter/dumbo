@@ -92,10 +92,10 @@ final class ExtensionImpl extends ComponentImpl {
    * @throws IOException on error.
    */
   @Override
-  void doInit(AppHTTPServer app) throws IOException {
-    super.doInit(app);
+  void initComponent(AppHTTPServer app) throws IOException {
+    super.initComponent(app);
     initResources();
-    init(app);
+    initExtension(app);
   }
 
   /**
@@ -148,7 +148,7 @@ final class ExtensionImpl extends ComponentImpl {
    * @param server The server instance to work with.
    * @throws IOException on error.
    */
-  void init(final AppHTTPServer server) throws IOException {
+  void initExtension(final AppHTTPServer server) throws IOException {
     serverContextPath = server.getContextPath().replaceFirst("/$", "");
     contextPath = serverContextPath;
     if (extensionPath != null) {

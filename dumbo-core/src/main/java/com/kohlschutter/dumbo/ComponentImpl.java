@@ -160,7 +160,7 @@ class ComponentImpl implements BaseSupport {
    *
    * @throws IOException on error.
    */
-  void doInit(AppHTTPServer app) throws IOException {
+  void initComponent(AppHTTPServer app) throws IOException {
     if (!initialized.compareAndSet(false, true)) {
       throw new IllegalStateException("Already initialized");
     }
