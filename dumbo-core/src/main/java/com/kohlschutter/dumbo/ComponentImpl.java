@@ -58,17 +58,12 @@ class ComponentImpl implements BaseSupport {
    * @param extra An additional class to retrieve {@link Component}s from.
    * @return A collection of {@link Component} instances, in dependency order.
    */
-  LinkedHashSet<Class<?>> getReachableComponents(Class<?> extra) {
+  protected synchronized LinkedHashSet<Class<?>> getReachableComponents() {
     if (reachableComponents == null) {
       reachableComponents = new LinkedHashSet<>();
       reachableComponents.add(BaseSupport.class);
       reachableComponents.add(componentClass);
       reachableComponents.addAll(linearizeComponentHierarchy(componentClass));
-
-      if (extra != null) {
-        reachableComponents.add(extra);
-        reachableComponents.addAll(linearizeComponentHierarchy(extra));
-      }
     }
 
     return reachableComponents;
@@ -96,10 +91,6 @@ class ComponentImpl implements BaseSupport {
 
   <T extends Annotation> List<T> getComponentAnnotations(Class<T> annotationClass) {
     return AnnotationUtil.getAnnotations(componentClass, annotationClass);
-  }
-
-  protected LinkedHashSet<Class<?>> getReachableComponents() {
-    return getReachableComponents(null);
   }
 
   final <T extends Annotation> LinkedHashSet<T> getAnnotatedMappingsFromAllReachableComponents(
@@ -164,5 +155,10 @@ class ComponentImpl implements BaseSupport {
     if (!initialized.compareAndSet(false, true)) {
       throw new IllegalStateException("Already initialized");
     }
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + "<" + getComponentClass() + ": " + getReachableComponents() + ">";
   }
 }

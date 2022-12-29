@@ -252,9 +252,11 @@ public class MultiplexedAppendable implements Appendable {
      * @throws IOException on error.
      */
     public void checkError(Appendable target) throws IOException {
-      Throwable t = getError(target);
-      if (t != null) {
-        throwError(t);
+      if (target != null) {
+        Throwable t = getError(target);
+        if (t != null) {
+          throwError(t);
+        }
       }
     }
   }

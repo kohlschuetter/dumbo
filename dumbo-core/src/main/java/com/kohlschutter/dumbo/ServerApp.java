@@ -29,10 +29,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,23 +65,54 @@ public final class ServerApp implements Closeable, Cloneable {
   private boolean staticDesignMode = false;
 
   private final Class<? extends Application> applicationClass;
-  private final ComponentImpl applicationComponentImpl;
+  private final ExtensionImpl applicationExtensionImpl;
+
+  private final Map<ImplementationIdentity<?>, Object> implementationIdentities =
+      new WeakHashMap<>();
 
   public ServerApp(Class<? extends Application> applicationClass) {
     this.applicationClass = applicationClass;
-    this.applicationComponentImpl = new ComponentImpl(applicationClass);
+    this.applicationExtensionImpl = new ExtensionImpl(applicationClass);
     resolveExtensions(applicationClass);
 
     initEventHandlers();
   }
 
+  /**
+   * Returns an implementation for the given component identity.
+   * 
+   * This data structure can be used by servlets etc. to store information at the application level
+   * in a secure way: only the code that has access to the given {@link ImplementationIdentity} can
+   * access the implementation.
+   * 
+   * @param identity The implementation identity.
+   * @return The implementatioin instance.
+   * @throws IOException
+   */
+  @SuppressWarnings({"unchecked"})
+  public <K> @NonNull K getImplementationByIdentity(ImplementationIdentity<K> identity,
+      ImplementationIdentity.Supplier<@NonNull K> supplier) throws IOException {
+    K instance = (K) implementationIdentities.get(identity);
+    if (instance == null) {
+      instance = Objects.requireNonNull(supplier.get());
+      implementationIdentities.put(identity, instance);
+    }
+    return instance;
+  }
+
   private void resolveExtensions(Class<? extends Component> mainComponent)
       throws ExtensionDependencyException {
-    LinkedHashSet<Class<?>> reachableComponents = applicationComponentImpl.getReachableComponents();
+    LinkedHashSet<Class<?>> reachableComponents = applicationExtensionImpl.getReachableComponents();
 
     for (Class<?> compClass : reachableComponents) {
+      if (extensions.containsKey(compClass)) {
+        continue;
+      }
+
       @SuppressWarnings("unchecked")
-      ExtensionImpl ext = new ExtensionImpl((Class<? extends Component>) compClass);
+      ExtensionImpl ext = compClass == applicationClass ? applicationExtensionImpl
+          : new ExtensionImpl((Class<? extends Component>) compClass);
+
       extensions.put(compClass, ext);
     }
 
@@ -88,7 +122,7 @@ public final class ServerApp implements Closeable, Cloneable {
   }
 
   private void initEventHandlers() {
-    List<Class<? extends EventHandler>> eventHandlerClasses = applicationComponentImpl
+    List<Class<? extends EventHandler>> eventHandlerClasses = applicationExtensionImpl
         .getAnnotations(EventHandlers.class).stream().map((s) -> s.value()).flatMap(Stream::of)
         .distinct().collect(Collectors.toList());
 
@@ -129,7 +163,7 @@ public final class ServerApp implements Closeable, Cloneable {
       }
     });
 
-    List<Class<?>> serviceClasses = applicationComponentImpl.getAnnotations(Services.class).stream()
+    List<Class<?>> serviceClasses = applicationExtensionImpl.getAnnotations(Services.class).stream()
         .map((s) -> s.value()).flatMap(Stream::of).distinct().collect(Collectors.toList());
     for (Class<?> serviceClass : serviceClasses) {
       Class<?>[] interfaces = serviceClass.getInterfaces();
@@ -241,8 +275,8 @@ public final class ServerApp implements Closeable, Cloneable {
     return applicationClass;
   }
 
-  ComponentImpl getApplicationComponentImpl() {
-    return applicationComponentImpl;
+  ComponentImpl getApplicationExtensionImpl() {
+    return applicationExtensionImpl;
   }
 
   /**
@@ -252,7 +286,7 @@ public final class ServerApp implements Closeable, Cloneable {
    * @return The {@link URL} pointing to the resource, or {@code null} if not found/not accessible.
    */
   public URL getResource(String path) {
-    URL resource = applicationComponentImpl.getComponentClass().getResource(path);
+    URL resource = applicationExtensionImpl.getComponentClass().getResource(path);
     if (resource != null) {
       return resource;
     }

@@ -37,8 +37,6 @@ import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 import com.kohlschutter.dumbo.api.Component;
 import com.kohlschutter.dumbo.util.NameObfuscator;
 
-import jakarta.servlet.http.HttpSession;
-
 /**
  * Provides support for HTML/CSS/JavaScript-based extensions that simplify app development.
  */
@@ -235,10 +233,10 @@ final class ExtensionImpl extends ComponentImpl {
    * By default, this returns a set of {@code <LINK>} and/or {@code SCRIPT} HTML elements, pointing
    * to the resources registered in {@link #initResources()}.
    *
-   * @param context The context of the page.
+   * @param app The server app.
    * @return The HTML string.
    */
-  String htmlHead(final HttpSession context) {
+  String htmlHead(final ServerApp app) {
     return htmlHead;
   }
 
@@ -246,10 +244,10 @@ final class ExtensionImpl extends ComponentImpl {
    * Returns an HTML string that may be added to the top of the HTML BODY section of a web page to
    * initialize this extension.
    *
-   * @param context The context of the page.
+   * @param app The server app.
    * @return The HTML string.
    */
-  String htmlBodyTop(final HttpSession context) {
+  String htmlBodyTop(final ServerApp app) {
     return htmlBodyTop;
   }
 

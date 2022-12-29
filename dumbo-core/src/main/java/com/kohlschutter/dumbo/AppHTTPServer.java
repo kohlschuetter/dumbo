@@ -27,8 +27,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -98,7 +100,7 @@ public class AppHTTPServer {
   private static URL getWebappBaseURL(final ServerApp app) {
     URL u;
 
-    u = app.getApplicationComponentImpl().getComponentResource("webapp/");
+    u = app.getApplicationExtensionImpl().getComponentResource("webapp/");
     if (u != null) {
       return u;
     }
@@ -194,7 +196,7 @@ public class AppHTTPServer {
       Resource res = Resource.newResource(webappBaseURL);
       final WebAppContext wac = new WebAppContext(res, contextPath);
 
-      initWebAppContext(app.getApplicationComponentImpl(), wac);
+      initWebAppContext(app.getApplicationExtensionImpl(), wac);
 
       ServletHolder sh = new ServletHolder(new JabsorbJSONRPCBridgeServlet());
       sh.setInitOrder(0); // initialize right upon start
@@ -210,10 +212,15 @@ public class AppHTTPServer {
     server.setConnectors(initConnectors(port, server));
   }
 
+  private final Set<File> scannedFiles = new HashSet<>();
+
   private void scanWebApp(String contextPrefix, String dirPrefix, Resource dir) throws IOException {
     File file = dir.getFile();
     if (file == null || !file.canWrite()) {
       LOG.warn("FIXME Cannot visit file: " + dir);
+      return;
+    }
+    if (!scannedFiles.add(file)) {
       return;
     }
 
@@ -256,7 +263,7 @@ public class AppHTTPServer {
   }
 
   /**
-   * Registers a web app context/
+   * Registers a web app context.
    *
    * @param contextPrefix The context prefix.
    * @param pathToWebApp The URL pointing to the resources that should be served.

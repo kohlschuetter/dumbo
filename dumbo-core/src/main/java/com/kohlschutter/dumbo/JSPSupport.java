@@ -37,12 +37,16 @@ public final class JSPSupport {
     ServerApp app = getApp(session);
     if (app == null) {
       return "";
+    } else {
+      return htmlHead(app);
     }
+  }
 
+  public static String htmlHead(final ServerApp app) {
     StringBuilder sb = new StringBuilder();
     for (ExtensionImpl ext : app.getExtensions()) {
       // FIXME precompute
-      String v = ext.htmlHead(session);
+      String v = ext.htmlHead(app);
       if (v != null) {
         sb.append(v);
       }
@@ -62,12 +66,17 @@ public final class JSPSupport {
     ServerApp app = getApp(session);
     if (app == null) {
       return "";
+    } else {
+      return htmlBodyTop(app);
     }
+  }
 
+  public static String htmlBodyTop(final ServerApp app) {
     StringBuilder sb = new StringBuilder();
+
     for (ExtensionImpl ext : app.getExtensions()) {
       // FIXME precompute
-      String v = ext.htmlBodyTop(session);
+      String v = ext.htmlBodyTop(app);
       if (v != null) {
         sb.append(v);
       }
