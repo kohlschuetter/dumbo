@@ -45,10 +45,6 @@ public class DumboIncludeTag extends Tag {
   @SuppressWarnings("deprecation")
   @Override
   public Object render(TemplateContext context, LNode... nodes) {
-    if (context.getParser().isLegacyMode()) {
-      throw new UnsupportedOperationException();
-    }
-
     ServerApp app = (ServerApp) Objects.requireNonNull(context.getEnvironmentMap().get(
         LiquidHelper.ENVIRONMENT_KEY_DUMBO_APP));
 
@@ -58,6 +54,7 @@ public class DumboIncludeTag extends Tag {
       if (includeResource.isEmpty()) {
         throw new FileNotFoundException("Can't include " + nodes[0] + " (empty string)");
       }
+
       if (includeResource.indexOf('.') == 0) {
         includeResource += DEFAULT_EXTENSION;
       }
@@ -69,21 +66,24 @@ public class DumboIncludeTag extends Tag {
 
       Map<String, Object> variables = new HashMap<String, Object>();
 
+      // CustomSiteVariables.copyPathAndFileName(context.getVariables(), variables);
+
       try (Reader in = new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8)) {
         Template template;
         template = context.getParser().parse(in);
         if (nodes.length > 1) {
           if (context.getParseSettings().flavor != Flavor.JEKYLL) {
-            // check if there's a optional "with expression"
+            // check if there's an optional "with expression"
             Object value = nodes[1].render(context);
             context.put(includeResource, value);
           } else {
+            Map<String, Object> includeMap = new HashMap<>();
+            variables.put("include", includeMap);
             for (int i = 1, n = nodes.length; i < n; i++) {
               @SuppressWarnings("unchecked")
               Map<String, Object> var = (Map<String, Object>) nodes[i].render(context);
 
-              Map<String, Object> includeMap = new HashMap<>(var);
-              variables.put("include", includeMap);
+              includeMap.putAll(var);
             }
           }
         }

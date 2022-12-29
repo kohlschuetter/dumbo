@@ -17,29 +17,12 @@
  */
 package com.kohlschutter.dumbo.markdown;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Objects;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.ServerApp;
-import com.kohlschutter.dumbo.markdown.site.SiteObject;
-import com.kohlschutter.dumbo.util.MultiplexedAppendable.SuppressErrorsAppendable;
-import com.kohlschutter.dumbo.util.SuccessfulCloseWriter;
-import com.kohlschutter.stringhold.StringHolder;
-import com.kohlschutter.stringhold.StringHolderSequence;
-import com.vladsch.flexmark.util.ast.Document;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -48,63 +31,26 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class MarkdownServlet extends HttpServlet {
-  private static final Logger LOG = LoggerFactory.getLogger(MarkdownServlet.class);
   private static final long serialVersionUID = 1L;
   private ServletContext servletContext;
 
   private ServerApp app;
 
-  private LiquidHelper liquid;
-  private LiquidMarkdownHelper liquidMarkdown;
-
-  private final Map<String, Object> commonVariables = new HashMap<>();
-  private final Map<String, Object> commonDumboVariables = new HashMap<>();
+  private String realPathPrefix;
+  private MarkdownSupportImpl mdConfig;
 
   @Override
   public void init() throws ServletException {
-    servletContext = getServletContext();
-
+    this.servletContext = getServletContext();
     this.app = Objects.requireNonNull(AppHTTPServer.getServerApp(servletContext));
 
-    this.liquid = new LiquidHelper(app);
-    this.liquidMarkdown = new LiquidMarkdownHelper(liquid);
+    this.realPathPrefix = servletContext.getRealPath("") + "/";
 
-    commonVariables.clear();
-    commonDumboVariables.clear();
-    commonVariables.put("dumbo", commonDumboVariables);
-
-    commonVariables.put("site", new SiteObject(app, liquid));
-  }
-
-  private SuccessfulCloseWriter mdReloadWriter(String path, HttpServletRequest req)
-      throws IOException {
-    if (!path.endsWith(".md")) {
-      return null;
-    }
-
-    String htmlPath = path.substring(0, path.length() - ".md".length()) + ".html";
-
-    File htmlFile = new File(htmlPath);
-
-    if ("true".equals(req.getParameter("reload")) /* || !htmlFile.exists() */) {
-      File mdFileHtmlTmp = File.createTempFile(".md", ".tmp", htmlFile.getParentFile());
-      LOG.info("Generating " + htmlFile);
-
-      return new SuccessfulCloseWriter(new OutputStreamWriter(new FileOutputStream(mdFileHtmlTmp),
-          StandardCharsets.UTF_8)) {
-
-        @Override
-        protected void onClosed(boolean success) throws IOException {
-          if (success && mdFileHtmlTmp.renameTo(htmlFile)) {
-            LOG.debug("renamed successfully: " + htmlFile);
-          } else {
-            LOG.warn("Failed to create " + htmlFile);
-            mdFileHtmlTmp.delete();
-          }
-        }
-      };
-    } else {
-      return null;
+    try {
+      mdConfig = app.getImplementationByIdentity(MarkdownSupportImpl.COMPONENT_IDENTITY,
+          () -> new MarkdownSupportImpl(app));
+    } catch (IOException e) {
+      throw new ServletException(e);
     }
   }
 
@@ -114,7 +60,7 @@ public class MarkdownServlet extends HttpServlet {
     try {
       doGet0(req, resp);
     } catch (IOException e) {
-//      e.printStackTrace();
+      // e.printStackTrace();
       throw e;
     }
   }
@@ -126,6 +72,7 @@ public class MarkdownServlet extends HttpServlet {
     if (path == null) {
       return;
     }
+
     File mdFile = new File(path);
     if (!mdFile.exists() || mdFile.isDirectory()) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -139,60 +86,12 @@ public class MarkdownServlet extends HttpServlet {
       return;
     }
 
-    // long time = System.currentTimeMillis();
-
-    Map<String, Object> variables = new HashMap<>(commonVariables);
-
-    @SuppressWarnings("unchecked")
-    Map<String, Object> dumboVariables = (Map<String, Object>) variables.get("dumbo");
-    dumboVariables.put("htmlHead", com.kohlschutter.dumbo.JSPSupport.htmlHead(req.getSession()));
-    dumboVariables.put("htmlBodyTop", com.kohlschutter.dumbo.JSPSupport.htmlBodyTop(req
-        .getSession()));
-    dumboVariables.put("includedLayouts", new LinkedHashSet<>());
-
-    Document document = liquidMarkdown.parseLiquidMarkdown(mdFile, variables);
-
-    resp.setContentType("text/html;charset=UTF-8");
-    resp.setCharacterEncoding("UTF-8");
-
-    // do not add to try-catch block, otherwise we won't see error messages
-    PrintWriter servletOut = resp.getWriter();
-
-    long time = System.currentTimeMillis();
-
-    try (SuccessfulCloseWriter mdReloadOut = mdReloadWriter(path, req)) {
-      final Appendable appendable = SuppressErrorsAppendable.multiplexIfNecessary(servletOut,
-          mdReloadOut);
-
-      String layoutId = YAMLSupport.getVariableAsString(variables, "page", "layout");
-      try (BufferedReader layoutIn = liquid.layoutReader(layoutId)) {
-        // the main content
-        StringHolderSequence seq = new StringHolderSequence();
-        seq.setExpectedLength(document.getTextLength());
-        liquidMarkdown.render(document, seq);
-
-        StringHolder contentSupply = seq;
-
-        if (layoutIn != null) {
-          // the main content has a layout declared
-          contentSupply = StringHolder.withContent(liquid.renderLayout(layoutId, layoutIn,
-              contentSupply, variables));
-        }
-
-        contentSupply.appendTo(appendable);
-      }
-
-      if (appendable instanceof SuppressErrorsAppendable) {
-        SuppressErrorsAppendable multiplexed = (SuppressErrorsAppendable) appendable;
-
-        if (mdReloadOut != null) {
-          mdReloadOut.setSuccessful(!multiplexed.hasError(mdReloadOut));
-        }
-        multiplexed.checkError(servletOut);
-      }
+    if (!path.startsWith(realPathPrefix)) {
+      throw new IllegalStateException("realPath not below " + realPathPrefix + ": " + path);
     }
+    String relativePath = path.substring(realPathPrefix.length());
 
-    time = System.currentTimeMillis() - time;
-    LOG.info("Request time: " + time + "ms");
+    mdConfig.renderMarkdown(resp, relativePath, mdFile, mdFile, "true".equals(req.getParameter(
+        "reload")), null);
   }
 }

@@ -23,9 +23,13 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -40,11 +44,13 @@ import com.kohlschutter.dumbo.markdown.liqp.MarkdownifyFilter;
 import com.kohlschutter.dumbo.markdown.liqp.NumberOfWordsFilter;
 import com.kohlschutter.dumbo.markdown.liqp.SeoTag;
 import com.kohlschutter.dumbo.markdown.liqp.SlugifyFilter;
+import com.kohlschutter.dumbo.markdown.site.CustomSiteVariables;
+import com.kohlschutter.dumbo.markdown.site.PermalinkParser;
+import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
 import com.kohlschutter.stringhold.CachedIOSupplier;
 import com.kohlschutter.stringhold.HasExpectedLength;
 import com.kohlschutter.stringhold.HasLength;
 import com.kohlschutter.stringhold.IOExceptionHandler.ExceptionResponse;
-import com.kohlschutter.stringhold.IOSupplier;
 import com.kohlschutter.stringhold.StringHolder;
 
 import liqp.ParseSettings;
@@ -66,8 +72,11 @@ public class LiquidHelper {
 
   private final ServerApp app;
 
-  LiquidHelper(ServerApp app) {
+  private final Map<String, Object> commonVariables;
+
+  LiquidHelper(ServerApp app, Map<String, Object> commonVariables) {
     this.app = app;
+    this.commonVariables = commonVariables;
     this.liqpParser = newLiqpParser(app);
   }
 
@@ -85,8 +94,14 @@ public class LiquidHelper {
     return haveFrontMatter;
   }
 
-  public Object prerenderLiquid(IOSupplier<Reader> inSup, Map<String, Object> variablesIn,
+  public Object prerenderLiquid(PathReaderSupplier inSup, Map<String, Object> variablesIn,
       Supplier<Map<String, Object>> pageVariablesSupplier) throws IOException {
+    return prerenderLiquid(inSup, variablesIn, "page", pageVariablesSupplier);
+  }
+
+  public Object prerenderLiquid(PathReaderSupplier inSup, Map<String, Object> variablesIn,
+      String collectionItemType, Supplier<Map<String, Object>> itemVariablesSupplier)
+      throws IOException {
     int expectedLen;
     if (inSup instanceof HasLength) {
       expectedLen = ((HasLength) inSup).length();
@@ -95,21 +110,42 @@ public class LiquidHelper {
     } else {
       expectedLen = 0;
     }
-    return prerenderLiquid(inSup, expectedLen, variablesIn, pageVariablesSupplier);
+    return prerenderLiquid(inSup, expectedLen, variablesIn, collectionItemType,
+        itemVariablesSupplier);
   }
 
-  public Object prerenderLiquid(IOSupplier<Reader> inSup, int expectedLen,
+  public Object prerenderLiquid(PathReaderSupplier inSup, int expectedLen,
       Map<String, Object> variablesIn) throws IOException {
     return prerenderLiquid(inSup, expectedLen, variablesIn, () -> new HashMap<>());
   }
 
-  public Object prerenderLiquid(IOSupplier<Reader> inSup, int expectedLen,
+  public Object prerenderLiquid(PathReaderSupplier inSup, int expectedLen,
       Map<String, Object> variables, Supplier<Map<String, Object>> pageVariablesSupplier)
       throws IOException {
+    return prerenderLiquid(inSup, expectedLen, variables, "page", pageVariablesSupplier);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Map<String, Object> parseFrontMatter(PathReaderSupplier inSup,
+      Map<String, Object> variables, String collectionItemType,
+      Supplier<Map<String, Object>> pageVariablesSupplier) throws IOException {
+    return (Map<String, Object>) prerenderLiquid(inSup, 0, variables, collectionItemType,
+        pageVariablesSupplier, true);
+  }
+
+  public Object prerenderLiquid(PathReaderSupplier inSup, int expectedLen,
+      Map<String, Object> variables, String collectionItemType,
+      Supplier<Map<String, Object>> pageVariablesSupplier) throws IOException {
+    return prerenderLiquid(inSup, expectedLen, variables, collectionItemType, pageVariablesSupplier,
+        false);
+  }
+
+  private Object prerenderLiquid(PathReaderSupplier inSup, int expectedLen,
+      Map<String, Object> variables, String collectionItemType,
+      Supplier<Map<String, Object>> pageVariablesSupplier, boolean justParseFrontMatter)
+      throws IOException {
+
     Reader in = inSup.get();
-    if (!in.markSupported()) {
-      in = new BufferedReader(in);
-    }
 
     if (in instanceof HasLength) {
       expectedLen = ((HasLength) in).length();
@@ -117,15 +153,59 @@ public class LiquidHelper {
       expectedLen = ((HasExpectedLength) in).getExpectedLength();
     }
 
+    if (!in.markSupported()) {
+      in = new BufferedReader(in);
+    }
+
     if (hasFrontMatter(in)) {
-      // enables Liquid templates
+      // front matter enables Liquid templates
+
       Map<String, Object> pageVariables = pageVariablesSupplier.get();
-      variables.put("page", pageVariables);
+      if (!justParseFrontMatter || variables != null) {
+        Objects.requireNonNull(variables);
+        variables.put(collectionItemType, pageVariables);
+      }
+
+      initDefaults(inSup.getType(), inSup.getRelativePath(), pageVariables);
+
       parseFrontMatter(in, pageVariables);
 
-      Template parse = liqpParser.parse(in);
-      return parse.prerender(variables);
+      Object tags = pageVariables.get("tags");
+      if (tags instanceof String) {
+        tags = new LinkedHashSet<>(Arrays.asList(((String) tags).split("[\\s]+")));
+        pageVariables.put("tags", tags);
+      }
+
+      String url;
+      try {
+        CustomSiteVariables.storePathAndFilename(inSup.getRelativePath(), pageVariables);
+        if (variables != null) {
+          CustomSiteVariables.copyPathAndFileName(pageVariables, variables);
+        }
+
+        url = PermalinkParser.parsePermalink((String) pageVariables.get("permalink"),
+            pageVariables);
+        pageVariables.put("url", url);
+      } catch (ParseException e) {
+        e.printStackTrace();
+      }
+
+      Template template = liqpParser.parse(in);
+      for (RuntimeException exc : template.errors()) {
+        exc.printStackTrace();
+      }
+
+      if (justParseFrontMatter) {
+        return pageVariables;
+      } else {
+        Object obj = template.prerender(variables);
+
+        return obj;
+      }
     } else {
+      if (justParseFrontMatter) {
+        return null;
+      }
       CompletableFuture<IOException> excHolder = new CompletableFuture<IOException>();
       StringHolder s = StringHolder.withReaderSupplierExpectedLength(expectedLen,
           new CachedIOSupplier<>(in, inSup), (IOException e) -> {
@@ -137,6 +217,44 @@ public class LiquidHelper {
         throw exception;
       }
       return s;
+    }
+  }
+
+  private void initDefaults(String type, String relativePath, Map<String, Object> pageVariables) {
+    @SuppressWarnings("unchecked")
+    List<Map<String, Map<String, Object>>> cv =
+        (List<Map<String, Map<String, Object>>>) ((Map<String, Object>) commonVariables.get("site"))
+            .get("defaults");
+    if (cv == null || cv.isEmpty()) {
+      return;
+    }
+
+    for (Map<String, Map<String, Object>> en : cv) {
+      Map<String, Object> scope = en.get("scope");
+
+      Object scopeType = scope.get("type");
+      if (scopeType != null) {
+        if (!scopeType.equals(type) && !String.valueOf(scopeType).isEmpty()) {
+          continue;
+        } ;
+      }
+      Object scopePath = scope.get("path");
+      if (scopePath != null) {
+        String scopePathStr = String.valueOf(scopePath);
+        if (!scopePathStr.isEmpty()) {
+          if (scopePathStr.contains("*")) {
+            throw new UnsupportedOperationException("globbing is not yet supported");
+          }
+          if (!scopePathStr.equals(relativePath) && !(relativePath.startsWith(scopePathStr)
+              && relativePath.length() > scopePathStr.length() && relativePath.charAt(scopePathStr
+                  .length()) == '/')) {
+            continue;
+          }
+        }
+      }
+
+      Map<String, Object> values = en.get("values");
+      pageVariables.putAll(values);
     }
   }
 
@@ -164,7 +282,8 @@ public class LiquidHelper {
       if (o == null) {
         continue;
       } else if (o instanceof Map) {
-        page.putAll((Map<String, Object>) o);
+        Map<String, Object> map = (Map<String, Object>) o;
+        page.putAll(map);
       } else {
         System.err.println("Unexpected YAML object class in front matter: " + o.getClass());
       }
@@ -202,18 +321,25 @@ public class LiquidHelper {
           "layout", (k) -> new HashMap<>());
       layoutVariables.remove("layout");
 
-      if (hasFrontMatter(in)) {
-        // enables Liquid templates
-        parseFrontMatter(in, layoutVariables);
-      }
+      if (in != null) {
+        if (hasFrontMatter(in)) {
+          // enables Liquid templates
+          parseFrontMatter(in, layoutVariables);
+        }
 
-      try {
-        contentSupply = liqpParser.parse(in).prerenderUnguarded(variables);
-      } catch (RuntimeException e) {
-        throw new RuntimeException("Error in layout " + layoutId, e);
-      }
+        try {
+          Template template = liqpParser.parse(in);
+          for (RuntimeException exc : template.errors()) {
+            // FIXME handle errors
+            exc.printStackTrace();
+          }
+          contentSupply = template.prerenderUnguarded(variables);
+        } catch (RuntimeException e) {
+          throw new RuntimeException("Error in layout " + layoutId, e);
+        }
 
-      in.close();
+        in.close();
+      }
 
       // the layout can have another layout
       layoutId = YAMLSupport.getVariableAsString(variables, "layout", "layout");
@@ -241,7 +367,8 @@ public class LiquidHelper {
             .build()) //
         .withRenderSettings(new RenderSettings.Builder() //
             // .withRenderTransformer(RenderTransformer.DEFAULT) //
-            .withRenderTransformer(RenderTransformer.STRINGHOLD) //
+            .withRaiseExceptionsInStrictMode(false).withStrictVariables(true).withRenderTransformer(
+                RenderTransformer.STRINGHOLD) //
             // .withRenderTransformer(RenderTransformer.STRINGHOLD_STRINGS_ONLY) //
             .withShowExceptionsFromInclude(true) //
             .withEnvironmentMapConfigurator((env) -> {

@@ -19,7 +19,6 @@ package com.kohlschutter.dumbo.markdown.site;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -33,11 +32,8 @@ import org.snakeyaml.engine.v2.api.Load;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.markdown.LiquidHelper;
 import com.kohlschutter.dumbo.markdown.YAMLSupport;
-import com.kohlschutter.stringhold.IOReaderSupplier;
-import com.kohlschutter.stringhold.IOSupplier;
+import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
 import com.kohlschutter.util.ResourcePathTraverser;
-
-import jakarta.servlet.ServletException;
 
 /**
  * Provides a Jekyll-compatible "site" object.
@@ -45,45 +41,109 @@ import jakarta.servlet.ServletException;
  * @author Christian Kohlschütter
  */
 public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object> {
+
+  private final ServerApp app;
+  private final LiquidHelper liquid;
+
   @SuppressWarnings("unchecked")
-  public SiteObject(ServerApp app, LiquidHelper liquid) throws ServletException {
-    super(new HashMap<>());
-    URL configYml = app.getResource("markdown/_config.yml");
-    if (configYml != null) {
-      try {
-        Object config = new Load(YAMLSupport.DEFAULT_LOAD_SETTINGS).loadFromReader(
-            new InputStreamReader(configYml.openStream(), StandardCharsets.UTF_8));
-        if (!(config instanceof Map)) {
-          throw new ServletException("Could not parse " + configYml + ": not a Map");
-        }
-        getMap().putAll((Map<String, Object>) config);
-      } catch (IOException e) {
-        throw new ServletException("Could not parse " + configYml);
+  private static Map<String, Object> mergeMaps(Map<String, Object> target,
+      Map<String, Object> newValues) {
+    newValues.forEach((k, newVal) -> {
+
+      if (newVal == null) {
+        return;
       }
-      System.out.println("Loaded " + configYml);
-    } else {
-      System.out.println("Not found: " + configYml);
-    }
 
-    getMap().put("data", new SiteData(app, "markdown/_data"));
+      target.merge(k, newVal, (a, b) -> {
+        if (a instanceof Map && b instanceof Map) {
+          return mergeMaps((Map<String, Object>) a, (Map<String, Object>) b);
+        } else if (b != null) {
+          return b;
+        } else {
+          return a;
+        }
+      });
+    });
 
-    getMap().put("posts", new SiteCollection(liquid, new HashMap<>(), getCollection(app, "posts")));
-    getMap().put("tabs", new SiteCollection(liquid, new HashMap<>(), getCollection(app, "tabs")));
-    getMap().put("drafts", new SiteCollection(liquid, new HashMap<>(), getCollection(app,
-        "drafts")));
+    return target;
   }
 
-  private static List<IOSupplier<Reader>> getCollection(ServerApp app, String collectionId)
-      throws ServletException {
-    Collection<URL> urls;
+  private void mergeConfig(URL configYml) {
+    Map<String, Object> map = getMap();
     try {
-      urls = ResourcePathTraverser.findURLs(app.getApplicationClass(), "markdown/_" + collectionId, false, (
-          n) -> n.endsWith(".md")).values();
+      Object config = new Load(YAMLSupport.DEFAULT_LOAD_SETTINGS).loadFromReader(
+          new InputStreamReader(configYml.openStream(), StandardCharsets.UTF_8));
+      if (!(config instanceof Map)) {
+        throw new IllegalStateException("Could not parse " + configYml + ": not a Map");
+      }
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> configMap = (Map<String, Object>) config;
+      mergeMaps(map, configMap);
     } catch (IOException e) {
-      throw new ServletException(e);
+      throw new IllegalStateException("Could not parse " + configYml);
+    }
+  }
+
+  public SiteObject(ServerApp app, LiquidHelper liquid) {
+    super(new HashMap<>());
+    this.app = app;
+    this.liquid = liquid;
+
+    Map<String, Object> map = getMap();
+
+    // Load default config
+    URL defaultConfigYml = getClass().getResource("defaultConfig.yml");
+    if (defaultConfigYml == null) {
+      throw new IllegalStateException("defaultConfig.yml not found");
+    }
+    mergeConfig(defaultConfigYml);
+
+    // Load site-specific config
+    URL configYml = app.getResource("markdown/_config.yml");
+    if (configYml != null) {
+      System.out.println("Load " + configYml);
+      mergeConfig(configYml);
+    } else {
+      System.out.println("Not found: markdown/_config.yml");
     }
 
-    return urls.stream().map((u) -> IOReaderSupplier.withContentsOf(u, StandardCharsets.UTF_8))
-        .collect(Collectors.toList());
+    map.put("data", new SiteData(app, "markdown/_data"));
+  }
+
+  public void initCollections() {
+    Map<String, Object> map = getMap();
+
+    @SuppressWarnings("unchecked")
+    final Map<String, Object> collectionsConfig = (Map<String, Object>) map.get("collections");
+
+    for (String collectionId : collectionsConfig.keySet()) {
+      map.put(collectionId, new SiteCollection(liquid, collectionsConfig, collectionId,
+          new HashMap<>(), getCollection(app, collectionId)));
+    }
+  }
+
+  private static List<PathReaderSupplier> getCollection(ServerApp app, String collectionId) {
+    Collection<URL> urls;
+
+    String baseUrl = app.getApplicationClass().getResource("markdown/").toString();
+    try {
+      urls = ResourcePathTraverser.findURLs(app.getApplicationClass(), "markdown/_" + collectionId,
+          false, ResourcePathTraverser.Order.ALPHABETICALLY_REVERSE, (n) -> n.endsWith(".md"))
+          .values();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+
+    return urls.stream().map((u) -> {
+      String uString = u.toString();
+      if (!uString.startsWith(baseUrl)) {
+        throw new IllegalStateException("URL does not start with " + baseUrl + ": " + uString);
+      }
+      String relativeUrl = uString.substring(baseUrl.length());
+
+      return PathReaderSupplier.withContentsOf(collectionId, relativeUrl, u,
+          StandardCharsets.UTF_8);
+    }).collect(Collectors.toList());
   }
 }

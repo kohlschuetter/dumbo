@@ -17,16 +17,12 @@
  */
 package com.kohlschutter.dumbo.markdown;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import com.kohlschutter.stringhold.IOSupplier;
+import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
 import com.vladsch.flexmark.util.ast.Document;
 
 public final class LiquidMarkdownHelper extends MarkdownHelper {
@@ -42,16 +38,17 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
    *
    * The file can have an optional front matter.
    *
+   * @param relativePath The path, relative to the site root.
    * @param mdFile The markdown file.
    * @param variables The variables to use in the scope of the file.
    * @return The parsed markdown object, ready to be rendered.
    * @throws IOException on error.
    */
-  public Document parseLiquidMarkdown(File mdFile, Map<String, Object> variables)
-      throws IOException {
+  public Document parseLiquidMarkdown(String relativePath, File mdFile,
+      Map<String, Object> variables) throws IOException {
 
-    return parseLiquidMarkdown(() -> new BufferedReader(new InputStreamReader(new FileInputStream(
-        mdFile), StandardCharsets.UTF_8)), (int) mdFile.length(), variables);
+    return parseLiquidMarkdown(PathReaderSupplier.withContentsOf(relativePath, mdFile,
+        StandardCharsets.UTF_8), (int) mdFile.length(), variables);
   }
 
   /**
@@ -64,7 +61,7 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
    * @return The parsed markdown object, ready to be rendered.
    * @throws IOException on error.
    */
-  public Document parseLiquidMarkdown(IOSupplier<Reader> in, int estimatedLen,
+  public Document parseLiquidMarkdown(PathReaderSupplier in, int estimatedLen,
       Map<String, Object> variables) throws IOException {
     Object liquid = getLiquidHelper().prerenderLiquid(in, estimatedLen, variables);
 
