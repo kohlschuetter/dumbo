@@ -21,5 +21,5 @@ package com.kohlschutter.dumbo.api;
  * 
  * @author Christian Kohlschütter
  */
-public interface Application extends Component {
+public interface DumboApplication extends DumboComponent {
 }

@@ -102,7 +102,6 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
     // Load site-specific config
     URL configYml = app.getResource("markdown/_config.yml");
     if (configYml != null) {
-      System.out.println("Load " + configYml);
       mergeConfig(configYml);
     } else {
       System.out.println("Not found: markdown/_config.yml");

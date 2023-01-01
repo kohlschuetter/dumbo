@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -83,12 +82,8 @@ final class MarkdownSupportImpl {
       if (webappBaseURL == null) {
         throw new IllegalStateException("Cannot get webapp base");
       }
-      File webappBaseFile;
-      try {
-        webappBaseFile = new File(webappBaseURL.toURI());
-      } catch (URISyntaxException e1) {
-        throw new IllegalStateException("Cannot get webapp base File from URL: " + webappBaseURL);
-      }
+
+      File webappWorkDir = app.getWebappWorkDir();
 
       List<Map<String, Object>> list = (List<Map<String, Object>>) siteObject.get(collectionId);
       for (Map<String, Object> l : list) {
@@ -118,15 +113,6 @@ final class MarkdownSupportImpl {
           continue;
         }
 
-        File resourceFile;
-        try {
-          resourceFile = new File(resourceURL.toURI());
-        } catch (URISyntaxException e1) {
-          e1.printStackTrace();
-          System.err.println("Skipping entry with unsupported resourceURL");
-          continue;
-        }
-
         try {
           permalink = PermalinkParser.parsePermalink(permalink, l);
         } catch (ParseException e) {
@@ -137,24 +123,34 @@ final class MarkdownSupportImpl {
         if (permalink.endsWith("/")) {
           permalink += "index.html";
         }
-        File permalinkFile = new File(webappBaseFile, permalink);
+        File permalinkFile = new File(webappWorkDir, permalink);
         permalinkFile.getParentFile().mkdirs();
 
-        System.out.println("- " + permalinkFile + ": <- " + resourceURL);
+        // System.out.println("- " + permalinkFile + ": <- " + resourceURL);
 
         String layout = (String) l.get("layout");
 
-        renderMarkdown(relativePath, /* permalinkFile */ resourceFile, permalinkFile, layout);
+        renderMarkdown(relativePath, resourceURL, permalinkFile, layout);
       }
     }
   }
 
-  public void renderMarkdown(String relativePath, File mdFile, File targetFile,
-      String defaultLayout) throws IOException {
-    renderMarkdown(null, relativePath, mdFile, targetFile, true, defaultLayout);
+  public void renderMarkdown(String relativePath, URL mdURL, File targetFile, String defaultLayout)
+      throws IOException {
+    renderMarkdown(null, relativePath, mdURL, targetFile, true, defaultLayout);
   }
 
-  public void renderMarkdown(HttpServletResponse resp, String relativePath, File mdFile,
+  public void renderMarkdown(HttpServletResponse resp, String relativePath, URL mdURL,
+      File targetFile, boolean generateHtmlFile, String defaultLayout) throws IOException {
+    renderMarkdown(resp, relativePath, (Object) mdURL, targetFile, generateHtmlFile, defaultLayout);
+  }
+
+  public void renderMarkdown(HttpServletResponse resp, String relativePath, File mdURL,
+      File targetFile, boolean generateHtmlFile, String defaultLayout) throws IOException {
+    renderMarkdown(resp, relativePath, (Object) mdURL, targetFile, generateHtmlFile, defaultLayout);
+  }
+
+  private void renderMarkdown(HttpServletResponse resp, String relativePath, Object mdId,
       File targetFile, boolean generateHtmlFile, String defaultLayout) throws IOException {
 
     Map<String, Object> variables = new HashMap<>(commonVariables);
@@ -165,7 +161,14 @@ final class MarkdownSupportImpl {
     dumboVariables.put("htmlBodyTop", com.kohlschutter.dumbo.JSPSupport.htmlBodyTop(app));
     dumboVariables.put("includedLayouts", new LinkedHashSet<>());
 
-    Document document = liquidMarkdown.parseLiquidMarkdown(relativePath, mdFile, variables);
+    Document document;
+    if (mdId instanceof File) {
+      document = liquidMarkdown.parseLiquidMarkdown(relativePath, (File) mdId, variables);
+    } else if (mdId instanceof URL) {
+      document = liquidMarkdown.parseLiquidMarkdown(relativePath, (URL) mdId, variables);
+    } else {
+      throw new IllegalStateException();
+    }
 
     long time = System.currentTimeMillis();
 
@@ -216,7 +219,7 @@ final class MarkdownSupportImpl {
           mdReloadOut.setSuccessful(!multiplexed.hasError(mdReloadOut));
         }
         multiplexed.checkError(servletOut);
-      } else {
+      } else if (mdReloadOut != null) {
         mdReloadOut.setSuccessful(true);
       }
     }

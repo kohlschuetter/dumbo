@@ -34,7 +34,7 @@ import com.kohlschutter.dumbo.annotations.HTMLResource.Target;
 import com.kohlschutter.dumbo.annotations.HTMLResources;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.util.NameObfuscator;
 
 /**
@@ -54,7 +54,7 @@ final class ExtensionImpl extends ComponentImpl {
   private String htmlHead = "";
   private String htmlBodyTop = "";
 
-  ExtensionImpl(Class<? extends Component> comp) {
+  ExtensionImpl(Class<? extends DumboComponent> comp) {
     super(comp);
     this.extensionPath = initPath();
   }

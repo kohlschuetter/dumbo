@@ -114,7 +114,12 @@ public final class PermalinkParser {
         default:
           SimpleDateFormat sdf = DATE_KEYS.get(key);
           if (sdf != null) {
-            value = sdf.format(date);
+            if (date != null) {
+              value = sdf.format(date);
+            } else {
+              throw new IllegalStateException("Date unknown for " + filename
+                  + " but permalink needs one: " + permalink);
+            }
           }
           break;
       }

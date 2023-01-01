@@ -43,5 +43,5 @@ import jakarta.servlet.Servlet;
  *
  * @author Christian Kohlschütter
  */
-public interface Component {
+public interface DumboComponent {
 }

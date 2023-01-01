@@ -18,7 +18,7 @@ package com.kohlschutter.dumbo.appdefaults;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
  * Simplifies app development by automatically providing references to the app's default JavaScript
@@ -26,6 +26,6 @@ import com.kohlschutter.dumbo.api.Component;
  */
 @JavaScriptResource("js/app.js")
 @CSSResource("css/default.css")
-public interface AppDefaultsSupport extends Component {
+public interface AppDefaultsSupport extends DumboComponent {
 
 }

@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 import com.kohlschutter.dumbo.util.AnnotationUtil;
 
@@ -40,23 +40,23 @@ class ComponentImpl implements BaseSupport {
 
   private final AtomicBoolean initialized = new AtomicBoolean();
 
-  private final Class<? extends Component> componentClass;
+  private final Class<? extends DumboComponent> componentClass;
 
   private LinkedHashSet<Class<?>> reachableComponents = null;
 
-  protected ComponentImpl(Class<? extends Component> compClass) {
+  protected ComponentImpl(Class<? extends DumboComponent> compClass) {
     this.componentClass = compClass == null ? getClass() : compClass;
   }
 
-  protected Class<? extends Component> getComponentClass() {
+  protected Class<? extends DumboComponent> getComponentClass() {
     return componentClass;
   }
 
   /**
-   * Retrieves a list of reachable {@link Component}s.
+   * Retrieves a list of reachable {@link DumboComponent}s.
    * 
-   * @param extra An additional class to retrieve {@link Component}s from.
-   * @return A collection of {@link Component} instances, in dependency order.
+   * @param extra An additional class to retrieve {@link DumboComponent}s from.
+   * @return A collection of {@link DumboComponent} instances, in dependency order.
    */
   protected synchronized LinkedHashSet<Class<?>> getReachableComponents() {
     if (reachableComponents == null) {
@@ -115,7 +115,7 @@ class ComponentImpl implements BaseSupport {
 
   private static void traverseComponentHierarchy(Class<?> clazzToInspect,
       LinkedHashMap<Class<?>, AtomicInteger> countMap) {
-    if (!Component.class.isAssignableFrom(clazzToInspect)) {
+    if (!DumboComponent.class.isAssignableFrom(clazzToInspect)) {
       return;
     }
 

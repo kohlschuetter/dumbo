@@ -18,12 +18,12 @@ package com.kohlschutter.dumbo.cleanstart;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
  * Hide the page BODY until the app is ready.
  */
 @CSSResource("css/cleanstart.css")
 @JavaScriptResource(value = "js/cleanstart.js", async = true)
-public interface CleanStartExtension extends Component {
+public interface CleanStartExtension extends DumboComponent {
 }

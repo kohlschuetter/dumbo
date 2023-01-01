@@ -18,7 +18,7 @@ package com.kohlschutter.dumbo.dygraphs;
 
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 
 /*
  * Helper class to add dygraphs support to the demo server.
@@ -27,5 +27,5 @@ import com.kohlschutter.dumbo.api.Component;
  * @see http://dygraphs.com/
  */
 @JavaScriptResources({@JavaScriptResource({"js/dygraph-combined.js", "js/dygraph-extras.js"})})
-public interface DygraphsSupport extends Component {
+public interface DygraphsSupport extends DumboComponent {
 }

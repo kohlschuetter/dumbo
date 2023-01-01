@@ -20,7 +20,7 @@ import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.CSSResources;
 import com.kohlschutter.dumbo.annotations.HTMLResource;
 import com.kohlschutter.dumbo.annotations.HTMLResource.Target;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.annotations.HTMLResources;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
@@ -37,6 +37,6 @@ import com.kohlschutter.dumbo.annotations.JavaScriptResources;
     @JavaScriptResource({"js/bootstrap.bundle.min.js", "js/bootstrap-extras.js"}) //
 })
 @HTMLResources({@HTMLResource(value = "include/noLongerCurrent.html", target = Target.BODY)})
-public interface BootstrapSupport extends Component {
+public interface BootstrapSupport extends DumboComponent {
 
 }

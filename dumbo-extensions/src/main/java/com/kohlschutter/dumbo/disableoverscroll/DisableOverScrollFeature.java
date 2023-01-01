@@ -18,7 +18,7 @@ package com.kohlschutter.dumbo.disableoverscroll;
 
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
  * Disable the "rubber band" / "overscrolling" annoyance in Google Chrome on OS X when scrolling
@@ -28,6 +28,6 @@ import com.kohlschutter.dumbo.api.Component;
  * {@code BODY} tag.
  */
 @JavaScriptResources(@JavaScriptResource(value = "js/disableoverscroll.js", async = true))
-public interface DisableOverScrollFeature extends Component {
+public interface DisableOverScrollFeature extends DumboComponent {
 
 }

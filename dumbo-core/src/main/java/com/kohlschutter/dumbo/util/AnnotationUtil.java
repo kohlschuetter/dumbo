@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
 
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 
 public final class AnnotationUtil {
   private AnnotationUtil() {
@@ -52,7 +52,7 @@ public final class AnnotationUtil {
       if (candidateClass.isAnnotationPresent(annotationClass)) {
         classesToInspect.add(candidateClass);
       }
-      if (Component.class.equals(candidateClass)) {
+      if (DumboComponent.class.equals(candidateClass)) {
         break;
       }
       candidateClass = candidateClass.getSuperclass();

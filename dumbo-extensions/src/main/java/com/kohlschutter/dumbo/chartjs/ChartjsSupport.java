@@ -17,7 +17,7 @@
 package com.kohlschutter.dumbo.chartjs;
 
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
  * Helper class to add Chart.js support to the demo server.
@@ -26,5 +26,5 @@ import com.kohlschutter.dumbo.api.Component;
  * @see "http://www.chartjs.org/"
  */
 @JavaScriptResource({"js/Chart.min.js", "js/chartjs-extras.js"})
-public interface ChartjsSupport extends Component {
+public interface ChartjsSupport extends DumboComponent {
 }

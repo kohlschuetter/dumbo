@@ -20,7 +20,7 @@ import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
  * Base resources, such as jQuery and json-rpc.
@@ -35,5 +35,5 @@ import com.kohlschutter.dumbo.api.Component;
     @JavaScriptResource({"js/app.js"}),})
 @ServletContextPath("/app_/base")
 @ResourcePath("/com/kohlschutter/dumbo/appbase/")
-interface BaseSupport extends Component {
+interface BaseSupport extends DumboComponent {
 }

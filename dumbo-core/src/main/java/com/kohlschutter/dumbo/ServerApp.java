@@ -17,8 +17,10 @@
 package com.kohlschutter.dumbo;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,8 +43,8 @@ import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.annotations.EventHandlers;
 import com.kohlschutter.dumbo.annotations.Services;
-import com.kohlschutter.dumbo.api.Application;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboApplication;
+import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.api.EventHandler;
 import com.kohlschutter.dumbo.console.ConsoleService;
@@ -64,13 +66,16 @@ public final class ServerApp implements Closeable, Cloneable {
 
   private boolean staticDesignMode = false;
 
-  private final Class<? extends Application> applicationClass;
+  private final Class<? extends DumboApplication> applicationClass;
   private final ExtensionImpl applicationExtensionImpl;
 
   private final Map<ImplementationIdentity<?>, Object> implementationIdentities =
       new WeakHashMap<>();
 
-  public ServerApp(Class<? extends Application> applicationClass) {
+  private File workDir;
+  private File webappWorkDir;
+
+  public ServerApp(Class<? extends DumboApplication> applicationClass) {
     this.applicationClass = applicationClass;
     this.applicationExtensionImpl = new ExtensionImpl(applicationClass);
     resolveExtensions(applicationClass);
@@ -100,7 +105,7 @@ public final class ServerApp implements Closeable, Cloneable {
     return instance;
   }
 
-  private void resolveExtensions(Class<? extends Component> mainComponent)
+  private void resolveExtensions(Class<? extends DumboComponent> mainComponent)
       throws ExtensionDependencyException {
     LinkedHashSet<Class<?>> reachableComponents = applicationExtensionImpl.getReachableComponents();
 
@@ -111,7 +116,7 @@ public final class ServerApp implements Closeable, Cloneable {
 
       @SuppressWarnings("unchecked")
       ExtensionImpl ext = compClass == applicationClass ? applicationExtensionImpl
-          : new ExtensionImpl((Class<? extends Component>) compClass);
+          : new ExtensionImpl((Class<? extends DumboComponent>) compClass);
 
       extensions.put(compClass, ext);
     }
@@ -131,11 +136,52 @@ public final class ServerApp implements Closeable, Cloneable {
     }
   }
 
-  final void init(AppHTTPServer server) throws IOException {
+  final void init(AppHTTPServer server, String path, URL webappBaseURL) throws IOException {
+    // also see AppHTTPServer
+    if ("file".equals(webappBaseURL.getProtocol())) {
+      try {
+        // If the webapp is in a jar file, we use the temp directory structure (which has a webapp/
+        // subdirectory) to serve additional files created by our servlets.
+        // In that case, app.getWebappWorkDir() will point to the webapp/ folder under
+        // app.getWorkDir()
+        this.workDir = new File(webappBaseURL.toURI()).getParentFile();
+      } catch (RuntimeException | URISyntaxException e) {
+        throw new IllegalStateException(e);
+      }
+    } else {
+      File dir = File.createTempFile("dumbo-workdir", ".tmp");
+      dir.delete();
+
+      this.workDir = new File(dir, path);
+
+      // FIXME move to AppHTTPServer
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        private void delete(File d) {
+          for (File f : d.listFiles()) {
+            if (f.isDirectory()) {
+              delete(f);
+            }
+            f.delete();
+          }
+          dir.delete();
+        }
+
+        @Override
+        public void run() {
+          delete(dir);
+        }
+      });
+    }
+    this.webappWorkDir = new File(this.workDir, "webapp");
+    webappWorkDir.mkdirs();
+    
+    LOG.info("Workdir: {}", workDir);
+  }
+
+  final void initComponents(AppHTTPServer server) throws IOException {
     if (!initDone.compareAndSet(false, true)) {
       throw new IllegalStateException("App is already initialized");
     }
-
     for (ExtensionImpl ext : extensions.values()) {
       ext.initComponent(server);
     }
@@ -271,7 +317,7 @@ public final class ServerApp implements Closeable, Cloneable {
     return 16;
   }
 
-  public Class<? extends Application> getApplicationClass() {
+  public Class<? extends DumboApplication> getApplicationClass() {
     return applicationClass;
   }
 
@@ -355,5 +401,13 @@ public final class ServerApp implements Closeable, Cloneable {
    * This method will be called upon application start.
    */
   protected void onAppStart() {
+  }
+
+  public File getWorkDir() {
+    return workDir;
+  }
+
+  public File getWebappWorkDir() {
+    return webappWorkDir;
   }
 }

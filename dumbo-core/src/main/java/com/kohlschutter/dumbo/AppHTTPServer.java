@@ -18,13 +18,11 @@ package com.kohlschutter.dumbo;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Inet4Address;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -180,21 +178,25 @@ public class AppHTTPServer {
       }
     });
 
-    File webappBase;
-    try {
-      webappBase = new File(webappBaseURL.toURI());
-    } catch (URISyntaxException e) {
-      throw new IOException(e);
-    }
-    if (!webappBase.isDirectory()) {
-      throw new FileNotFoundException("Not a directory: " + webappBase);
-    }
-
     contextHandlers = new ContextHandlerCollection();
+
+    app.init(this, path, webappBaseURL);
 
     {
       Resource res = Resource.newResource(webappBaseURL);
       final WebAppContext wac = new WebAppContext(res, contextPath);
+
+      if (!"file".equals(webappBaseURL.getProtocol())) {
+        // If the webapp is in a jar file, we use the temp directory structure (which has a webapp/
+        // subdirectory) to serve additional files created by our servlets.
+        // In that case, app.getWebappWorkDir() will point to the webapp/ folder under
+        // app.getWorkDir()
+        wac.setTempDirectory(app.getWorkDir());
+      } else {
+        // Otherwise, we will use the webapp directory itself as a "temporary" storage
+        // This is (usually) fine since that directory usually is the classpath derived from
+        // some other source directory.
+      }
 
       initWebAppContext(app.getApplicationExtensionImpl(), wac);
 
@@ -206,21 +208,20 @@ public class AppHTTPServer {
       scanWebApp(wac.getContextPath(), null, res);
     }
 
-    app.init(this);
+    app.initComponents(this);
 
     server.setHandler(contextHandlers);
     server.setConnectors(initConnectors(port, server));
   }
 
-  private final Set<File> scannedFiles = new HashSet<>();
+  private final Set<Object> scannedFiles = new HashSet<>();
 
   private void scanWebApp(String contextPrefix, String dirPrefix, Resource dir) throws IOException {
-    File file = dir.getFile();
-    if (file == null || !file.canWrite()) {
-      LOG.warn("FIXME Cannot visit file: " + dir);
-      return;
+    Object key = dir.getFile();
+    if (key == null) {
+      key = dir.getURI();
     }
-    if (!scannedFiles.add(file)) {
+    if (!scannedFiles.add(key)) {
       return;
     }
 

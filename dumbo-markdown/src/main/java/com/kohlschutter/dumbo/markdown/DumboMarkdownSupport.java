@@ -20,7 +20,7 @@ package com.kohlschutter.dumbo.markdown;
 import com.kohlschutter.dumbo.ConsoleSupport;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
-import com.kohlschutter.dumbo.api.Component;
+import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.appdefaults.AppDefaultsSupport;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 
@@ -29,7 +29,7 @@ import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
     @ServletMapping(map = "*.md", to = MarkdownServlet.class),
     //
 })
-public interface DumboMarkdownSupport extends Component, AppDefaultsSupport, BootstrapSupport,
+public interface DumboMarkdownSupport extends DumboComponent, AppDefaultsSupport, BootstrapSupport,
     ConsoleSupport {
 
 }
