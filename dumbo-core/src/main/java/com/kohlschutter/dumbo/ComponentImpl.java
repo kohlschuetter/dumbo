@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Christian Kohlschütter
+ * Copyright 2022,2023 Christian Kohlschütter
  * Copyright 2014,2015 Evernote Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,7 @@ class ComponentImpl implements BaseSupport {
 
   /**
    * Retrieves a list of reachable {@link DumboComponent}s.
-   * 
+   *
    * @param extra An additional class to retrieve {@link DumboComponent}s from.
    * @return A collection of {@link DumboComponent} instances, in dependency order.
    */

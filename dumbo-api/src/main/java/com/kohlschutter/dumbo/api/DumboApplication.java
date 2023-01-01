@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Christian Kohlschütter
+ * Copyright 2022,2023 Christian Kohlschütter
  * Copyright 2014,2015 Evernote Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ package com.kohlschutter.dumbo.api;
 
 /**
  * Marks the main component of a Dumbo application.
- * 
+ *
  * @author Christian Kohlschütter
  */
 public interface DumboApplication extends DumboComponent {

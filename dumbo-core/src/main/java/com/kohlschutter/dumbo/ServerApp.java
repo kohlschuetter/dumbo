@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Christian Kohlschütter
+ * Copyright 2022,2023 Christian Kohlschütter
  * Copyright 2014,2015 Evernote Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,11 +85,11 @@ public final class ServerApp implements Closeable, Cloneable {
 
   /**
    * Returns an implementation for the given component identity.
-   * 
+   *
    * This data structure can be used by servlets etc. to store information at the application level
    * in a secure way: only the code that has access to the given {@link ImplementationIdentity} can
    * access the implementation.
-   * 
+   *
    * @param identity The implementation identity.
    * @return The implementatioin instance.
    * @throws IOException
@@ -174,7 +174,7 @@ public final class ServerApp implements Closeable, Cloneable {
     }
     this.webappWorkDir = new File(this.workDir, "webapp");
     webappWorkDir.mkdirs();
-    
+
     LOG.info("Workdir: {}", workDir);
   }
 

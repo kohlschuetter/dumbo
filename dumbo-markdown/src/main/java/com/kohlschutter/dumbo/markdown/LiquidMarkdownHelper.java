@@ -1,7 +1,7 @@
 /*
  * dumbo-markdown
  *
- * Copyright 2022 Christian Kohlschütter
+ * Copyright 2022,2023 Christian Kohlschütter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
     return parseLiquidMarkdown(PathReaderSupplier.withContentsOf(relativePath, mdFile,
         StandardCharsets.UTF_8), (int) mdFile.length(), variables);
   }
-  
+
   /**
    * Parses the given Markdown file so it can be rendered.
    *
@@ -63,8 +63,8 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
    * @return The parsed markdown object, ready to be rendered.
    * @throws IOException on error.
    */
-  public Document parseLiquidMarkdown(String relativePath,URL mdURL,
-      Map<String, Object> variables) throws IOException {
+  public Document parseLiquidMarkdown(String relativePath, URL mdURL, Map<String, Object> variables)
+      throws IOException {
 
     return parseLiquidMarkdown(PathReaderSupplier.withContentsOf(relativePath, mdURL,
         StandardCharsets.UTF_8), 0, variables);

@@ -1,7 +1,7 @@
 /*
  * dumbo-markdown
  *
- * Copyright 2022 Christian Kohlschütter
+ * Copyright 2022,2023 Christian Kohlschütter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,20 +25,23 @@ import java.util.Map;
  * Provides a Jekyll-compatible paginator object.
  *
  * @author Christian Kohlschütter
+ *
+ *
  */
+// FIXME not fully implemented yet
 public class PaginatorObject extends FilterMap.ReadOnlyFilterMap<String, Object> {
   private final List<Object> posts;
 
   @SuppressWarnings("unchecked")
   public PaginatorObject(Map<String, Object> commonVariables) {
     super(new HashMap<>());
-    
-    this.posts = (List<Object>)((Map<String,Object>)commonVariables.get("site")).get("posts");
-    
+
+    this.posts = (List<Object>) ((Map<String, Object>) commonVariables.get("site")).get("posts");
+
     Map<String, Object> map = getMap();
     int perPage = 5;
     int totalPosts = posts.size();
-    int totalPages = (int)Math.ceil(totalPosts / (float)perPage);
+    int totalPages = (int) Math.ceil(totalPosts / (float) perPage);
     map.put("page", 1);
     map.put("per_page", perPage);
     map.put("posts", posts);

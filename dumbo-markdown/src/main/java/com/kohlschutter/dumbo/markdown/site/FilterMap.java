@@ -1,7 +1,7 @@
 /*
  * dumbo-markdown
  *
- * Copyright 2022 Christian Kohlschütter
+ * Copyright 2022,2023 Christian Kohlschütter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public abstract class FilterMap<K, V> implements Map<K, V> {
 
   public static abstract class ReadOnlyFilterMap<K, V> extends FilterMap<K, V> {
 
-    protected ReadOnlyFilterMap(Map<K,V> map) {
+    protected ReadOnlyFilterMap(Map<K, V> map) {
       super(map);
     }
 

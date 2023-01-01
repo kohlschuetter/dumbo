@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Christian Kohlschütter
+ * Copyright 2022,2023 Christian Kohlschütter
  * Copyright 2014,2015 Evernote Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,10 @@ import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.CSSResources;
 import com.kohlschutter.dumbo.annotations.HTMLResource;
 import com.kohlschutter.dumbo.annotations.HTMLResource.Target;
-import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.annotations.HTMLResources;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
+import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
  * Helper class to add Bootstrap.js support to the demo server.

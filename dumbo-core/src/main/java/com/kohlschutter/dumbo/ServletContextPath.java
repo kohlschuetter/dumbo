@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Christian Kohlschütter
+ * Copyright 2022,2023 Christian Kohlschütter
  * Copyright 2014,2015 Evernote Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +24,8 @@ import java.lang.annotation.Target;
 import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
- * Specifies the servlet context path of this {@link DumboComponent} to use instead of an automatically
- * generated one.
+ * Specifies the servlet context path of this {@link DumboComponent} to use instead of an
+ * automatically generated one.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
