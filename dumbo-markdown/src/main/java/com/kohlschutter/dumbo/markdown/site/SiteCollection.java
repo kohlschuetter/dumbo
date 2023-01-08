@@ -80,6 +80,9 @@ public final class SiteCollection implements List<Object> {
     }
     populateObjects();
 
+    if (objects == null) {
+      return this;
+    }
     Collections.sort(objects, new Comparator<Object>() {
 
       @SuppressWarnings("unchecked")

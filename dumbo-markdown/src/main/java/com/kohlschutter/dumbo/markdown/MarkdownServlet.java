@@ -19,6 +19,10 @@ package com.kohlschutter.dumbo.markdown;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 
 import com.kohlschutter.dumbo.AppHTTPServer;
@@ -59,8 +63,8 @@ public class MarkdownServlet extends HttpServlet {
       IOException {
     try {
       doGet0(req, resp);
-    } catch (IOException e) {
-      // e.printStackTrace();
+    } catch (ServletException | IOException | RuntimeException e) {
+      e.printStackTrace();
       throw e;
     }
   }
@@ -68,18 +72,34 @@ public class MarkdownServlet extends HttpServlet {
   protected void doGet0(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
       IOException {
 
-    String path = servletContext.getRealPath(req.getServletPath());
-    if (path == null) {
-      return;
-    }
-
-    File mdFile = new File(path);
-    if (!mdFile.exists() || mdFile.isDirectory()) {
+    String servletPath = req.getServletPath();
+    String path = servletContext.getRealPath(servletPath);
+    URL url = servletContext.getResource(servletPath);
+    if (servletPath == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
       return;
     }
 
-    long mdFileLength = mdFile.length();
+    if (url == null) {
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+      return;
+    }
+
+    Path mdPath;
+    try {
+      mdPath = Path.of(url.toURI());
+    } catch (URISyntaxException e1) {
+      e1.printStackTrace();
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+      return;
+    }
+
+    if (!Files.exists(mdPath) || Files.isDirectory(mdPath)) {
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+      return;
+    }
+
+    long mdFileLength = Files.size(mdPath);
     if (mdFileLength > Integer.MAX_VALUE) {
       // FIXME: use a lower bound
       resp.sendError(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
@@ -91,7 +111,15 @@ public class MarkdownServlet extends HttpServlet {
     }
     String relativePath = path.substring(realPathPrefix.length());
 
-    mdConfig.renderMarkdown(resp, relativePath, mdFile, mdFile, "true".equals(req.getParameter(
+    File mdFile;
+    try {
+      mdFile = mdPath.toFile();
+    } catch (Exception e) {
+      System.err.println("Cannot convert path " + mdPath + " to file: " + e);
+      mdFile = null;
+    }
+
+    mdConfig.renderMarkdown(resp, relativePath, mdPath, mdFile, "true".equals(req.getParameter(
         "reload")), null);
   }
 }

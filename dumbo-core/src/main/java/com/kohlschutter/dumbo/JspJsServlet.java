@@ -19,9 +19,10 @@ package com.kohlschutter.dumbo;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.DefaultServlet;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,12 +47,14 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 final class JspJsServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
+  private ServletContext servletContext;
   private DefaultServlet defaultServlet;
   private JspCachingServlet jspServlet;
   private static final Pattern PAT_JS = Pattern.compile("\\.js$");
 
   @Override
   public void init() throws ServletException {
+    servletContext = getServletContext();
     defaultServlet = (DefaultServlet) ((ServletHolder) getServletContext().getAttribute("holder."
         + DefaultServlet.class.getName())).getServlet();
     jspServlet = (JspCachingServlet) ((ServletHolder) getServletContext().getAttribute("holder."
@@ -64,18 +67,18 @@ final class JspJsServlet extends HttpServlet {
     String requestURI = req.getRequestURI();
     String pathInContext = requestURI.substring(req.getContextPath().length());
 
-    if (defaultServlet.getResource(pathInContext).exists()) {
+    if (AppHTTPServer.checkResourceExists(servletContext, pathInContext)) {
       if (pathInContext.contains(".jsp.js")) {
         jspServlet.service(req, resp);
       } else {
         defaultServlet.service(req, resp);
       }
       return;
-    } else if (defaultServlet.getResource(pathInContext + ".jsp").exists()) {
+    } else if (AppHTTPServer.checkResourceExists(servletContext, pathInContext + ".jsp")) {
       req.getRequestDispatcher(pathInContext + ".jsp").forward(req, resp);
     } else {
       String path = PAT_JS.matcher(pathInContext).replaceFirst(".jsp.js");
-      if (defaultServlet.getResource(path).exists()) {
+      if (AppHTTPServer.checkResourceExists(servletContext, path)) {
         req.getRequestDispatcher(path).forward(req, resp);
       } else {
         resp.sendError(HttpServletResponse.SC_NOT_FOUND);

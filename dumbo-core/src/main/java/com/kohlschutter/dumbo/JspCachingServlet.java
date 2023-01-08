@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.eclipse.jetty.jsp.JettyJspServlet;
+import org.eclipse.jetty.ee10.jsp.JettyJspServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,11 +51,17 @@ final class JspCachingServlet extends JettyJspServlet {
   private boolean checkCache(String path, String generatedPath, HttpServletRequest req,
       HttpServletResponse resp) throws ServletException, IOException {
 
+    // FIXME use Path / temporary directory instead 
     if (generatedPath == null || context.getRealPath(path) == null || path.contains("..")) {
       return false;
     }
 
-    File generatedFile = new File(context.getRealPath(generatedPath));
+    String realPath = context.getRealPath(generatedPath);
+    if (realPath == null) {
+      LOG.warn("Cannot get realpath for generatedPath {}", generatedPath);
+      return false;
+    }
+    File generatedFile = new File(realPath);
     if ((generatedFile.exists() && !"true".equals(req.getParameter("reload")))) {
       return false;
     }

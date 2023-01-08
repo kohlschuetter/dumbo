@@ -19,9 +19,12 @@ package com.kohlschutter.dumbo.markdown;
 
 import java.io.IOException;
 
-import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.DefaultServlet;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 
+import com.kohlschutter.dumbo.AppHTTPServer;
+
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,12 +40,14 @@ import jakarta.servlet.http.HttpServletResponse;
 public class HtmlJspServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private DefaultServlet defaultServlet;
+  private ServletContext servletContext;
   private static final String[] suffixesWithoutHtml = new String[] {".jsp", ".md"};
   private static final String[] suffixesWithHtml = new String[] {".md", ".html.jsp"};
 
   @Override
   public void init() throws ServletException {
-    defaultServlet = (DefaultServlet) ((ServletHolder) getServletContext().getAttribute("holder."
+    this.servletContext = getServletContext();
+    defaultServlet = (DefaultServlet) ((ServletHolder) servletContext.getAttribute("holder."
         + DefaultServlet.class.getName())).getServlet();
   }
 
@@ -52,7 +57,7 @@ public class HtmlJspServlet extends HttpServlet {
     String requestURI = req.getRequestURI();
     String pathInContext = requestURI.substring(req.getContextPath().length());
 
-    if (defaultServlet.getResource(pathInContext).exists()) {
+    if (AppHTTPServer.checkResourceExists(servletContext, pathInContext)) {
       // *.html file exists -> use DefaultServlet
       defaultServlet.service(req, resp);
       return;
@@ -68,7 +73,7 @@ public class HtmlJspServlet extends HttpServlet {
     }
     for (String suffix : suffixes) {
       String path = pathInContext + suffix;
-      if (defaultServlet.getResource(path).exists()) {
+      if (AppHTTPServer.checkResourceExists(servletContext, path)) {
         req.getRequestDispatcher(path).forward(req, resp);
         return;
       }

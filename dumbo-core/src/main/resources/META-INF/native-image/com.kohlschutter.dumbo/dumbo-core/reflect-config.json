@@ -1,0 +1,185 @@
+[
+{
+  "name":"[Lorg.eclipse.jetty.server.handler.ContextHandlerCollection$Branch;"
+},
+{
+  "name":"com.kohlschutter.dumbo.JspCachingServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.kohlschutter.dumbo.JspJsServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.kohlschutter.dumbo.markdown.HtmlJspServlet",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "allPublicMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"com.kohlschutter.dumbo.markdown.MarkdownServlet",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "allPublicMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.ProcessBuilder$RedirectPipeImpl"
+},
+{
+  "name":"java.lang.Thread",
+  "methods":[{"name":"isVirtual","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.management.ManagementFactory",
+  "methods":[{"name":"getRuntimeMXBean","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.management.RuntimeMXBean",
+  "methods":[{"name":"getUptime","parameterTypes":[] }]
+},
+{
+  "name":"java.nio.channels.spi.AbstractSelectableChannel"
+},
+{
+  "name":"java.security.SecureRandomParameters"
+},
+{
+  "name":"java.util.concurrent.Executors",
+  "methods":[{"name":"newVirtualThreadPerTaskExecutor","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.tomcat.InstanceManager"
+},
+{
+  "name":"org.eclipse.jetty.ee10.apache.jsp.JuliLog",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.jsp.JettyJspServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.servlet.DefaultServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.servlet.listener.IntrospectorCleaner",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.servlet.security.ConstraintSecurityHandler",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.ClassMatcher$ByLocationOrModule",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.ClassMatcher$ByPackageOrName",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.FragmentConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.JettyWebXmlConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.JspConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.MetaInfConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.StandardDescriptorProcessor",
+  "methods":[
+    {"name":"visitContextParam","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitDefaultContextPath","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitDenyUncoveredHttpMethods","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitDisplayName","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitErrorPage","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitFilter","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitFilterMapping","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitJspConfig","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitListener","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitLocaleEncodingList","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitLoginConfig","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitMimeMapping","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitRequestCharacterEncoding","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitResponseCharacterEncoding","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitSecurityConstraint","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitSecurityRole","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitServlet","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitServletMapping","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitSessionConfig","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitTagLib","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitWelcomeFileList","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }
+  ]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.WebAppConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.WebInfConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.WebXmlConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.io.SelectorManager$SelectorManagerListener"
+},
+{
+  "name":"org.eclipse.jetty.util.TypeUtil",
+  "methods":[
+    {"name":"getClassLoaderLocation","parameterTypes":["java.lang.Class"] }, 
+    {"name":"getCodeSourceLocation","parameterTypes":["java.lang.Class"] }, 
+    {"name":"getModuleLocation","parameterTypes":["java.lang.Class"] }, 
+    {"name":"getSystemClassLoaderLocation","parameterTypes":["java.lang.Class"] }
+  ]
+},
+{
+  "name":"org.newsclub.lib.junixsocket.common.NarMetadata"
+},
+{
+  "name":"org.newsclub.lib.junixsocket.custom.NarMetadata"
+},
+{
+  "name":"org.newsclub.net.unix.AFUNIXSelectorProvider",
+  "methods":[{"name":"provider","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.NativePRNG",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.oracle.svm.core.jdk.resources.NativeImageResourceFileSystemProvider",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "allPublicMethods":true,
+  "allDeclaredConstructors":true
+}
+]

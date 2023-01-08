@@ -23,8 +23,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -147,29 +149,25 @@ final class MarkdownSupportImpl {
 
         String layout = (String) l.get("layout");
 
-        renderMarkdown(relativePath, resourceURL, permalinkFile, layout);
+        Path path;
+        try {
+          path = Path.of(resourceURL.toURI());
+        } catch (URISyntaxException e) {
+          throw new IllegalStateException(e);
+        }
+
+        renderMarkdown(null, relativePath, path, permalinkFile, true, layout);
       }
     }
   }
 
-  public void renderMarkdown(String relativePath, URL mdURL, File targetFile, String defaultLayout)
-      throws IOException {
-    renderMarkdown(null, relativePath, mdURL, targetFile, true, defaultLayout);
+  public void renderMarkdown(String relativePath, File mdFile, File targetFile,
+      String defaultLayout) throws IOException {
+    renderMarkdown(null, relativePath, mdFile.toPath(), targetFile, true, defaultLayout);
   }
 
-  public void renderMarkdown(HttpServletResponse resp, String relativePath, URL mdURL,
+  public void renderMarkdown(HttpServletResponse resp, String relativePath, Path mdPath,
       File targetFile, boolean generateHtmlFile, String defaultLayout) throws IOException {
-    renderMarkdown(resp, relativePath, (Object) mdURL, targetFile, generateHtmlFile, defaultLayout);
-  }
-
-  public void renderMarkdown(HttpServletResponse resp, String relativePath, File mdURL,
-      File targetFile, boolean generateHtmlFile, String defaultLayout) throws IOException {
-    renderMarkdown(resp, relativePath, (Object) mdURL, targetFile, generateHtmlFile, defaultLayout);
-  }
-
-  private void renderMarkdown(HttpServletResponse resp, String relativePath, Object mdId,
-      File targetFile, boolean generateHtmlFile, String defaultLayout) throws IOException {
-
     Map<String, Object> variables = new HashMap<>(commonVariables);
 
     @SuppressWarnings("unchecked")
@@ -178,14 +176,7 @@ final class MarkdownSupportImpl {
     dumboVariables.put("htmlBodyTop", com.kohlschutter.dumbo.JSPSupport.htmlBodyTop(app));
     dumboVariables.put("includedLayouts", new LinkedHashSet<>());
 
-    Document document;
-    if (mdId instanceof File) {
-      document = liquidMarkdown.parseLiquidMarkdown(relativePath, (File) mdId, variables);
-    } else if (mdId instanceof URL) {
-      document = liquidMarkdown.parseLiquidMarkdown(relativePath, (URL) mdId, variables);
-    } else {
-      throw new IllegalStateException();
-    }
+    Document document = liquidMarkdown.parseLiquidMarkdown(relativePath, mdPath, variables);
 
     long time = System.currentTimeMillis();
 
@@ -247,6 +238,9 @@ final class MarkdownSupportImpl {
 
   private SuccessfulCloseWriter mdReloadWriter(File targetFile, boolean generateHtmlFile)
       throws IOException {
+    if (targetFile == null) {
+      return null;
+    }
     String filename = targetFile.getName();
     int suffix = filename.indexOf('.');
     if (suffix == -1) {
@@ -257,7 +251,7 @@ final class MarkdownSupportImpl {
 
     File htmlFile = new File(targetFile.getParentFile(), filename);
 
-    if (generateHtmlFile /* || !htmlFile.exists() */) {
+    if (generateHtmlFile || !htmlFile.exists()) {
       File mdFileHtmlTmp = File.createTempFile(".md", ".tmp", htmlFile.getParentFile());
       LOG.info("Generating " + htmlFile);
 

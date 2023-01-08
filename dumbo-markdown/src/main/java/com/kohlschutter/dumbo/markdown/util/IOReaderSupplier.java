@@ -28,6 +28,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.kohlschutter.annotations.compiletime.ExcludeFromCodeCoverageGeneratedReport;
 import com.kohlschutter.stringhold.HasLength;
@@ -96,6 +98,46 @@ final class IOReaderSupplier {
     };
   }
 
+  /**
+   * Returns an {@link IOSupplier} providing {@link Reader} instances with content from file at the given
+   * path, using the given {@link Charset}.
+   *
+   * @param p The path to the file to provides contents from.
+   * @param cs The {@link Charset} to use.
+   * @return The supplier.
+   */
+  static IOSupplier<Reader> withContentsOf(Path f, Charset cs) {
+    return new IOSupplier<Reader>() {
+      @Override
+      public Reader get() throws IOException {
+        long lenLong = Files.size(f);
+        int len = lenLong >= Integer.MAX_VALUE ? -1 : (int) lenLong;
+        // NOTE this assumes that the length doesn't change between these two calls (hard to
+        // enforce)
+        
+        InputStream in = Files.newInputStream(f);
+        if (len < 0) {
+          return new InputStreamReader(in, cs);
+        } else if (len == 0) {
+          in.close();
+          return LengthAwareStringReader.withString("");
+        } else {
+          // FIXME Byte-Order-Mark (BOM) detection etc.
+
+          if (StandardCharsets.ISO_8859_1.equals(cs) || StandardCharsets.US_ASCII.equals(cs)) {
+            return new LengthAwareInputStreamReader(in, cs, len);
+          } else {
+            return new MinimumLengthAwareInputStreamReader(in, cs, len);
+          }
+        }
+      }
+
+      @Override
+      public String toString() {
+        return super.toString() + "[file=" + f + ";charset=" + cs + "]";
+      }
+    };
+  }
   /**
    * Returns an {@link IOSupplier} providing {@link Reader} instances with content from the given
    * URL, using the given {@link Charset}.

@@ -52,6 +52,8 @@ import com.kohlschutter.stringhold.HasExpectedLength;
 import com.kohlschutter.stringhold.HasLength;
 import com.kohlschutter.stringhold.IOExceptionHandler.ExceptionResponse;
 import com.kohlschutter.stringhold.StringHolder;
+import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.util.sequence.LineAppendable;
 
 import liqp.ParseSettings;
 import liqp.RenderSettings;
@@ -73,6 +75,14 @@ public class LiquidHelper {
   private final ServerApp app;
 
   private final Map<String, Object> commonVariables;
+
+  // FIXME revisit this
+  static final class GraalVMStub {
+    static final MarkdownServlet obj1 = new MarkdownServlet();
+    static final HtmlJspServlet obj2 = new HtmlJspServlet();
+    static final HtmlRenderer obj3 = HtmlRenderer.builder().build();
+    static final LineAppendable.Options[] obj4 = LineAppendable.Options.values();
+  }
 
   LiquidHelper(ServerApp app, Map<String, Object> commonVariables) {
     this.app = app;

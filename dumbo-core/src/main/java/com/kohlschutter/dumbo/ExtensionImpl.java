@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
-import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.ee10.webapp.WebAppContext;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.CSSResources;

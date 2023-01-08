@@ -23,6 +23,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 import com.kohlschutter.stringhold.IOSupplier;
 
@@ -41,6 +42,10 @@ public class PathReaderSupplier implements IOSupplier<Reader> {
     return withContentsOf(null, relativePath, f, cs);
   }
 
+  public static PathReaderSupplier withContentsOf(String relativePath, Path p, Charset cs) {
+    return withContentsOf(null, relativePath, p, cs);
+  }
+
   public static PathReaderSupplier withContentsOf(String relativePath, URL url, Charset cs) {
     return withContentsOf(null, relativePath, url, cs);
   }
@@ -48,6 +53,12 @@ public class PathReaderSupplier implements IOSupplier<Reader> {
   public static PathReaderSupplier withContentsOf(String type, String relativePath, File f,
       Charset cs) {
     return new PathReaderSupplier(IOReaderSupplier.withContentsOf(f, StandardCharsets.UTF_8),
+        relativePath, type);
+  }
+
+  public static PathReaderSupplier withContentsOf(String type, String relativePath, Path p,
+      Charset cs) {
+    return new PathReaderSupplier(IOReaderSupplier.withContentsOf(p, StandardCharsets.UTF_8),
         relativePath, type);
   }
 

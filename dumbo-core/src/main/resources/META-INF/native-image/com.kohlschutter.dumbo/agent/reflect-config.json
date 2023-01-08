@@ -1,0 +1,445 @@
+[
+{
+  "name":"[B"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.Deserializers;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.KeyDeserializers;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.ValueInstantiators;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.ser.Serializers;"
+},
+{
+  "name":"[Ljava.lang.String;"
+},
+{
+  "name":"[Lorg.eclipse.jetty.server.handler.ContextHandlerCollection$Branch;"
+},
+{
+  "name":"[Lsun.security.pkcs.SignerInfo;"
+},
+{
+  "name":"apple.security.AppleProvider",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.kohlschutter.dumbo.JspCachingServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.kohlschutter.dumbo.JspJsServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.kohlschutter.dumbo.markdown.HtmlJspServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.kohlschutter.dumbo.markdown.MarkdownServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.AESCipher$General",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.ARCFOURCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DESCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DESedeCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DHParameters",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.GaloisCounterMode$AESGCM",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.TlsMasterSecretGenerator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.xml.internal.stream.XMLInputFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.vladsch.flexmark.util.ast.TextContainer$Flags",
+  "allPublicFields":true
+},
+{
+  "name":"com.vladsch.flexmark.util.sequence.BasedOptionsHolder$Options",
+  "allPublicFields":true
+},
+{
+  "name":"com.vladsch.flexmark.util.sequence.LineAppendable$Options",
+  "allPublicFields":true
+},
+{
+  "name":"com.vladsch.flexmark.util.sequence.LineInfo$Flags",
+  "allPublicFields":true
+},
+{
+  "name":"com.vladsch.flexmark.util.sequence.builder.ISegmentBuilder$Options",
+  "allPublicFields":true
+},
+{
+  "name":"jakarta.servlet.jsp.JspContext"
+},
+{
+  "name":"java.lang.ProcessBuilder$RedirectPipeImpl"
+},
+{
+  "name":"java.lang.String"
+},
+{
+  "name":"java.lang.Thread",
+  "methods":[{"name":"isVirtual","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.management.ManagementFactory",
+  "methods":[{"name":"getRuntimeMXBean","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.management.RuntimeMXBean",
+  "methods":[{"name":"getUptime","parameterTypes":[] }]
+},
+{
+  "name":"java.nio.channels.spi.AbstractSelectableChannel"
+},
+{
+  "name":"java.security.AlgorithmParametersSpi"
+},
+{
+  "name":"java.security.KeyStoreSpi"
+},
+{
+  "name":"java.security.MessageDigestSpi"
+},
+{
+  "name":"java.security.SecureRandomParameters"
+},
+{
+  "name":"java.security.interfaces.RSAPrivateKey"
+},
+{
+  "name":"java.security.interfaces.RSAPublicKey"
+},
+{
+  "name":"java.util.Date"
+},
+{
+  "name":"java.util.concurrent.Executors",
+  "methods":[{"name":"newVirtualThreadPerTaskExecutor","parameterTypes":[] }]
+},
+{
+  "name":"javax.security.auth.x500.X500Principal",
+  "fields":[{"name":"thisX500Name"}],
+  "methods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
+},
+{
+  "name":"org.apache.el.ExpressionFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.jasper.compiler.JDTCompiler",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.jsp.js.app_002dconsole_002dwebworker_jsp_js",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.jsp.js.app_002dconsole_jsp_js",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.jsp.js.app_jsp_js",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.tomcat.InstanceManager"
+},
+{
+  "name":"org.apache.tomcat.util.descriptor.tld.TagXml",
+  "methods":[{"name":"setDynamicAttributes","parameterTypes":["boolean"] }]
+},
+{
+  "name":"org.apache.tomcat.util.descriptor.tld.TldRuleSet$Attribute",
+  "methods":[
+    {"name":"setFragment","parameterTypes":["boolean"] }, 
+    {"name":"setRequestTime","parameterTypes":["boolean"] }, 
+    {"name":"setRequired","parameterTypes":["boolean"] }
+  ]
+},
+{
+  "name":"org.apache.tomcat.util.descriptor.tld.TldRuleSet$Variable",
+  "methods":[{"name":"setDeclare","parameterTypes":["boolean"] }]
+},
+{
+  "name":"org.eclipse.jdt.internal.compiler.util.Messages",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.eclipse.jetty.ee10.apache.jsp.JuliLog",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.jsp.JettyJspServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.servlet.DefaultServlet",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.servlet.listener.IntrospectorCleaner",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.servlet.security.ConstraintSecurityHandler",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.ClassMatcher$ByLocationOrModule",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.ClassMatcher$ByPackageOrName",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.FragmentConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.JettyWebXmlConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.JspConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.MetaInfConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.StandardDescriptorProcessor",
+  "methods":[
+    {"name":"visitContextParam","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitDefaultContextPath","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitDenyUncoveredHttpMethods","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitDisplayName","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitErrorPage","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitFilter","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitFilterMapping","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitJspConfig","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitListener","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitLocaleEncodingList","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitLoginConfig","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitMimeMapping","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitRequestCharacterEncoding","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitResponseCharacterEncoding","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitSecurityConstraint","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitSecurityRole","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitServlet","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitServletMapping","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitSessionConfig","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitTagLib","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }, 
+    {"name":"visitWelcomeFileList","parameterTypes":["org.eclipse.jetty.ee10.webapp.WebAppContext","org.eclipse.jetty.ee10.webapp.Descriptor","org.eclipse.jetty.xml.XmlParser$Node"] }
+  ]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.WebAppConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.WebInfConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.ee10.webapp.WebXmlConfiguration",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jetty.io.SelectorManager$SelectorManagerListener"
+},
+{
+  "name":"org.eclipse.jetty.util.TypeUtil",
+  "methods":[
+    {"name":"getClassLoaderLocation","parameterTypes":["java.lang.Class"] }, 
+    {"name":"getCodeSourceLocation","parameterTypes":["java.lang.Class"] }, 
+    {"name":"getModuleLocation","parameterTypes":["java.lang.Class"] }, 
+    {"name":"getSystemClassLoaderLocation","parameterTypes":["java.lang.Class"] }
+  ]
+},
+{
+  "name":"org.newsclub.lib.junixsocket.common.NarMetadata"
+},
+{
+  "name":"org.newsclub.lib.junixsocket.custom.NarMetadata"
+},
+{
+  "name":"org.newsclub.net.unix.AFUNIXSelectorProvider",
+  "methods":[{"name":"provider","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.pkcs12.PKCS12KeyStore",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.DSA$SHA224withDSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.DSA$SHA256withDSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.NativePRNG",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA2$SHA224",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA2$SHA256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA5$SHA384",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA5$SHA512",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.X509Factory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.PSSParameters",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSAKeyFactory$Legacy",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSAPSSSignature",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA224withRSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA256withRSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA384withRSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.SSLContextImpl$TLSContext",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.util.ObjectIdentifier"
+},
+{
+  "name":"sun.security.x509.AuthorityInfoAccessExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.AuthorityKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.BasicConstraintsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CRLDistributionPointsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CertificateExtensions"
+},
+{
+  "name":"sun.security.x509.CertificatePoliciesExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.ExtendedKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.IssuerAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.KeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.NetscapeCertTypeExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.PrivateKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+}
+]

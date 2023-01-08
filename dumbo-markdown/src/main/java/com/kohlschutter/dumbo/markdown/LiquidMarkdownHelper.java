@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
@@ -50,6 +52,23 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
 
     return parseLiquidMarkdown(PathReaderSupplier.withContentsOf(relativePath, mdFile,
         StandardCharsets.UTF_8), (int) mdFile.length(), variables);
+  }
+
+  /**
+   * Parses the given Markdown file so it can be rendered.
+   *
+   * The file can have an optional front matter.
+   *
+   * @param relativePath The path, relative to the site root.
+   * @param mdPath The path to the markdown file.
+   * @param variables The variables to use in the scope of the file.
+   * @return The parsed markdown object, ready to be rendered.
+   * @throws IOException on error.
+   */
+  public Document parseLiquidMarkdown(String relativePath, Path mdPath,
+      Map<String, Object> variables) throws IOException {
+    return parseLiquidMarkdown(PathReaderSupplier.withContentsOf(relativePath, mdPath,
+        StandardCharsets.UTF_8), (int) Files.size(mdPath), variables);
   }
 
   /**

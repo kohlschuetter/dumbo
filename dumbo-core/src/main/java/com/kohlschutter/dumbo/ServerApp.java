@@ -20,8 +20,10 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -138,14 +140,14 @@ public final class ServerApp implements Closeable, Cloneable {
 
   final void init(AppHTTPServer server, String path, URL webappBaseURL) throws IOException {
     // also see AppHTTPServer
-    if ("file".equals(webappBaseURL.getProtocol())) {
+    if ("file".equals(webappBaseURL.getProtocol()) && !webappBaseURL.getPath().contains("!")) {
       try {
         // If the webapp is in a jar file, we use the temp directory structure (which has a webapp/
         // subdirectory) to serve additional files created by our servlets.
         // In that case, app.getWebappWorkDir() will point to the webapp/ folder under
         // app.getWorkDir()
         this.workDir = new File(webappBaseURL.toURI()).getParentFile();
-      } catch (RuntimeException | URISyntaxException e) {
+      } catch (Exception e) {
         throw new IllegalStateException(e);
       }
     } else {

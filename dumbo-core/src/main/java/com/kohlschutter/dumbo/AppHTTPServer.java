@@ -22,8 +22,11 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Inet4Address;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -37,6 +40,11 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response.CompleteListener;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
+import org.eclipse.jetty.ee10.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.ee10.servlet.DefaultServlet;
+import org.eclipse.jetty.ee10.servlet.ServletHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.io.ClientConnector;
@@ -45,16 +53,11 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SessionIdManager;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.ErrorHandler;
-import org.eclipse.jetty.server.session.DefaultSessionIdManager;
-import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.servlet.ServletHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.handler.ErrorProcessor;
 import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.webapp.WebAppContext;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.newsclub.net.unix.jetty.AFSocketClientConnector;
 import org.newsclub.net.unix.jetty.AFSocketServerConnector;
@@ -87,7 +90,7 @@ public class AppHTTPServer {
   private final ServerApp app;
   private final String jsonPath = "/json";
 
-  private final ErrorHandler errorHandler;
+  private final ErrorProcessor errorHandler;
 
   private final Map<String, String> pathsToRegenerate = new HashMap<>();
 
@@ -154,21 +157,27 @@ public class AppHTTPServer {
     this(0, app, path, webappBaseURL);
   }
 
+  private static Path urlToPath(URL url) throws IOException {
+    try {
+      return Path.of(url.toURI());
+    } catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
+  }
+
   public AppHTTPServer(int tcpPort, final ServerApp app, final String path, final URL webappBaseURL)
       throws IOException {
     int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081")) : tcpPort;
 
-    Objects.requireNonNull(webappBaseURL);
+    Objects.requireNonNull(webappBaseURL, "Webapp baseURL not specified or resources not found");
     this.app = app;
 
-    this.errorHandler = new ErrorHandler();
+    this.errorHandler = new ErrorProcessor();
     errorHandler.setShowServlet(false);
 
     this.threadPool = new QueuedThreadPool();
 
     this.server = new Server(threadPool);
-    SessionIdManager smgr = new DefaultSessionIdManager(server);
-    server.setSessionIdManager(smgr);
 
     this.contextPath = "/" + (path.replaceFirst("^/", "").replaceFirst("/$", ""));
     app.registerCloseable(new Closeable() {
@@ -183,10 +192,14 @@ public class AppHTTPServer {
     app.init(this, path, webappBaseURL);
 
     {
-      Resource res = Resource.newResource(webappBaseURL);
+      final Resource res = ResourceFactory.root().newResource(webappBaseURL);
       final WebAppContext wac = new WebAppContext(res, contextPath);
+      wac.setBaseResource(res);
 
-      if (!"file".equals(webappBaseURL.getProtocol())) {
+      wac.setLogger(LOG);
+      wac.addServletContainerInitializer(new JettyJasperInitializer());
+
+      if (!"file".equals(webappBaseURL.getProtocol()) || webappBaseURL.getPath().contains("!")) {
         // If the webapp is in a jar file, we use the temp directory structure (which has a webapp/
         // subdirectory) to serve additional files created by our servlets.
         // In that case, app.getWebappWorkDir() will point to the webapp/ folder under
@@ -206,6 +219,8 @@ public class AppHTTPServer {
       contextHandlers.addHandler(wac);
 
       scanWebApp(wac.getContextPath(), null, res);
+
+      wac.setServer(server);
     }
 
     app.initComponents(this);
@@ -214,13 +229,19 @@ public class AppHTTPServer {
     server.setConnectors(initConnectors(port, server));
   }
 
-  private final Set<Object> scannedFiles = new HashSet<>();
+  private final Set<URI> scannedFiles = new HashSet<>();
 
+  /**
+   * Scan the webapp's resources for files that we should request via HTTP (to trigger caching,
+   * etc.).
+   * 
+   * @param contextPrefix The context prefix.
+   * @param dirPrefix The directory prefix.
+   * @param dir The directory resource.
+   * @throws IOException on error.
+   */
   private void scanWebApp(String contextPrefix, String dirPrefix, Resource dir) throws IOException {
-    Object key = dir.getFile();
-    if (key == null) {
-      key = dir.getURI();
-    }
+    URI key = dir.getURI();
     if (!scannedFiles.add(key)) {
       return;
     }
@@ -232,11 +253,11 @@ public class AppHTTPServer {
       return;
     }
 
-    for (String name : dir.list()) {
-      Resource r = dir.getResource(name);
+    for (Resource r : dir.list()) {
       if (r.isDirectory()) {
         scanWebApp(contextPrefix, dirPrefix, r);
       } else {
+        String name = r.getName();
         String path = r.toString();
         if (!path.startsWith(dirPrefix)) {
           continue;
@@ -267,17 +288,25 @@ public class AppHTTPServer {
    * Registers a web app context.
    *
    * @param contextPrefix The context prefix.
-   * @param pathToWebApp The URL pointing to the resources that should be served.
+   * @param pathToWebAppURL The URL pointing to the resources that should be served.
    * @return The context.
    * @throws IOException
    */
   public WebAppContext registerContext(ComponentImpl comp, final String contextPrefix,
-      final URL pathToWebApp) throws IOException {
-    Resource res = Resource.newResource(pathToWebApp);
+      final URL pathToWebAppURL) throws IOException {
+    Resource res = ResourceFactory.root().newResource(pathToWebAppURL);
+
     WebAppContext wac = new WebAppContext(res, (contextPath + contextPrefix).replaceAll("//+",
         "/"));
+    wac.setBaseResource(res);
+    wac.setLogger(LOG);
+    wac.addServletContainerInitializer(new JettyJasperInitializer());
+
     scanWebApp(wac.getContextPath(), null, res);
     initWebAppContext(comp, wac);
+
+    wac.setServer(server);
+
     return registerContext(wac);
   }
 
@@ -285,16 +314,15 @@ public class AppHTTPServer {
     wac.setDefaultRequestCharacterEncoding("UTF-8");
     wac.setDefaultResponseCharacterEncoding("UTF-8");
 
-    MimeTypes mt = new MimeTypes();
+    MimeTypes.Mutable mt = wac.getMimeTypes();
     mt.addMimeMapping("html", MimeTypes.Type.TEXT_HTML_UTF_8.asString());
     mt.addMimeMapping("js", "text/javascript;charset=utf-8");
     mt.addMimeMapping("json", MimeTypes.Type.TEXT_JSON_UTF_8.asString());
     mt.addMimeMapping("txt", MimeTypes.Type.TEXT_PLAIN_UTF_8.asString());
     mt.addMimeMapping("xml", MimeTypes.Type.TEXT_XML_UTF_8.asString());
-    wac.setMimeTypes(mt);
 
-    wac.setWelcomeFiles(new String[] {"index.html", "index.html.jsp"});
-    wac.setErrorHandler(errorHandler);
+    wac.setWelcomeFiles(new String[] {"index.html", "index.html.jsp", "index.md"});
+    wac.setErrorProcessor(errorHandler);
 
     wac.setAttribute(AppHTTPServer.class.getName(), this);
 
@@ -614,5 +642,13 @@ public class AppHTTPServer {
 
   void onSessionShutdown(String sessionId, WeakReference<HttpSession> weakSession) {
     // FIXME: implement server shutdown check
+  }
+
+  public static boolean checkResourceExists(ServletContext context, String pathInContext) {
+    try {
+      return context.getResource(pathInContext) != null;
+    } catch (MalformedURLException e) {
+      return false;
+    }
   }
 }
