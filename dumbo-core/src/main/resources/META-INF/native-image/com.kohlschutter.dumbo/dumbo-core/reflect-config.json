@@ -157,24 +157,6 @@
   ]
 },
 {
-  "name":"org.newsclub.lib.junixsocket.common.NarMetadata"
-},
-{
-  "name":"org.newsclub.lib.junixsocket.custom.NarMetadata"
-},
-{
-  "name":"org.newsclub.net.unix.AFUNIXSelectorProvider",
-  "methods":[{"name":"provider","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.NativePRNG",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.SHA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"com.oracle.svm.core.jdk.resources.NativeImageResourceFileSystemProvider",
   "allDeclaredFields":true,
   "allDeclaredClasses":true,

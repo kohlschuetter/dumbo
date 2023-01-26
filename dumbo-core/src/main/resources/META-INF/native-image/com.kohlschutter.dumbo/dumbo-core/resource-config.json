@@ -2,6 +2,9 @@
   "resources":{
   "includes":[
     {
+      "pattern":"^lib/aarch64-MacOSX-clang/jni/libjunixsocket-native-.*\\.dylib$"
+    },
+    {
       "pattern":"\\QMETA-INF/maven/com.kohlschutter.junixsocket/junixsocket-common/pom.properties\\E"
     }, 
     {
@@ -123,9 +126,6 @@
     }, 
     {
       "pattern":"\\Qjakarta/servlet/resources/web-fragment_6_0.xsd\\E"
-    }, 
-    {
-      "pattern":"\\Qlib/aarch64-MacOSX-clang/jni/libjunixsocket-native-2.7.0-SNAPSHOT.dylib\\E"
     }, 
     {
       "pattern":"\\Qorg/eclipse/jetty/ee10/webapp/catalog-ee10.xml\\E"

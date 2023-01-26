@@ -494,9 +494,6 @@
       "pattern":"\\Qjava/util/Spliterator.class\\E"
     }, 
     {
-      "pattern":"\\Qlib/aarch64-MacOSX-clang/jni/libjunixsocket-native-2.7.0-SNAPSHOT.dylib\\E"
-    }, 
-    {
       "pattern":"\\Qorg/apache/jasper/runtime/HttpJspBase.class\\E"
     }, 
     {
