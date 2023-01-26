@@ -24,9 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.Inet4Address;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -37,9 +35,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.Response.CompleteListener;
-import org.eclipse.jetty.client.api.Result;
-import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
+import org.eclipse.jetty.client.Response.CompleteListener;
+import org.eclipse.jetty.client.Result;
+import org.eclipse.jetty.client.transport.HttpClientTransportDynamic;
 import org.eclipse.jetty.ee10.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.ee10.servlet.DefaultServlet;
 import org.eclipse.jetty.ee10.servlet.ServletHandler;
@@ -155,14 +153,6 @@ public class AppHTTPServer {
   public AppHTTPServer(final ServerApp app, final String path, final URL webappBaseURL)
       throws IOException {
     this(0, app, path, webappBaseURL);
-  }
-
-  private static Path urlToPath(URL url) throws IOException {
-    try {
-      return Path.of(url.toURI());
-    } catch (URISyntaxException e) {
-      throw new IOException(e);
-    }
   }
 
   public AppHTTPServer(int tcpPort, final ServerApp app, final String path, final URL webappBaseURL)
