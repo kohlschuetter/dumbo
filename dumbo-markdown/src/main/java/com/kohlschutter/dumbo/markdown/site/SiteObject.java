@@ -19,14 +19,17 @@ package com.kohlschutter.dumbo.markdown.site;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.snakeyaml.engine.v2.api.Load;
 
@@ -34,7 +37,6 @@ import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.markdown.LiquidHelper;
 import com.kohlschutter.dumbo.markdown.YAMLSupport;
 import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
-import com.kohlschutter.util.ResourcePathTraverser;
 
 /**
  * Provides a Jekyll-compatible "site" object.
@@ -124,26 +126,39 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
   }
 
   private static List<PathReaderSupplier> getCollection(ServerApp app, String collectionId) {
-    Collection<URL> urls;
-
-    String baseUrl = app.getApplicationClass().getResource("markdown/").toString();
+    String rootUriPrefix;
     try {
-      urls = ResourcePathTraverser.findURLs(app.getApplicationClass(), "markdown/_" + collectionId,
-          false, ResourcePathTraverser.Order.ALPHABETICALLY_REVERSE, (n) -> n.endsWith(".md"))
-          .values();
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+      rootUriPrefix = Path.of(app.getApplicationClass().getResource("markdown/").toURI()).toUri()
+          .toString();
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+      return Collections.emptyList();
     }
 
-    return urls.stream().map((u) -> {
-      String uString = u.toString();
-      if (!uString.startsWith(baseUrl)) {
-        throw new IllegalStateException("URL does not start with " + baseUrl + ": " + uString);
-      }
-      String relativeUrl = uString.substring(baseUrl.length());
+    URL url = app.getApplicationClass().getResource("markdown/_" + collectionId + "/");
+    try {
+      Path p = Path.of(url.toURI());
 
-      return PathReaderSupplier.withContentsOf(collectionId, relativeUrl, u,
-          StandardCharsets.UTF_8);
-    }).collect(Collectors.toList());
+      try (Stream<Path> paths = Files.find(p, 64, (path, attr) -> !attr.isDirectory() && path
+          .toString().endsWith(".md")).sorted(Collections.reverseOrder())) {
+        return paths.map((path) -> {
+          String uString = path.toUri().toString();
+          if (!uString.startsWith(rootUriPrefix)) {
+            throw new IllegalStateException("URL does not start with " + rootUriPrefix + ": "
+                + uString);
+          }
+          String relativeUrl = uString.substring(rootUriPrefix.length());
+          if (relativeUrl.startsWith("/")) {
+            relativeUrl = relativeUrl.substring(1);
+          }
+
+          return PathReaderSupplier.withContentsOf(collectionId, relativeUrl, path,
+              StandardCharsets.UTF_8);
+        }).collect(Collectors.toList());
+      }
+    } catch (IOException | URISyntaxException e) {
+      e.printStackTrace();
+      return Collections.emptyList();
+    }
   }
 }

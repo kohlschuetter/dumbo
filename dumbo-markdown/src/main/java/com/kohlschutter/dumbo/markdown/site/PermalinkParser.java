@@ -105,6 +105,7 @@ public final class PermalinkParser {
     }
 
     String filenameSlug;
+    @SuppressWarnings("unused")
     String filenameSlugSuffix;
     matcher = PAT_FILENAME_SLUG.matcher(filenameRest);
     if (matcher.find()) {

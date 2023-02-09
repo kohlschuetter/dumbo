@@ -24,9 +24,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.Inet4Address;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -53,6 +56,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorProcessor;
+import org.eclipse.jetty.util.resource.CombinedResource;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -182,24 +186,21 @@ public class AppHTTPServer {
     app.init(this, path, webappBaseURL);
 
     {
-      final Resource res = ResourceFactory.root().newResource(webappBaseURL);
+      Resource res;
+      try {
+        res = ResourceFactory.root().newResource(List.of(app.getWebappWorkDir().toURI(),
+            webappBaseURL.toURI()));
+      } catch (URISyntaxException e) {
+        throw new IllegalStateException(e);
+      }
       final WebAppContext wac = new WebAppContext(res, contextPath);
       wac.setBaseResource(res);
 
       wac.setLogger(LOG);
       wac.addServletContainerInitializer(new JettyJasperInitializer());
 
-      if (!"file".equals(webappBaseURL.getProtocol()) || webappBaseURL.getPath().contains("!")) {
-        // If the webapp is in a jar file, we use the temp directory structure (which has a webapp/
-        // subdirectory) to serve additional files created by our servlets.
-        // In that case, app.getWebappWorkDir() will point to the webapp/ folder under
-        // app.getWorkDir()
-        wac.setTempDirectory(app.getWorkDir());
-      } else {
-        // Otherwise, we will use the webapp directory itself as a "temporary" storage
-        // This is (usually) fine since that directory usually is the classpath derived from
-        // some other source directory.
-      }
+      wac.setTempDirectory(new File(app.getWorkDir(), "jetty.tmp"));
+      wac.setTempDirectoryPersistent(true);
 
       initWebAppContext(app.getApplicationExtensionImpl(), wac);
 
@@ -221,39 +222,70 @@ public class AppHTTPServer {
 
   private final Set<URI> scannedFiles = new HashSet<>();
 
+  private static String normalizeFileSlashes(String uri) {
+    return uri.replace("file:///", "file:/");
+  }
+
   /**
    * Scan the webapp's resources for files that we should request via HTTP (to trigger caching,
    * etc.).
    * 
    * @param contextPrefix The context prefix.
-   * @param dirPrefix The directory prefix.
+   * @param dirPrefixes Valid directory prefixes.
    * @param dir The directory resource.
    * @throws IOException on error.
    */
-  private void scanWebApp(String contextPrefix, String dirPrefix, Resource dir) throws IOException {
+  private void scanWebApp(String contextPrefix, String[] dirPrefixes, Resource dir)
+      throws IOException {
     URI key = dir.getURI();
     if (!scannedFiles.add(key)) {
       return;
     }
 
-    String dirString = dir.toString();
-    if (dirPrefix == null) {
-      dirPrefix = dirString;
-    } else if (!dirString.equals(dirPrefix) && !dirString.startsWith(dirPrefix)) {
-      return;
+    if (dirPrefixes == null) {
+      if (dir instanceof CombinedResource) {
+        CombinedResource cr = (CombinedResource) dir;
+        List<String> prefixes = new ArrayList<>();
+        for (Resource r : cr.getResources()) {
+          prefixes.add(normalizeFileSlashes(r.getURI().toString()));
+        }
+        dirPrefixes = prefixes.toArray(new String[0]);
+      } else {
+        dirPrefixes = new String[] {normalizeFileSlashes(dir.getURI().toString())};
+      }
+    } else {
+      String dirString = dir.getURI().toString();
+      boolean ok = false;
+      for (String prefix : dirPrefixes) {
+        if (dirString.equals(prefix) || dirString.startsWith(prefix)) {
+          ok = true;
+          break;
+        }
+      }
+      if (!ok) {
+        return;
+      }
     }
 
     for (Resource r : dir.list()) {
       if (r.isDirectory()) {
-        scanWebApp(contextPrefix, dirPrefix, r);
+        scanWebApp(contextPrefix, dirPrefixes, r);
       } else {
         String name = r.getName();
-        String path = r.toString();
-        if (!path.startsWith(dirPrefix)) {
+        String path = normalizeFileSlashes(r.getURI().toString());
+
+        String okPrefix = null;
+        for (String prefix : dirPrefixes) {
+          if (path.startsWith(prefix)) {
+            okPrefix = prefix;
+            break;
+          }
+        }
+        if (okPrefix == null) {
           continue;
         }
 
-        path = path.substring(dirPrefix.length());
+        path = path.substring(okPrefix.length());
         path = contextPrefix + "/" + path;
 
         String cachedFile;

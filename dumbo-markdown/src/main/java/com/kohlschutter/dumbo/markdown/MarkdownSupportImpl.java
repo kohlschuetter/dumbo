@@ -75,8 +75,6 @@ final class MarkdownSupportImpl {
     this.liquid = new LiquidHelper(app, commonVariables);
     this.liquidMarkdown = new LiquidMarkdownHelper(liquid);
 
-    commonVariables.clear();
-    commonDumboVariables.clear();
     commonVariables.put("dumbo", commonDumboVariables);
 
     siteObject = new SiteObject(app, liquid);
@@ -103,6 +101,7 @@ final class MarkdownSupportImpl {
       }
 
       File webappWorkDir = app.getWebappWorkDir();
+      webappWorkDir.mkdirs();
 
       List<Map<String, Object>> list = (List<Map<String, Object>>) siteObject.get(collectionId);
       for (Map<String, Object> l : list) {
@@ -128,7 +127,7 @@ final class MarkdownSupportImpl {
 
         URL resourceURL = app.getResource("markdown/" + relativePath);
         if (resourceURL == null) {
-          System.err.println("Skipping entry without resourceURL");
+          System.err.println("Skipping entry without resourceURL: " + relativePath);
           continue;
         }
 
@@ -250,10 +249,11 @@ final class MarkdownSupportImpl {
     }
 
     File htmlFile = new File(targetFile.getParentFile(), filename);
+    System.out.println("WD " + app.getWorkDir() + " " + app.getWorkDir().exists());
 
     if (generateHtmlFile || !htmlFile.exists()) {
-      File mdFileHtmlTmp = File.createTempFile(".md", ".tmp", htmlFile.getParentFile());
       LOG.info("Generating " + htmlFile);
+      File mdFileHtmlTmp = File.createTempFile(".md", ".tmp", app.getWorkDir());
 
       return new SuccessfulCloseWriter(new OutputStreamWriter(new FileOutputStream(mdFileHtmlTmp),
           StandardCharsets.UTF_8)) {

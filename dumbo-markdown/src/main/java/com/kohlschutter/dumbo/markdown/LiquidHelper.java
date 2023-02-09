@@ -52,12 +52,12 @@ import com.kohlschutter.stringhold.HasExpectedLength;
 import com.kohlschutter.stringhold.HasLength;
 import com.kohlschutter.stringhold.IOExceptionHandler.ExceptionResponse;
 import com.kohlschutter.stringhold.StringHolder;
+import com.kohlschutter.stringhold.liqp.StringHolderRenderTransformer;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.util.sequence.LineAppendable;
 
 import liqp.ParseSettings;
 import liqp.RenderSettings;
-import liqp.RenderTransformer;
 import liqp.Template;
 import liqp.TemplateParser;
 import liqp.parser.Flavor;
@@ -320,8 +320,10 @@ public class LiquidHelper {
         "includedLayouts");
     do {
       if (!includedLayouts.add(layoutId)) {
-        throw new IOException("Circular reference detected: Layout " + layoutId
+        IOException e = new IOException("Circular reference detected: Layout " + layoutId
             + " already detected: " + includedLayouts);
+        e.printStackTrace();
+        throw e;
       }
 
       variables.put("content", contentSupply);
@@ -377,9 +379,9 @@ public class LiquidHelper {
             .build()) //
         .withRenderSettings(new RenderSettings.Builder() //
             // .withRenderTransformer(RenderTransformer.DEFAULT) //
-            .withRaiseExceptionsInStrictMode(false).withStrictVariables(true).withRenderTransformer(
-                RenderTransformer.STRINGHOLD) //
-            // .withRenderTransformer(RenderTransformer.STRINGHOLD_STRINGS_ONLY) //
+            .withRaiseExceptionsInStrictMode(false).withStrictVariables(true) //
+            .withRenderTransformer(StringHolderRenderTransformer.getSharedCacheInstance()) //
+            // .withRenderTransformer(StringsOnlyRenderTransformer.getInstance()) //
             .withShowExceptionsFromInclude(true) //
             .withEnvironmentMapConfigurator((env) -> {
               env.put(ENVIRONMENT_KEY_DUMBO_APP, app);

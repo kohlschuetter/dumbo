@@ -40,15 +40,12 @@ public class MarkdownServlet extends HttpServlet {
 
   private ServerApp app;
 
-  private String realPathPrefix;
   private MarkdownSupportImpl mdConfig;
 
   @Override
   public void init() throws ServletException {
     this.servletContext = getServletContext();
     this.app = Objects.requireNonNull(AppHTTPServer.getServerApp(servletContext));
-
-    this.realPathPrefix = servletContext.getRealPath("") + "/";
 
     try {
       mdConfig = app.getImplementationByIdentity(MarkdownSupportImpl.COMPONENT_IDENTITY,
@@ -71,9 +68,8 @@ public class MarkdownServlet extends HttpServlet {
 
   protected void doGet0(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
       IOException {
-
     String servletPath = req.getServletPath();
-    String path = servletContext.getRealPath(servletPath);
+
     URL url = servletContext.getResource(servletPath);
     if (servletPath == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -106,17 +102,17 @@ public class MarkdownServlet extends HttpServlet {
       return;
     }
 
-    if (!path.startsWith(realPathPrefix)) {
-      throw new IllegalStateException("realPath not below " + realPathPrefix + ": " + path);
+    String relativePath = servletPath;
+    if (relativePath.startsWith("/")) {
+      relativePath = relativePath.substring(1);
     }
-    String relativePath = path.substring(realPathPrefix.length());
-
     File mdFile;
     try {
       mdFile = mdPath.toFile();
     } catch (Exception e) {
       System.err.println("Cannot convert path " + mdPath + " to file: " + e);
-      mdFile = null;
+      mdFile = new File(app.getWebappWorkDir(), relativePath);
+      // System.out.println("using " + mdFile);
     }
 
     mdConfig.renderMarkdown(resp, relativePath, mdPath, mdFile, "true".equals(req.getParameter(

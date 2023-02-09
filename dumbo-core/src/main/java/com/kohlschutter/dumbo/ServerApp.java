@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -137,40 +138,31 @@ public final class ServerApp implements Closeable, Cloneable {
 
   final void init(AppHTTPServer server, String path, URL webappBaseURL) throws IOException {
     // also see AppHTTPServer
-    if ("file".equals(webappBaseURL.getProtocol()) && !webappBaseURL.getPath().contains("!")) {
-      try {
-        // If the webapp is in a jar file, we use the temp directory structure (which has a webapp/
-        // subdirectory) to serve additional files created by our servlets.
-        // In that case, app.getWebappWorkDir() will point to the webapp/ folder under
-        // app.getWorkDir()
-        this.workDir = new File(webappBaseURL.toURI()).getParentFile();
-      } catch (Exception e) {
-        throw new IllegalStateException(e);
-      }
-    } else {
-      File dir = File.createTempFile("dumbo-workdir", ".tmp");
-      dir.delete();
+    File dir = Files.createTempDirectory("dumbo-workdir").toRealPath().toFile();
 
-      this.workDir = new File(dir, path);
+    this.workDir = new File(dir, path);
+    workDir.mkdirs();
 
-      // FIXME move to AppHTTPServer
-      Runtime.getRuntime().addShutdownHook(new Thread() {
-        private void delete(File d) {
-          for (File f : d.listFiles()) {
+    // FIXME move to AppHTTPServer
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      private void delete(File d) {
+        File[] files = d.listFiles();
+        if (files != null) {
+          for (File f : files) {
             if (f.isDirectory()) {
               delete(f);
             }
             f.delete();
           }
-          dir.delete();
         }
+        d.delete();
+      }
 
-        @Override
-        public void run() {
-          delete(dir);
-        }
-      });
-    }
+      @Override
+      public void run() {
+        delete(dir);
+      }
+    });
     this.webappWorkDir = new File(this.workDir, "webapp");
     webappWorkDir.mkdirs();
 

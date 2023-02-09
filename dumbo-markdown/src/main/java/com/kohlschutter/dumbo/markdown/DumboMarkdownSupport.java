@@ -25,8 +25,8 @@ import com.kohlschutter.dumbo.appdefaults.AppDefaultsSupport;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 
 @Servlets({ //
-    @ServletMapping(map = "*.html", to = HtmlJspServlet.class),
-    @ServletMapping(map = "*.md", to = MarkdownServlet.class),
+    @ServletMapping(map = "*.html", to = HtmlJspServlet.class, initOrder = 1),
+    @ServletMapping(map = "*.md", to = MarkdownServlet.class, initOrder = 1),
     //
 })
 public interface DumboMarkdownSupport extends DumboComponent, AppDefaultsSupport, BootstrapSupport,
