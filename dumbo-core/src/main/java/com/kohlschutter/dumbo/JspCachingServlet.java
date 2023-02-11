@@ -51,7 +51,7 @@ final class JspCachingServlet extends JettyJspServlet {
   private boolean checkCache(String path, String generatedPath, HttpServletRequest req,
       HttpServletResponse resp) throws ServletException, IOException {
 
-    // FIXME use Path / temporary directory instead 
+    // FIXME use Path / temporary directory instead
     if (generatedPath == null || context.getRealPath(path) == null || path.contains("..")) {
       return false;
     }

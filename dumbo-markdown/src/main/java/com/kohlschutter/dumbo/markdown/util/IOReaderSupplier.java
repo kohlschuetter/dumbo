@@ -99,8 +99,8 @@ final class IOReaderSupplier {
   }
 
   /**
-   * Returns an {@link IOSupplier} providing {@link Reader} instances with content from file at the given
-   * path, using the given {@link Charset}.
+   * Returns an {@link IOSupplier} providing {@link Reader} instances with content from file at the
+   * given path, using the given {@link Charset}.
    *
    * @param p The path to the file to provides contents from.
    * @param cs The {@link Charset} to use.
@@ -114,7 +114,7 @@ final class IOReaderSupplier {
         int len = lenLong >= Integer.MAX_VALUE ? -1 : (int) lenLong;
         // NOTE this assumes that the length doesn't change between these two calls (hard to
         // enforce)
-        
+
         InputStream in = Files.newInputStream(f);
         if (len < 0) {
           return new InputStreamReader(in, cs);
@@ -138,6 +138,7 @@ final class IOReaderSupplier {
       }
     };
   }
+
   /**
    * Returns an {@link IOSupplier} providing {@link Reader} instances with content from the given
    * URL, using the given {@link Charset}.

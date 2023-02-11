@@ -229,7 +229,7 @@ public class AppHTTPServer {
   /**
    * Scan the webapp's resources for files that we should request via HTTP (to trigger caching,
    * etc.).
-   * 
+   *
    * @param contextPrefix The context prefix.
    * @param dirPrefixes Valid directory prefixes.
    * @param dir The directory resource.

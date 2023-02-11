@@ -246,7 +246,7 @@ public class LiquidHelper {
       if (scopeType != null) {
         if (!scopeType.equals(type) && !String.valueOf(scopeType).isEmpty()) {
           continue;
-        } ;
+        }
       }
       Object scopePath = scope.get("path");
       if (scopePath != null) {
