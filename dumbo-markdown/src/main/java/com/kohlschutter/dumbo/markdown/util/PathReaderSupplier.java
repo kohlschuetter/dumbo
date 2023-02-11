@@ -42,10 +42,6 @@ public class PathReaderSupplier implements IOSupplier<Reader> {
     return withContentsOf(null, relativePath, f, cs);
   }
 
-  public static PathReaderSupplier withContentsOf(String relativePath, Path p, Charset cs) {
-    return withContentsOf(null, relativePath, p, cs);
-  }
-
   public static PathReaderSupplier withContentsOf(String relativePath, URL url, Charset cs) {
     return withContentsOf(null, relativePath, url, cs);
   }

@@ -116,6 +116,6 @@ public class MarkdownServlet extends HttpServlet {
     }
 
     mdConfig.renderMarkdown(resp, relativePath, mdPath, mdFile, "true".equals(req.getParameter(
-        "reload")), null);
+        "reload")), null, null);
   }
 }

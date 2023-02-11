@@ -105,13 +105,8 @@ final class MarkdownSupportImpl {
 
       List<Map<String, Object>> list = (List<Map<String, Object>>) siteObject.get(collectionId);
       for (Map<String, Object> l : list) {
-        // liquid.renderLayout(l.get("layout"));
-
         Map<String, Object> variables = new HashMap<>(commonVariables);
         variables.put("page", l);
-
-        // Object content = l.get("content");
-        // Objects.requireNonNull(content);
 
         String permalink = (String) l.get("permalink");
         if (permalink == null || permalink.isBlank()) {
@@ -155,18 +150,14 @@ final class MarkdownSupportImpl {
           throw new IllegalStateException(e);
         }
 
-        renderMarkdown(null, relativePath, path, permalinkFile, true, layout);
+        renderMarkdown(null, relativePath, path, permalinkFile, true, layout, collectionId);
       }
     }
   }
 
-  public void renderMarkdown(String relativePath, File mdFile, File targetFile,
-      String defaultLayout) throws IOException {
-    renderMarkdown(null, relativePath, mdFile.toPath(), targetFile, true, defaultLayout);
-  }
-
   public void renderMarkdown(HttpServletResponse resp, String relativePath, Path mdPath,
-      File targetFile, boolean generateHtmlFile, String defaultLayout) throws IOException {
+      File targetFile, boolean generateHtmlFile, String defaultLayout, String collectionId)
+      throws IOException {
     Map<String, Object> variables = new HashMap<>(commonVariables);
 
     @SuppressWarnings("unchecked")
@@ -179,7 +170,17 @@ final class MarkdownSupportImpl {
       }
     });
 
-    Document document = liquidMarkdown.parseLiquidMarkdown(relativePath, mdPath, variables);
+    @SuppressWarnings("unchecked")
+    Map<String, Object> pageObj = (Map<String, Object>) variables.computeIfAbsent("page", (k) -> {
+      return new HashMap<String, Object>();
+    });
+    if (defaultLayout == null) {
+      defaultLayout = "default";
+    }
+    pageObj.put("layout", defaultLayout);
+
+    Document document = liquidMarkdown.parseLiquidMarkdown(relativePath, mdPath, variables,
+        collectionId);
 
     long time = System.currentTimeMillis();
 
