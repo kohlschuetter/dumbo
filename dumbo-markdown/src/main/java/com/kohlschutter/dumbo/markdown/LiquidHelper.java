@@ -316,8 +316,8 @@ public class LiquidHelper {
   public Object renderLayout(String layoutId, BufferedReader in, Object contentSupply,
       Map<String, Object> variables) throws IOException {
     @SuppressWarnings("unchecked")
-    Set<String> includedLayouts = (Set<String>) ((Map<String, Object>) variables.get("dumbo")).get(
-        "includedLayouts");
+    Set<String> includedLayouts = ((ThreadLocal<Set<String>>) ((Map<String, Object>) variables.get(
+        "dumbo")).get("includedLayouts")).get();
     do {
       if (!includedLayouts.add(layoutId)) {
         IOException e = new IOException("Circular reference detected: Layout " + layoutId

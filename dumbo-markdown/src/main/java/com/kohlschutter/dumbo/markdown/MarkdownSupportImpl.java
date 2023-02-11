@@ -173,7 +173,11 @@ final class MarkdownSupportImpl {
     Map<String, Object> dumboVariables = (Map<String, Object>) variables.get("dumbo");
     dumboVariables.put("htmlHead", com.kohlschutter.dumbo.JSPSupport.htmlHead(app));
     dumboVariables.put("htmlBodyTop", com.kohlschutter.dumbo.JSPSupport.htmlBodyTop(app));
-    dumboVariables.put("includedLayouts", new LinkedHashSet<>());
+    dumboVariables.put("includedLayouts", new ThreadLocal<>() {
+      public Object get() {
+        return new LinkedHashSet<>();
+      }
+    });
 
     Document document = liquidMarkdown.parseLiquidMarkdown(relativePath, mdPath, variables);
 
