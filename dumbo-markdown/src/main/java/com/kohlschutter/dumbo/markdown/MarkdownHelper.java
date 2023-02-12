@@ -20,20 +20,37 @@ package com.kohlschutter.dumbo.markdown;
 import java.io.IOException;
 import java.io.Reader;
 
+import com.kohlschutter.dumbo.markdown.flexmark.CustomFencedCodeRenderer;
 import com.kohlschutter.stringhold.StringHolder;
+import com.vladsch.flexmark.ext.attributes.AttributesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.parser.Parser.Builder;
+import com.vladsch.flexmark.parser.ParserEmulationProfile;
 import com.vladsch.flexmark.util.ast.Document;
 
+/**
+ * Markdown support, using flexmark-java.
+ *
+ * @author Christian Kohlschütter
+ */
 public class MarkdownHelper {
-  // flexmark-java
   private final Parser markdownParser;
   private final HtmlRenderer htmlRenderer;
 
   public MarkdownHelper() {
-    // flexmark-java
-    this.markdownParser = Parser.builder().build();
-    this.htmlRenderer = HtmlRenderer.builder().build();
+    AttributesExtension attributesExtension = AttributesExtension.create();
+
+    Builder parserBuilder = Parser.builder();
+    parserBuilder.setFrom(ParserEmulationProfile.KRAMDOWN);
+    parserBuilder.set(AttributesExtension.FENCED_CODE_INFO_ATTRIBUTES, true);
+
+    attributesExtension.extend(parserBuilder);
+    this.markdownParser = parserBuilder.build();
+
+    com.vladsch.flexmark.html.HtmlRenderer.Builder htmlBuilder = HtmlRenderer.builder();
+    htmlBuilder.nodeRendererFactory(new CustomFencedCodeRenderer.Factory());
+    this.htmlRenderer = htmlBuilder.build();
   }
 
   public Document parseMarkdown(Object obj) throws IOException {
@@ -69,5 +86,4 @@ public class MarkdownHelper {
   public void render(Document document, Appendable appendable) {
     htmlRenderer.render(document, appendable);
   }
-
 }
