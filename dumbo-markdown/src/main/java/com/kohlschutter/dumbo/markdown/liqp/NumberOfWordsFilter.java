@@ -33,6 +33,7 @@ public class NumberOfWordsFilter extends Filter {
       return 0;
     }
 
+    @SuppressWarnings("unused")
     String param = params.length == 0 ? "" : asString(params[0], context);
     // FIXME param, CJK
 
