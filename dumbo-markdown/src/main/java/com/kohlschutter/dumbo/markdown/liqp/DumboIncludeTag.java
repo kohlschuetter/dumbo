@@ -88,7 +88,7 @@ public class DumboIncludeTag extends Tag {
           }
         }
 
-        return template.prerenderUnguarded(variables, context, true);
+        return template.renderToObjectUnguarded(variables, context, true);
       }
     } catch (Exception e) {
       e.printStackTrace();

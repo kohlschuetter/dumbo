@@ -34,7 +34,7 @@
         <dependency>
             <groupId>nl.big-o</groupId>
             <artifactId>liqp</artifactId>
-            <version>0.8.3.4-SNAPSHOT</version>
+            <version>0.8.4.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.kohlschutter.stringhold</groupId>

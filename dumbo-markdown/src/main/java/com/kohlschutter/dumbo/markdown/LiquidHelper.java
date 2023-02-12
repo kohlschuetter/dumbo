@@ -208,7 +208,7 @@ public class LiquidHelper {
       if (justParseFrontMatter) {
         return pageVariables;
       } else {
-        Object obj = template.prerender(variables);
+        Object obj = template.renderToObject(variables);
 
         return obj;
       }
@@ -345,7 +345,7 @@ public class LiquidHelper {
             // FIXME handle errors
             exc.printStackTrace();
           }
-          contentSupply = template.prerenderUnguarded(variables);
+          contentSupply = template.renderToObjectUnguarded(variables);
         } catch (RuntimeException e) {
           throw new RuntimeException("Error in layout " + layoutId, e);
         }
