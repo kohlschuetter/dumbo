@@ -81,7 +81,7 @@ public class CustomFencedCodeRenderer implements NodeRenderer {
 
     if (useRouge) {
       html.attr("class", "highlighter-rouge");
-      html.attr("style", "padding-left: 2em");
+      // html.attr("style", "padding-left: 2em");
     }
     html.tag("div");
 

@@ -55,7 +55,7 @@ public final class DevTools {
     }
 
     try {
-      Process proc = Runtime.getRuntime().exec(PATH_TO_MODIFIERKEYS);
+      Process proc = Runtime.getRuntime().exec(new String[] {PATH_TO_MODIFIERKEYS});
       int rc = proc.waitFor();
       return (rc & 2) != 0;
     } catch (InterruptedException | IOException e) {

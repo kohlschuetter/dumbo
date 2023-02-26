@@ -14,16 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo.cleanstart;
+package com.kohlschutter.dumbo.ext.prism;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
+import com.kohlschutter.dumbo.annotations.CSSResources;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
- * Hide the page BODY until the app is ready.
+ * prism.js
  */
-@CSSResource(value = "css/cleanstart.css", group = "dumbo")
-@JavaScriptResource(value = "js/cleanstart.js", async = true)
-public interface CleanStartExtension extends DumboComponent {
+@CSSResources({//
+    @CSSResource(value = "css/prism.css", optional = true), //
+    @CSSResource(value = "css/prism-dumbo.css", group = "dumbo", optional = true) //
+})
+@JavaScriptResource(value = "js/prism.js", defer = true, optional = true)
+public interface PrismSupport extends DumboComponent {
 }

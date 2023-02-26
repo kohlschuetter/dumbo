@@ -23,6 +23,7 @@ import com.kohlschutter.dumbo.annotations.Servlets;
 import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.appdefaults.AppDefaultsSupport;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
+import com.kohlschutter.dumbo.ext.prism.PrismSupport;
 
 @Servlets({ //
     @ServletMapping(map = "*.html", to = HtmlJspServlet.class, initOrder = 1),
@@ -30,6 +31,6 @@ import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
     //
 })
 public interface DumboMarkdownSupport extends DumboComponent, AppDefaultsSupport, BootstrapSupport,
-    ConsoleSupport {
+    ConsoleSupport, PrismSupport {
 
 }

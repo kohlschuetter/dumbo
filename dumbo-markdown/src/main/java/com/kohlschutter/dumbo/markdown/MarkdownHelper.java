@@ -20,8 +20,11 @@ package com.kohlschutter.dumbo.markdown;
 import java.io.IOException;
 import java.io.Reader;
 
+import com.kohlschutter.dumbo.RenderState;
+import com.kohlschutter.dumbo.ext.prism.PrismSupport;
 import com.kohlschutter.dumbo.markdown.flexmark.CustomFencedCodeRenderer;
 import com.kohlschutter.stringhold.StringHolder;
+import com.kohlschutter.stringhold.StringHolderSequence;
 import com.vladsch.flexmark.ext.attributes.AttributesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
@@ -69,21 +72,15 @@ public class MarkdownHelper {
   }
 
   /**
-   * Renders the parsed Markdown document to string.
-   *
-   * @param document The document.
-   * @return The rendered document as a string.
-   */
-  public String render(Document document) {
-    return htmlRenderer.render(document);
-  }
-
-  /**
    * Renders the parsed Markdown document to an {@link Appendable}.
    *
    * @param document The document.
    */
-  public void render(Document document, Appendable appendable) {
+  public void render(Document document, StringHolderSequence appendable) {
     htmlRenderer.render(document, appendable);
+
+    if (document.contains(Parser.FENCED_CODE_CONTENT_BLOCK)) {
+      RenderState.get().setMarkedUsed(PrismSupport.class);
+    }
   }
 }

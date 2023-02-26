@@ -27,7 +27,41 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface JavaScriptResource {
+  /**
+   * The relative path to the resource, e.g., {@code js/default.js}.
+   * 
+   * @return The relative path.
+   */
   String[] value();
 
+  /**
+   * An optional group the JavaScript resource may be integrated with.
+   * 
+   * As a general rule, only resources with the same license should be grouped.
+   * 
+   * @return The group, or empty if no grouping desired.
+   */
+  String group() default "";
+
+  /**
+   * An optional resource that may be excluded if certain optimization conditions are met.
+   * 
+   * @return {@code true} if optional.
+   */
+  boolean optional() default false;
+
+  /**
+   * Load script asynchronously, independent of document rendering, in non-specific order.
+   * 
+   * @return {@code true} if enabled.
+   */
   boolean async() default false;
+
+  /**
+   * Load script after the document is loaded and parsed, in the order in which they were defined in
+   * the document.
+   * 
+   * @return {@code true} if enabled.
+   */
+  boolean defer() default false;
 }

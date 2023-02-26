@@ -16,6 +16,8 @@
  */
 package com.kohlschutter.dumbo;
 
+import com.kohlschutter.dumbo.api.DumboComponent;
+
 import jakarta.servlet.http.HttpSession;
 
 /**
@@ -38,21 +40,17 @@ public final class JSPSupport {
     if (app == null) {
       return "";
     } else {
-      return htmlHead(app);
+      return htmlHead(app).toString();
     }
   }
 
-  public static String htmlHead(final ServerApp app) {
-    StringBuilder sb = new StringBuilder();
-    for (ExtensionImpl ext : app.getExtensions()) {
-      // FIXME precompute
-      String v = ext.htmlHead(app);
-      if (v != null) {
-        sb.append(v);
-      }
-    }
+  public static void markComponentUsed(Class<? extends DumboComponent> component) {
+    RenderState.get().setMarkedUsed(component);
+  }
 
-    return sb.toString();
+  public static String htmlHead(final ServerApp app) {
+    // RenderState.get().setMarkedUsedAllComponents(true);
+    return ExtensionResourceHelper.htmlHead(app).toString();
   }
 
   /**
@@ -67,22 +65,13 @@ public final class JSPSupport {
     if (app == null) {
       return "";
     } else {
-      return htmlBodyTop(app);
+      return htmlBodyTop(app).toString();
     }
   }
 
   public static String htmlBodyTop(final ServerApp app) {
-    StringBuilder sb = new StringBuilder();
-
-    for (ExtensionImpl ext : app.getExtensions()) {
-      // FIXME precompute
-      String v = ext.htmlBodyTop(app);
-      if (v != null) {
-        sb.append(v);
-      }
-    }
-
-    return sb.toString();
+    // RenderState.get().setMarkedUsedAllComponents(true);
+    return ExtensionResourceHelper.htmlBodyTop(app).toString();
   }
 
   /**

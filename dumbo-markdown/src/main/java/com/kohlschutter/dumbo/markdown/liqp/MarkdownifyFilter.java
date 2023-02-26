@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import com.kohlschutter.dumbo.markdown.MarkdownHelper;
 import com.kohlschutter.stringhold.StringHolder;
+import com.kohlschutter.stringhold.StringHolderSequence;
 
 import liqp.TemplateContext;
 import liqp.filters.Filter;
@@ -49,7 +50,9 @@ public class MarkdownifyFilter extends Filter {
     }
 
     try {
-      return mh.render(mh.parseMarkdown(value));
+      StringHolderSequence sh = new StringHolderSequence();
+      mh.render(mh.parseMarkdown(value), sh);
+      return sh;
     } catch (IOException e) {
       throw new RuntimeException("Cannot markdownify content");
     }

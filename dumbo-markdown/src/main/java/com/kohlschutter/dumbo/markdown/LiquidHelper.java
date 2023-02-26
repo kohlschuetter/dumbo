@@ -37,6 +37,7 @@ import java.util.function.Supplier;
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 
+import com.kohlschutter.dumbo.RenderState;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.markdown.liqp.AssetPathTag;
 import com.kohlschutter.dumbo.markdown.liqp.DumboIncludeTag;
@@ -52,6 +53,8 @@ import com.kohlschutter.stringhold.HasExpectedLength;
 import com.kohlschutter.stringhold.HasLength;
 import com.kohlschutter.stringhold.IOExceptionHandler.ExceptionResponse;
 import com.kohlschutter.stringhold.StringHolder;
+import com.kohlschutter.stringhold.liqp.Conditional;
+import com.kohlschutter.stringhold.liqp.Conditionally;
 import com.kohlschutter.stringhold.liqp.StringHolderRenderTransformer;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.util.sequence.LineAppendable;
@@ -316,8 +319,8 @@ public class LiquidHelper {
   public Object renderLayout(String layoutId, BufferedReader in, Object contentSupply,
       Map<String, Object> variables) throws IOException {
     @SuppressWarnings("unchecked")
-    Set<String> includedLayouts = ((ThreadLocal<Set<String>>) ((Map<String, Object>) variables.get(
-        "dumbo")).get("includedLayouts")).get();
+    Set<String> includedLayouts = (((ThreadLocal<RenderState>) ((Map<String, Object>) variables
+        .get(LiquidVariables.DUMBO)).get(LiquidVariables.DUMBO_STATE_TL)).get()).getIncluded();
     do {
       if (!includedLayouts.add(layoutId)) {
         IOException e = new IOException("Circular reference detected: Layout " + layoutId
@@ -376,6 +379,10 @@ public class LiquidHelper {
             .with(new DumboIncludeTag()) //
             .with(new SeoTag()) //
             .with(new AssetPathTag()) //
+            .with(new Conditional()) //
+            // blocks
+            .with(new Conditionally()) //
+            //
             .build()) //
         .withRenderSettings(new RenderSettings.Builder() //
             // .withRenderTransformer(RenderTransformer.DEFAULT) //

@@ -19,10 +19,9 @@ package com.kohlschutter.dumbo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
@@ -36,6 +35,8 @@ import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.util.NameObfuscator;
+import com.kohlschutter.stringhold.StringHolder;
+import com.kohlschutter.stringhold.StringHolderSequence;
 
 /**
  * Provides support for HTML/CSS/JavaScript-based extensions that simplify app development.
@@ -45,14 +46,12 @@ final class ExtensionImpl extends ComponentImpl {
   private String serverContextPath;
   private String contextPath;
 
-  private final Collection<String> resJavaScript = new LinkedHashSet<>();
-  private final Collection<String> resAsyncJavaScript = new LinkedHashSet<>();
-  private final Collection<String> resCSS = new LinkedHashSet<>();
-  private final Collection<String> resHEAD = new LinkedHashSet<>();
-  private final Collection<String> resBODY = new LinkedHashSet<>();
+  private StringHolderSequence htmlHead = null;
+  private StringHolderSequence htmlBodyTop = null;
 
-  private String htmlHead = "";
-  private String htmlBodyTop = "";
+  private List<JavaScriptResource> jsResources;
+  private List<CSSResource> cssResources;
+  private List<HTMLResource> htmlResources;
 
   ExtensionImpl(Class<? extends DumboComponent> comp) {
     super(comp);
@@ -103,41 +102,17 @@ final class ExtensionImpl extends ComponentImpl {
    * @see #registerJavaScript(String)
    */
   private void initResources() {
-    List<JavaScriptResource> jsResources = getComponentAnnotations(JavaScriptResource.class);
+    this.jsResources = getComponentAnnotations(JavaScriptResource.class);
     getComponentAnnotations(JavaScriptResources.class).stream().map((k) -> k.value()).flatMap(
         Stream::of).collect(() -> jsResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
 
-    List<CSSResource> cssResources = getComponentAnnotations(CSSResource.class);
+    this.cssResources = getComponentAnnotations(CSSResource.class);
     getComponentAnnotations(CSSResources.class).stream().map((k) -> k.value()).flatMap(Stream::of)
         .collect(() -> cssResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
 
-    List<HTMLResource> htmlResources = getComponentAnnotations(HTMLResource.class);
+    this.htmlResources = getComponentAnnotations(HTMLResource.class);
     getComponentAnnotations(HTMLResources.class).stream().map((k) -> k.value()).flatMap(Stream::of)
         .collect(() -> htmlResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
-
-    for (JavaScriptResource js : jsResources) {
-      Collection<String> res = js.async() ? resAsyncJavaScript : resJavaScript;
-      for (String path : js.value()) {
-        register(res, path);
-      }
-    }
-
-    for (CSSResource css : cssResources) {
-      for (String path : css.value()) {
-        register(resCSS, path);
-      }
-    }
-
-    for (HTMLResource html : htmlResources) {
-      Collection<String> res = html.target() == Target.HEAD ? resHEAD : resBODY;
-      for (String path : html.value()) {
-        register(res, path);
-      }
-    }
-  }
-
-  private void register(Collection<String> targetCollection, String path) {
-    targetCollection.add(path);
   }
 
   /**
@@ -185,41 +160,73 @@ final class ExtensionImpl extends ComponentImpl {
     }
   }
 
-  private String initHtmlHead() throws IOException {
-    StringBuilder sb = new StringBuilder();
+  private StringHolderSequence initHtmlHead() throws IOException {
+    StringHolderSequence sb = new StringHolderSequence();
 
-    for (String path : resCSS) {
-      sb.append("<link rel=\"stylesheet\" href=\"" + xmlEntities(toAbsolutePath(path)) + "\" />\n");
+    final Predicate<StringHolder> optionalInclude = (sh) -> {
+      RenderState rs = RenderState.get();
+      boolean used = rs.isMarkedUsed(getComponentClass());
+      return used;
+    };
+
+    for (CSSResource css : cssResources) {
+      for (String path : css.value()) {
+        CharSequence s = "<link rel=\"stylesheet\" href=\"" + xmlEntities(toAbsolutePath(path))
+            + "\" />\n";
+        if (css.optional()) {
+          s = StringHolder.withConditionalStringHolder(StringHolder.withContent(s),
+              optionalInclude);
+        }
+
+        sb.append(s);
+      }
     }
 
-    for (String path : resJavaScript) {
-      sb.append("<script type=\"text/javascript\" src=\"" + xmlEntities(toAbsolutePath(path))
-          + "\"></script>\n");
-    }
-    for (String path : resAsyncJavaScript) {
-      sb.append("<script type=\"text/javascript\" async=\"async\" src=\"" + xmlEntities(
-          toAbsolutePath(path)) + "\"></script>\n");
+    for (JavaScriptResource js : jsResources) {
+      String defer = js.defer() ? " defer=\"defer\"" : "";
+      String async = js.async() ? " async=\"async\"" : "";
+
+      for (String path : js.value()) {
+        CharSequence s = "<script type=\"text/javascript\" src=\"" + xmlEntities(toAbsolutePath(
+            path)) + "\"" + defer + async + "></script>\n";
+        if (js.optional()) {
+          s = StringHolder.withConditionalStringHolder(StringHolder.withContent(s),
+              optionalInclude);
+        }
+
+        sb.append(s);
+      }
     }
 
-    for (String path : resHEAD) {
-      sb.append(getContentsOfResource(path));
+    for (HTMLResource html : htmlResources) {
+      if (html.target() != Target.HEAD) {
+        continue;
+      }
+      for (String path : html.value()) {
+        sb.append(getContentsOfResource(path));
+      }
     }
 
-    return sb.toString();
+    return sb;
   }
 
-  private String initHtmlBodyTop() throws IOException {
-    if (resHEAD.isEmpty()) {
-      return "";
+  private StringHolderSequence initHtmlBodyTop() throws IOException {
+    StringHolderSequence sb = new StringHolderSequence();
+
+    for (HTMLResource html : htmlResources) {
+      if (html.target() != Target.BODY) {
+        continue;
+      }
+      for (String path : html.value()) {
+        sb.append(getContentsOfResource(path));
+      }
     }
-    StringBuilder sb = new StringBuilder();
-    for (String path : resHEAD) {
-      sb.append(getContentsOfResource(path));
-    }
-    return sb.toString();
+
+    return sb;
   }
 
   private String getContentsOfResource(String path) throws IOException {
+    // FIXME
     try (InputStream in = getComponentResource("include/noLongerCurrent.html").openStream();
         Scanner sc = new Scanner(in, "UTF-8")) {
       return sc.useDelimiter("\\Z").next();
@@ -236,8 +243,8 @@ final class ExtensionImpl extends ComponentImpl {
    * @param app The server app.
    * @return The HTML string.
    */
-  String htmlHead(final ServerApp app) {
-    return htmlHead;
+  StringHolderSequence htmlHead(final ServerApp app) {
+    return htmlHead.clone();
   }
 
   /**
@@ -247,8 +254,8 @@ final class ExtensionImpl extends ComponentImpl {
    * @param app The server app.
    * @return The HTML string.
    */
-  String htmlBodyTop(final ServerApp app) {
-    return htmlBodyTop;
+  StringHolderSequence htmlBodyTop(final ServerApp app) {
+    return htmlBodyTop.clone();
   }
 
   private static String xmlEntities(final String in) {

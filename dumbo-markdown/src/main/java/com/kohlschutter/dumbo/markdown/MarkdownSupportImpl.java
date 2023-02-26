@@ -29,15 +29,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.ImplementationIdentity;
+import com.kohlschutter.dumbo.RenderState;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.markdown.site.CustomSiteVariables;
 import com.kohlschutter.dumbo.markdown.site.JekyllObject;
@@ -75,14 +76,14 @@ final class MarkdownSupportImpl {
     this.liquid = new LiquidHelper(app, commonVariables);
     this.liquidMarkdown = new LiquidMarkdownHelper(liquid);
 
-    commonVariables.put("dumbo", commonDumboVariables);
+    commonVariables.put(LiquidVariables.DUMBO, commonDumboVariables);
 
-    siteObject = new SiteObject(app, liquid);
-    commonVariables.put("site", siteObject);
-    commonVariables.put("jekyll", new JekyllObject());
+    commonVariables.put(LiquidVariables.JEKYLL, new JekyllObject());
 
+    commonVariables.put(LiquidVariables.SITE, (siteObject = new SiteObject(app, liquid)));
     siteObject.initCollections();
-    commonVariables.put("paginator", new PaginatorObject(commonVariables));
+
+    commonVariables.put(LiquidVariables.PAGINATOR, new PaginatorObject(commonVariables));
 
     createFiles();
   }
@@ -150,30 +151,35 @@ final class MarkdownSupportImpl {
           throw new IllegalStateException(e);
         }
 
-        renderMarkdown(null, relativePath, path, permalinkFile, true, layout, collectionId);
+        renderMarkdown(relativePath, path, permalinkFile, true, null, layout, collectionId);
       }
     }
   }
 
-  public void renderMarkdown(HttpServletResponse resp, String relativePath, Path mdPath,
-      File targetFile, boolean generateHtmlFile, String defaultLayout, String collectionId)
-      throws IOException {
+  public void renderMarkdown(String relativePath, Path mdPath, File targetFile,
+      boolean generateHtmlFile, @Nullable HttpServletResponse resp, @Nullable String defaultLayout,
+      @Nullable String collectionId) throws IOException {
     Map<String, Object> variables = new HashMap<>(commonVariables);
 
     @SuppressWarnings("unchecked")
-    Map<String, Object> dumboVariables = (Map<String, Object>) variables.get("dumbo");
-    dumboVariables.put("htmlHead", com.kohlschutter.dumbo.JSPSupport.htmlHead(app));
-    dumboVariables.put("htmlBodyTop", com.kohlschutter.dumbo.JSPSupport.htmlBodyTop(app));
-    dumboVariables.put("includedLayouts", new ThreadLocal<>() {
-      public Object get() {
-        return new LinkedHashSet<>();
-      }
-    });
+    Map<String, Object> dumboVariables = (Map<String, Object>) variables.get(LiquidVariables.DUMBO);
+    dumboVariables.put(LiquidVariables.DUMBO_HTMLHEAD,
+        com.kohlschutter.dumbo.ExtensionResourceHelper.htmlHead(app));
+    dumboVariables.put(LiquidVariables.DUMBO_HTMLBODYTOP,
+        com.kohlschutter.dumbo.ExtensionResourceHelper.htmlBodyTop(app));
+
+    ThreadLocal<RenderState> stateTL = RenderState.getThreadLocal();
+    stateTL.remove();
+    dumboVariables.put(LiquidVariables.DUMBO_STATE_TL, stateTL);
+
+    RenderState state = RenderState.get();
+    state.setRelativePath(relativePath);
 
     @SuppressWarnings("unchecked")
-    Map<String, Object> pageObj = (Map<String, Object>) variables.computeIfAbsent("page", (k) -> {
-      return new HashMap<String, Object>();
-    });
+    Map<String, Object> pageObj = (Map<String, Object>) variables.computeIfAbsent(
+        LiquidVariables.PAGE, (k) -> {
+          return new HashMap<String, Object>();
+        });
     if (defaultLayout == null) {
       defaultLayout = "default";
     }
@@ -185,7 +191,7 @@ final class MarkdownSupportImpl {
     long time = System.currentTimeMillis();
 
     try (SuccessfulCloseWriter mdReloadOut = mdReloadWriter(targetFile, generateHtmlFile)) {
-      final Appendable appendable;
+      final Appendable out;
       PrintWriter servletOut;
       if (resp != null) {
         resp.setContentType("text/html;charset=UTF-8");
@@ -193,24 +199,33 @@ final class MarkdownSupportImpl {
         // do not add to try-catch block, otherwise we won't see error messages
         servletOut = resp.getWriter();
 
-        appendable = SuppressErrorsAppendable.multiplexIfNecessary(servletOut, mdReloadOut);
+        out = SuppressErrorsAppendable.multiplexIfNecessary(servletOut, mdReloadOut);
       } else {
         servletOut = null;
 
-        appendable = Objects.requireNonNull(mdReloadOut);
+        out = Objects.requireNonNull(mdReloadOut);
       }
 
-      String layoutId0 = YAMLSupport.getVariableAsString(variables, "page", "layout");
+      String layoutId0 = YAMLSupport.getVariableAsString(variables, LiquidVariables.PAGE,
+          LiquidVariables.PAGE_LAYOUT);
       if (layoutId0 == null) {
         layoutId0 = defaultLayout;
       }
       String layoutId = layoutId0;
 
       try (BufferedReader layoutIn = liquid.layoutReader(layoutId)) {
-        // the main content
+        // render the main content first
         StringHolderSequence seq = new StringHolderSequence();
         seq.setExpectedLength(document.getTextLength());
         liquidMarkdown.render(document, seq);
+
+        // // ALTERNATIVE: defer rendering (this causes the outermost layout to be rendered first)
+        // StringHolder contentSupply =
+        // StringHolder.withSupplierExpectedLength(document.getTextLength(), ()->{
+        // StringHolderSequence seq = new StringHolderSequence();
+        // liquidMarkdown.render(document, seq);
+        // return seq;
+        // });
 
         StringHolder contentSupply = seq;
 
@@ -221,11 +236,11 @@ final class MarkdownSupportImpl {
               originalContentSupply, variables), IOExceptionHandler.ILLEGAL_STATE);
         }
 
-        contentSupply.appendTo(appendable);
+        contentSupply.appendTo(out);
       }
 
-      if (appendable instanceof SuppressErrorsAppendable) {
-        SuppressErrorsAppendable multiplexed = (SuppressErrorsAppendable) appendable;
+      if (out instanceof SuppressErrorsAppendable) {
+        SuppressErrorsAppendable multiplexed = (SuppressErrorsAppendable) out;
 
         if (mdReloadOut != null) {
           mdReloadOut.setSuccessful(!multiplexed.hasError(mdReloadOut));
@@ -237,7 +252,7 @@ final class MarkdownSupportImpl {
     }
 
     time = System.currentTimeMillis() - time;
-    LOG.info("Request time: " + time + "ms");
+    LOG.info("Request time: " + time + "ms for " + relativePath);
   }
 
   private SuccessfulCloseWriter mdReloadWriter(File targetFile, boolean generateHtmlFile)

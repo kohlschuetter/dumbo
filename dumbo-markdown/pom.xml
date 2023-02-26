@@ -32,14 +32,9 @@
         </dependency>
         <!-- Liquid parser -->
         <dependency>
-            <groupId>nl.big-o</groupId>
-            <artifactId>liqp</artifactId>
-            <version>0.8.4.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>com.kohlschutter.stringhold</groupId>
             <artifactId>stringhold-liqp</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${stringhold.version}</version>
         </dependency>
         <!-- YAML parser -->
         <dependency>

@@ -24,6 +24,8 @@
         <maven.compile.encoding>UTF-8</maven.compile.encoding>
         
         <kohlschutter.java.release>11</kohlschutter.java.release>
+        
+        <stringhold.version>1.0.0-SNAPSHOT</stringhold.version>
     </properties>
 
     <organization>
