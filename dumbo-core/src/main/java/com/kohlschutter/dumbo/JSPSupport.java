@@ -16,6 +16,8 @@
  */
 package com.kohlschutter.dumbo;
 
+import java.util.Set;
+
 import com.kohlschutter.dumbo.api.DumboComponent;
 
 import jakarta.servlet.http.HttpSession;
@@ -44,8 +46,27 @@ public final class JSPSupport {
     }
   }
 
-  public static void markComponentUsed(Class<? extends DumboComponent> component) {
-    RenderState.get().setMarkedUsed(component);
+  @SafeVarargs
+  public static void markComponentUsed(final HttpSession session,
+      Class<? extends DumboComponent>... components) {
+    ServerApp app = getApp(session);
+    if (app == null) {
+      return;
+    }
+    RenderState renderState = RenderState.get();
+    renderState.setApp(app);
+
+    for (Class<? extends DumboComponent> component : components) {
+      renderState.setMarkedUsed(component);
+
+      Set<Class<? extends DumboComponent>> subcomponents = app.getComponentToSubComponentMap().get(
+          component);
+      if (subcomponents != null && !subcomponents.isEmpty()) {
+        for (Class<? extends DumboComponent> subcomponent : subcomponents) {
+          renderState.setMarkedUsed(subcomponent);
+        }
+      }
+    }
   }
 
   public static String htmlHead(final ServerApp app) {

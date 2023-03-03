@@ -174,6 +174,7 @@ final class MarkdownSupportImpl {
 
     RenderState state = RenderState.get();
     state.setRelativePath(relativePath);
+    state.setApp(app);
 
     @SuppressWarnings("unchecked")
     Map<String, Object> pageObj = (Map<String, Object>) variables.computeIfAbsent(

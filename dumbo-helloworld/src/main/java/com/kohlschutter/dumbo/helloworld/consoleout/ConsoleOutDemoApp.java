@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.ConsoleSupport;
 import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.dumbo.annotations.EventHandlers;
 import com.kohlschutter.dumbo.annotations.Services;
 import com.kohlschutter.dumbo.api.Console;
 import com.kohlschutter.dumbo.api.DumboApplication;
@@ -35,6 +36,7 @@ import com.kohlschutter.dumbo.util.DevTools;
  * This demo shows how one can use the Console.
  */
 @Services({DemoServiceImpl.class})
+@EventHandlers({ConsoleOutDemoApp.class})
 public class ConsoleOutDemoApp implements DumboApplication, BootstrapSupport, ConsoleSupport,
     EventHandler {
   public static void main(String[] args) throws IOException {

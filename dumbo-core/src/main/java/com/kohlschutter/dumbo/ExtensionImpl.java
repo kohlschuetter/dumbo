@@ -25,6 +25,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.CSSResources;
@@ -42,6 +44,8 @@ import com.kohlschutter.stringhold.StringHolderSequence;
  * Provides support for HTML/CSS/JavaScript-based extensions that simplify app development.
  */
 final class ExtensionImpl extends ComponentImpl {
+  private static final Logger LOG = LoggerFactory.getLogger(ExtensionImpl.class);
+
   private final String extensionPath;
   private String serverContextPath;
   private String contextPath;
@@ -132,7 +136,7 @@ final class ExtensionImpl extends ComponentImpl {
       }
     }
 
-    htmlHead = this.initHtmlHead();
+    htmlHead = this.initHtmlHead(server);
     htmlBodyTop = this.initHtmlBodyTop();
   }
 
@@ -150,6 +154,10 @@ final class ExtensionImpl extends ComponentImpl {
     return getComponentResource("webapp/");
   }
 
+  private boolean isRelativePath(String path) {
+    return !path.startsWith("/") && !path.contains("://");
+  }
+
   private String toAbsolutePath(String path) {
     if (path.contains("://")) {
       return path;
@@ -160,7 +168,7 @@ final class ExtensionImpl extends ComponentImpl {
     }
   }
 
-  private StringHolderSequence initHtmlHead() throws IOException {
+  private StringHolderSequence initHtmlHead(AppHTTPServer server) throws IOException {
     StringHolderSequence sb = new StringHolderSequence();
 
     final Predicate<StringHolder> optionalInclude = (sh) -> {
@@ -171,8 +179,19 @@ final class ExtensionImpl extends ComponentImpl {
 
     for (CSSResource css : cssResources) {
       for (String path : css.value()) {
-        CharSequence s = "<link rel=\"stylesheet\" href=\"" + xmlEntities(toAbsolutePath(path))
-            + "\" />\n";
+        String url = toAbsolutePath(path);
+
+        if (isRelativePath(url) && !server.checkResourceExists(url)) {
+          // CSS resource doesn't exist, and can be optimized away
+          if (css.optional()) {
+            LOG.info("Skipping CSS resource " + url + "; missing from " + this);
+            continue;
+          } else {
+            LOG.warn("CSS resource " + url + " is missing from " + this);
+          }
+        }
+
+        CharSequence s = "<link rel=\"stylesheet\" href=\"" + xmlEntities(url) + "\" />\n";
         if (css.optional()) {
           s = StringHolder.withConditionalStringHolder(StringHolder.withContent(s),
               optionalInclude);
@@ -187,8 +206,20 @@ final class ExtensionImpl extends ComponentImpl {
       String async = js.async() ? " async=\"async\"" : "";
 
       for (String path : js.value()) {
-        CharSequence s = "<script type=\"text/javascript\" src=\"" + xmlEntities(toAbsolutePath(
-            path)) + "\"" + defer + async + "></script>\n";
+        String url = toAbsolutePath(path);
+
+        if (isRelativePath(url) && !server.checkResourceExists(url)) {
+          // JavaScript resource doesn't exist, and can be optimized away
+          if (js.optional()) {
+            LOG.info("Skipping JavaScript resource " + url + "; missing from " + this);
+            continue;
+          } else {
+            LOG.warn("JavaScript" + url + " is missing from " + this);
+          }
+        }
+
+        CharSequence s = "<script type=\"text/javascript\" src=\"" + xmlEntities(url) + "\"" + defer
+            + async + "></script>\n";
         if (js.optional()) {
           s = StringHolder.withConditionalStringHolder(StringHolder.withContent(s),
               optionalInclude);

@@ -20,6 +20,7 @@ public final class RenderState {
     }
   };
 
+  private ServerApp app;
   private boolean componentsMarkedUseAll = false;
   private final Set<Class<? extends DumboComponent>> componentsMarkedUsed = new HashSet<>();
   private final Set<String> included = new LinkedHashSet<>();
@@ -58,5 +59,13 @@ public final class RenderState {
    */
   public void setMarkedUsedAllComponents(boolean allUsed) {
     this.componentsMarkedUseAll = allUsed;
+  }
+
+  public ServerApp getApp() {
+    return app;
+  }
+
+  public void setApp(ServerApp app) {
+    this.app = app;
   }
 }

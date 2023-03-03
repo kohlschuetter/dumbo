@@ -21,6 +21,8 @@ import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -44,6 +46,9 @@ class ComponentImpl implements BaseSupport {
 
   private LinkedHashSet<Class<?>> reachableComponents = null;
 
+  private final Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> componentToSubComponents =
+      new HashMap<>();
+
   protected ComponentImpl(Class<? extends DumboComponent> compClass) {
     this.componentClass = compClass == null ? getClass() : compClass;
   }
@@ -63,7 +68,8 @@ class ComponentImpl implements BaseSupport {
       reachableComponents = new LinkedHashSet<>();
       reachableComponents.add(BaseSupport.class);
       reachableComponents.add(componentClass);
-      reachableComponents.addAll(linearizeComponentHierarchy(componentClass));
+      reachableComponents.addAll(linearizeComponentHierarchy(componentClass,
+          componentToSubComponents));
     }
 
     return reachableComponents;
@@ -102,33 +108,58 @@ class ComponentImpl implements BaseSupport {
     return annotations;
   }
 
-  private static Collection<Class<?>> linearizeComponentHierarchy(Class<?> leafClass) {
-    LinkedHashMap<Class<?>, AtomicInteger> countMap = new LinkedHashMap<>();
+  private static Collection<Class<?>> linearizeComponentHierarchy(Class<?> leafClass,
+      Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> componentToSubcomponentsMap) {
+    LinkedHashMap<Class<? extends DumboComponent>, AtomicInteger> countMap = new LinkedHashMap<>();
 
-    traverseComponentHierarchy(leafClass, countMap);
+    traverseComponentHierarchy(leafClass, countMap, componentToSubcomponentsMap);
 
-    List<Map.Entry<Class<?>, AtomicInteger>> list = new ArrayList<>(countMap.entrySet());
+    List<Map.Entry<Class<? extends DumboComponent>, AtomicInteger>> list = new ArrayList<>(countMap
+        .entrySet());
     list.sort((a, b) -> b.getValue().get() - a.getValue().get());
 
     return list.stream().map((e) -> e.getKey()).collect(Collectors.toList());
   }
 
-  private static void traverseComponentHierarchy(Class<?> clazzToInspect,
-      LinkedHashMap<Class<?>, AtomicInteger> countMap) {
-    if (!DumboComponent.class.isAssignableFrom(clazzToInspect)) {
+  private static void traverseComponentHierarchy(Class<?> clazzToInspect0,
+      LinkedHashMap<Class<? extends DumboComponent>, AtomicInteger> countMap,
+      Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> componentToSubcomponentsMap) {
+    if (!DumboComponent.class.isAssignableFrom(clazzToInspect0)) {
       return;
     }
+    @SuppressWarnings("unchecked")
+    Class<? extends DumboComponent> clazzToInspect =
+        (Class<? extends DumboComponent>) clazzToInspect0;
+
+    LinkedHashMap<Class<? extends DumboComponent>, AtomicInteger> componentCountMap =
+        new LinkedHashMap<>();
 
     Class<?> superClass = clazzToInspect.getSuperclass();
     if (superClass != null) {
-      traverseComponentHierarchy(superClass, countMap);
+      traverseComponentHierarchy(superClass, countMap, componentToSubcomponentsMap);
+
+      if (componentToSubcomponentsMap != null) {
+        traverseComponentHierarchy(superClass, componentCountMap, componentToSubcomponentsMap);
+      }
     }
 
     for (Class<?> intf : clazzToInspect.getInterfaces()) {
-      traverseComponentHierarchy(intf, countMap);
+      traverseComponentHierarchy(intf, countMap, componentToSubcomponentsMap);
+      if (componentToSubcomponentsMap != null) {
+        traverseComponentHierarchy(intf, componentCountMap, componentToSubcomponentsMap);
+      }
     }
 
     countMap.computeIfAbsent(clazzToInspect, (k) -> new AtomicInteger(0)).incrementAndGet();
+    if (!DumboComponent.class.equals(clazzToInspect)) {
+      componentCountMap.computeIfAbsent(clazzToInspect, (k) -> new AtomicInteger(0))
+          .incrementAndGet();
+    }
+
+    if (!componentCountMap.isEmpty() && componentToSubcomponentsMap != null) {
+      componentToSubcomponentsMap.put(clazzToInspect, new HashSet<Class<? extends DumboComponent>>(
+          componentCountMap.keySet()));
+    }
   }
 
   URL getComponentResource(String name) {
@@ -160,5 +191,9 @@ class ComponentImpl implements BaseSupport {
   @Override
   public String toString() {
     return super.toString() + "<" + getComponentClass() + ": " + getReachableComponents() + ">";
+  }
+
+  Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> getComponentToSubComponentsMap() {
+    return componentToSubComponents;
   }
 }

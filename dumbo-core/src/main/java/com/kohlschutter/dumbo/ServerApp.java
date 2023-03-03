@@ -26,12 +26,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -69,11 +71,15 @@ public final class ServerApp implements Closeable, Cloneable {
   private final Class<? extends DumboApplication> applicationClass;
   private final ExtensionImpl applicationExtensionImpl;
 
+  private final Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> componentToSubComponentMap = new HashMap<>();
+
   private final Map<ImplementationIdentity<?>, Object> implementationIdentities =
       new WeakHashMap<>();
 
   private File workDir;
   private File webappWorkDir;
+
+  private AppHTTPServer appServer = null;
 
   public ServerApp(Class<? extends DumboApplication> applicationClass) {
     this.applicationClass = applicationClass;
@@ -131,12 +137,22 @@ public final class ServerApp implements Closeable, Cloneable {
         .getAnnotations(EventHandlers.class).stream().map((s) -> s.value()).flatMap(Stream::of)
         .distinct().collect(Collectors.toList());
 
+    if (EventHandler.class.isAssignableFrom(applicationClass)) {
+      eventHandlers.add((EventHandler) getInstance(applicationClass));
+    }
+
     for (Class<? extends EventHandler> c : eventHandlerClasses) {
       eventHandlers.add(getInstance(c));
     }
   }
 
-  final void init(AppHTTPServer server, String path, URL webappBaseURL) throws IOException {
+  final synchronized void init(AppHTTPServer server, String path, URL webappBaseURL)
+      throws IOException {
+    if (appServer != null) {
+      throw new IllegalStateException("Already initialized");
+    }
+    appServer = server;
+
     // also see AppHTTPServer
     File dir = Files.createTempDirectory("dumbo-workdir").toRealPath().toFile();
 
@@ -175,6 +191,12 @@ public final class ServerApp implements Closeable, Cloneable {
     }
     for (ExtensionImpl ext : extensions.values()) {
       ext.initComponent(server);
+
+      ext.getComponentToSubComponentsMap().forEach((k, v) -> {
+        getComponentToSubComponentMap().computeIfAbsent(k, (e) -> {
+          return new HashSet<Class<? extends DumboComponent>>();
+        }).addAll(v);
+      });
     }
   }
 
@@ -400,5 +422,9 @@ public final class ServerApp implements Closeable, Cloneable {
 
   public File getWebappWorkDir() {
     return webappWorkDir;
+  }
+
+  Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> getComponentToSubComponentMap() {
+    return componentToSubComponentMap;
   }
 }

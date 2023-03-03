@@ -100,6 +100,8 @@ public class AppHTTPServer {
 
   private final QueuedThreadPool threadPool;
 
+  private final List<WebAppContext> contexts = new ArrayList<>();
+
   private static URL getWebappBaseURL(final ServerApp app) {
     URL u;
 
@@ -207,7 +209,8 @@ public class AppHTTPServer {
       ServletHolder sh = new ServletHolder(new JabsorbJSONRPCBridgeServlet());
       sh.setInitOrder(0); // initialize right upon start
       wac.addServlet(sh, jsonPath);
-      contextHandlers.addHandler(wac);
+
+      registerContext(wac);
 
       scanWebApp(wac.getContextPath(), null, res);
 
@@ -318,8 +321,8 @@ public class AppHTTPServer {
       final URL pathToWebAppURL) throws IOException {
     Resource res = ResourceFactory.root().newResource(pathToWebAppURL);
 
-    WebAppContext wac = new WebAppContext(res, (contextPath + contextPrefix).replaceAll("//+",
-        "/"));
+    String prefix = (contextPath + contextPrefix).replaceAll("//+", "/");
+    WebAppContext wac = new WebAppContext(res, prefix);
     wac.setBaseResource(res);
     wac.setLogger(LOG);
     wac.addServletContainerInitializer(new JettyJasperInitializer());
@@ -414,6 +417,7 @@ public class AppHTTPServer {
   }
 
   WebAppContext registerContext(WebAppContext wac) {
+    contexts.add(wac);
     contextHandlers.addHandler(wac);
     return wac;
   }
@@ -672,5 +676,25 @@ public class AppHTTPServer {
     } catch (MalformedURLException e) {
       return false;
     }
+  }
+
+  public boolean checkResourceExists(String path) {
+    for (WebAppContext wac : contexts) {
+      String cp = wac.getContextPath();
+      if (!path.startsWith(cp)) {
+        continue;
+      }
+
+      String pathInContext = path.substring(cp.length());
+
+      try {
+        if (wac.getResource(pathInContext) != null) {
+          return true;
+        }
+      } catch (MalformedURLException e) {
+        // ignore
+      }
+    }
+    return false;
   }
 }
