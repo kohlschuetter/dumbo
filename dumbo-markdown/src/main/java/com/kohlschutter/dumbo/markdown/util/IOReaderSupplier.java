@@ -43,7 +43,7 @@ import com.kohlschutter.stringhold.IOSupplier;
  * @author Christian Kohlschütter
  */
 final class IOReaderSupplier {
-  @ExcludeFromCodeCoverageGeneratedReport
+  @ExcludeFromCodeCoverageGeneratedReport(reason = "unreachable")
   private IOReaderSupplier() {
     throw new IllegalStateException("No instances");
   }
