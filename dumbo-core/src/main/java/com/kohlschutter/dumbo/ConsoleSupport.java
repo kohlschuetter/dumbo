@@ -23,8 +23,8 @@ import com.kohlschutter.dumbo.api.DumboComponent;
 /**
  * Helper class to add required console-specific resources.
  */
-@CSSResource(value = "css/app-console.css", optional=true)
-@JavaScriptResource(value = "js/app-console.js", optional=true)
+@CSSResource(value = "css/app-console.css", optional = true)
+@JavaScriptResource(value = "js/app-console.js", optional = true)
 @ServletContextPath("/app_/base")
 @ResourcePath("/com/kohlschutter/dumbo/appbase/")
 public interface ConsoleSupport extends DumboComponent {

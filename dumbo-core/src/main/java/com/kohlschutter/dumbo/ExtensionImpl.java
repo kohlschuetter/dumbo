@@ -57,13 +57,13 @@ final class ExtensionImpl extends ComponentImpl {
   private List<CSSResource> cssResources;
   private List<HTMLResource> htmlResources;
 
-  ExtensionImpl(Class<? extends DumboComponent> comp) {
+  ExtensionImpl(Class<? extends DumboComponent> comp, boolean isAppComponent) {
     super(comp);
-    this.extensionPath = initPath();
+    this.extensionPath = initPath(isAppComponent);
   }
 
-  private String initPath() {
-    String path = initExtensionPath();
+  private String initPath(boolean isAppComponent) {
+    String path = initExtensionPath(isAppComponent);
     if (path == null) {
       path = "";
     } else {
@@ -76,12 +76,15 @@ final class ExtensionImpl extends ComponentImpl {
     }
   }
 
-  String initExtensionPath() {
+  String initExtensionPath(boolean isAppComponent) {
     ServletContextPath path = getMostRecentComponentAnnotation(ServletContextPath.class);
     if (path != null) {
       return path.value();
     }
 
+    if (isAppComponent) {
+      return "/";
+    }
     String name = getComponentClass().getName();
 
     return "/app_/" + NameObfuscator.obfuscate(name);

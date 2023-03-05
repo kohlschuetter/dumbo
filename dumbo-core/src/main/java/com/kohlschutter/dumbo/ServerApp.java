@@ -71,7 +71,8 @@ public final class ServerApp implements Closeable, Cloneable {
   private final Class<? extends DumboApplication> applicationClass;
   private final ExtensionImpl applicationExtensionImpl;
 
-  private final Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> componentToSubComponentMap = new HashMap<>();
+  private final Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> componentToSubComponentMap =
+      new HashMap<>();
 
   private final Map<ImplementationIdentity<?>, Object> implementationIdentities =
       new WeakHashMap<>();
@@ -83,7 +84,7 @@ public final class ServerApp implements Closeable, Cloneable {
 
   public ServerApp(Class<? extends DumboApplication> applicationClass) {
     this.applicationClass = applicationClass;
-    this.applicationExtensionImpl = new ExtensionImpl(applicationClass);
+    this.applicationExtensionImpl = new ExtensionImpl(applicationClass, true);
     resolveExtensions(applicationClass);
 
     initEventHandlers();
@@ -121,8 +122,8 @@ public final class ServerApp implements Closeable, Cloneable {
       }
 
       @SuppressWarnings("unchecked")
-      ExtensionImpl ext = compClass == applicationClass ? applicationExtensionImpl
-          : new ExtensionImpl((Class<? extends DumboComponent>) compClass);
+      ExtensionImpl ext = compClass.equals(applicationClass) ? applicationExtensionImpl
+          : new ExtensionImpl((Class<? extends DumboComponent>) compClass, false);
 
       extensions.put(compClass, ext);
     }

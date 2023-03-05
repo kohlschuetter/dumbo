@@ -44,6 +44,7 @@ import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
  * @author Christian Kohlschütter
  */
 public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object> {
+  private static final int MAX_PATH_DEPTH = 64;
 
   private final ServerApp app;
   private final LiquidHelper liquid;
@@ -139,8 +140,8 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
     try {
       Path p = Path.of(url.toURI());
 
-      try (Stream<Path> paths = Files.find(p, 64, (path, attr) -> !attr.isDirectory() && path
-          .toString().endsWith(".md")).sorted(Collections.reverseOrder())) {
+      try (Stream<Path> paths = Files.find(p, MAX_PATH_DEPTH, (path, attr) -> !attr.isDirectory()
+          && path.toString().endsWith(".md")).sorted(Collections.reverseOrder())) {
         return paths.map((path) -> {
           String uString = path.toUri().toString();
           if (!uString.startsWith(rootUriPrefix)) {

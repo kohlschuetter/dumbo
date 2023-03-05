@@ -29,6 +29,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -100,7 +101,7 @@ public class AppHTTPServer {
 
   private final QueuedThreadPool threadPool;
 
-  private final List<WebAppContext> contexts = new ArrayList<>();
+  private final LinkedHashMap<WebAppContext, ContextMetadata> contexts = new LinkedHashMap<>();
 
   private static URL getWebappBaseURL(final ServerApp app) {
     URL u;
@@ -187,6 +188,13 @@ public class AppHTTPServer {
 
     app.init(this, path, webappBaseURL);
 
+    URI webappBaseURI;
+    try {
+      webappBaseURI = webappBaseURL.toURI();
+    } catch (URISyntaxException e1) {
+      throw new IllegalStateException(e1);
+    }
+
     {
       Resource res;
       try {
@@ -210,7 +218,7 @@ public class AppHTTPServer {
       sh.setInitOrder(0); // initialize right upon start
       wac.addServlet(sh, jsonPath);
 
-      registerContext(wac);
+      registerContext(wac, webappBaseURI);
 
       scanWebApp(wac.getContextPath(), null, res);
 
@@ -291,21 +299,29 @@ public class AppHTTPServer {
         path = path.substring(okPrefix.length());
         path = contextPrefix + "/" + path;
 
-        String cachedFile;
-        if (name.endsWith(".md")) {
-          cachedFile = name.substring(0, name.length() - ".md".length()) + ".html";
-        } else if (name.endsWith(".html.jsp")) {
-          cachedFile = name.substring(0, name.length() - ".jsp".length());
-        } else if (name.endsWith(".jsp.js")) {
-          cachedFile = name.substring(0, name.length() - ".jsp.js".length()) + ".js";
-        } else {
-          continue;
+        String cachedFile = processFileName(name);
+        if (cachedFile != null && !cachedFile.equals(name)) {
+          cachedFile = contextPrefix + "/" + cachedFile;
+          pathsToRegenerate.put(path, cachedFile);
         }
-
-        cachedFile = contextPrefix + "/" + cachedFile;
-
-        pathsToRegenerate.put(path, cachedFile);
       }
+    }
+  }
+
+  private static String processFileName(String name) {
+    if (name.endsWith(".md")) {
+      return name.substring(0, name.length() - ".md".length()) + ".html";
+    } else if (name.endsWith(".html.jsp")) {
+      return name.substring(0, name.length() - ".jsp".length());
+    } else if (name.endsWith(".jsp.js")) {
+      return name.substring(0, name.length() - ".jsp.js".length()) + ".js";
+    } else if (name.endsWith("~")) {
+      return null;
+    } else if (name.startsWith(".")) {
+      // FIXME if desired, add exceptions to forcibly include hidden files
+      return null;
+    } else {
+      return name;
     }
   }
 
@@ -319,7 +335,13 @@ public class AppHTTPServer {
    */
   public WebAppContext registerContext(ComponentImpl comp, final String contextPrefix,
       final URL pathToWebAppURL) throws IOException {
-    Resource res = ResourceFactory.root().newResource(pathToWebAppURL);
+    URI resourceBaseUri;
+    try {
+      resourceBaseUri = pathToWebAppURL.toURI();
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException(e);
+    }
+    Resource res = ResourceFactory.root().newResource(resourceBaseUri);
 
     String prefix = (contextPath + contextPrefix).replaceAll("//+", "/");
     WebAppContext wac = new WebAppContext(res, prefix);
@@ -332,7 +354,7 @@ public class AppHTTPServer {
 
     wac.setServer(server);
 
-    return registerContext(wac);
+    return registerContext(wac, resourceBaseUri);
   }
 
   private void initWebAppContext(ComponentImpl comp, WebAppContext wac) throws IOException {
@@ -416,8 +438,8 @@ public class AppHTTPServer {
     return (ServerApp) sc.getAttribute(ServerApp.class.getName());
   }
 
-  WebAppContext registerContext(WebAppContext wac) {
-    contexts.add(wac);
+  WebAppContext registerContext(WebAppContext wac, URI webappBaseURI) {
+    contexts.put(wac, new ContextMetadata(webappBaseURI));
     contextHandlers.addHandler(wac);
     return wac;
   }
@@ -452,6 +474,7 @@ public class AppHTTPServer {
         try {
           LOG.info("Regenerating " + cdl.getCount() + " paths...");
           for (String path : pathsToRegenerate.keySet()) {
+            LOG.info("Regenerating " + path);
             String uri = serverURIBase + path + "?reload=true";
             try {
               client.newRequest(uri).method(HttpMethod.HEAD).send(new CompleteListener() {
@@ -679,7 +702,7 @@ public class AppHTTPServer {
   }
 
   public boolean checkResourceExists(String path) {
-    for (WebAppContext wac : contexts) {
+    for (WebAppContext wac : contexts.keySet()) {
       String cp = wac.getContextPath();
       if (!path.startsWith(cp)) {
         continue;
@@ -696,5 +719,13 @@ public class AppHTTPServer {
       }
     }
     return false;
+  }
+
+  private static final class ContextMetadata {
+    private URI webappURI;
+
+    ContextMetadata(URI webappURI) {
+      this.webappURI = webappURI;
+    }
   }
 }

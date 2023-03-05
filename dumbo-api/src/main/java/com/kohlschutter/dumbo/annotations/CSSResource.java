@@ -29,23 +29,23 @@ import java.lang.annotation.Target;
 public @interface CSSResource {
   /**
    * The relative path to the resource, e.g., {@code css/default.css}.
-   * 
+   *
    * @return The relative path.
    */
   String[] value();
 
   /**
    * An optional group the CSS resource may be integrated with.
-   * 
+   *
    * As a general rule, only resources with the same license should be grouped.
-   * 
+   *
    * @return The group, or empty if no grouping desired.
    */
   String group() default "";
 
   /**
    * An optional resource that may be excluded if certain optimization conditions are met.
-   * 
+   *
    * @return {@code true} if optional.
    */
   boolean optional() default false;
