@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.kohlschutter.dumbo.markdown.LiquidHelper;
+import com.kohlschutter.dumbo.markdown.LiquidVariables;
 import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
 import com.kohlschutter.stringhold.IOExceptionHandler.ExceptionResponse;
 import com.kohlschutter.stringhold.StringHolder;
@@ -125,7 +126,7 @@ public final class SiteCollection implements List<Object> {
     // map.put("date", null);
     // map.put("url", null);
     // map.put("excerpt", null);
-    map.put("last_modified_at", "2022-01-01"); // FIXME date
+    // map.put("last_modified_at", "2022-01-01"); // FIXME date
     map.put("previous", null);
     map.put("next", null);
     map.put("collection", collectionId);
@@ -135,16 +136,26 @@ public final class SiteCollection implements List<Object> {
       Map<String, Object> iv = null;
 
       @Override
+      public String toString() {
+        return super.toString() + "(FilteredMap site.collection;id=" + collectionId + ")";
+      }
+
+      @Override
       public Object get(Object key) {
-        if (index > 0 && "previous".equals(key)) {
+        if (key instanceof CharSequence) {
+          key = key.toString();
+        }
+
+        if (index > 0 && "next".equals(key)) {
           return SiteCollection.this.get(index - 1);
-        } else if (index < size() - 1 && "next".equals(key)) {
+        } else if (index < size() - 1 && "previous".equals(key)) {
           return SiteCollection.this.get(index + 1);
         } else if ("content".equals(key)) {
           // see StringHolder below
           return super.get(key);
         } else {
           Object obj = super.get(key);
+
           if (obj != null || (parsedFrontMatter && !super.containsKey(key))) {
             return obj;
           }
@@ -152,7 +163,7 @@ public final class SiteCollection implements List<Object> {
           if (!parsedFrontMatter) {
             parsedFrontMatter = true;
             try {
-              iv = liquid.parseFrontMatter(supp, null, "page", () -> map);
+              iv = liquid.parseFrontMatter(supp, null, LiquidVariables.PAGE, () -> map);
             } catch (IOException e) {
               e.printStackTrace();
             }
@@ -167,16 +178,17 @@ public final class SiteCollection implements List<Object> {
 
           return obj;
         }
+
       }
     };
 
     CustomSiteVariables.storePathAndFilename(supp.getRelativePath(), map);
 
     map.put("content", StringHolder.withSupplier(() -> liquid.prerenderLiquid(supp, variables,
-        "page", () -> map), (e) -> ExceptionResponse.ILLEGAL_STATE));
+        LiquidVariables.PAGE, () -> map), (e) -> ExceptionResponse.ILLEGAL_STATE));
 
     if (index > 0) {
-      itemVariables.put("previous", new Callable<Object>() {
+      itemVariables.put("next", new Callable<Object>() {
 
         @Override
         public Object call() throws Exception {
@@ -185,7 +197,7 @@ public final class SiteCollection implements List<Object> {
       });
     }
     if (index < size() - 1) {
-      itemVariables.put("next", new Callable<Object>() {
+      itemVariables.put("previous", new Callable<Object>() {
 
         @Override
         public Object call() throws Exception {

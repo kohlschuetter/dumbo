@@ -68,7 +68,7 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
   public Document parseLiquidMarkdown(String relativePath, Path mdPath,
       Map<String, Object> variables, String type) throws IOException {
     return parseLiquidMarkdown(PathReaderSupplier.withContentsOf(type, relativePath, mdPath,
-        StandardCharsets.UTF_8), (int) Files.size(mdPath), variables);
+        StandardCharsets.UTF_8), mdPath == null ? 0 : (int) Files.size(mdPath), variables);
   }
 
   /**

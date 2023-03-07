@@ -89,35 +89,37 @@ public final class PermalinkParser {
     Matcher matcher;
 
     String filename = (String) pageVariables.get(CustomSiteVariables.DUMBO_FILENAME);
-    if (filename == null) {
-      throw new IllegalStateException("Filename not stored for permalink " + permalink);
-    }
-
-    matcher = PAT_DATE_FILENAME.matcher(filename);
-    Date date;
-    String filenameRest;
-    if (matcher.find()) {
-      date = SDF_YMD.parse(matcher.group(1));
-      filenameRest = matcher.group(2);
-    } else {
-      date = null;
-      filenameRest = filename;
-    }
-
     String filenameSlug;
-    @SuppressWarnings("unused")
-    String filenameSlugSuffix;
-    matcher = PAT_FILENAME_SLUG.matcher(filenameRest);
-    if (matcher.find()) {
-      filenameSlug = matcher.group(1);
-      filenameSlugSuffix = matcher.group(2);
+    Date date;
+
+    if (filename != null) {
+      matcher = PAT_DATE_FILENAME.matcher(filename);
+      String filenameRest;
+      if (matcher.find()) {
+        date = SDF_YMD.parse(matcher.group(1));
+        filenameRest = matcher.group(2);
+      } else {
+        date = null;
+        filenameRest = filename;
+      }
+
+      @SuppressWarnings("unused")
+      String filenameSlugSuffix;
+      matcher = PAT_FILENAME_SLUG.matcher(filenameRest);
+      if (matcher.find()) {
+        filenameSlug = matcher.group(1);
+        filenameSlugSuffix = matcher.group(2);
+      } else {
+        filenameSlug = filenameRest;
+        filenameSlugSuffix = "";
+      }
+      filenameSlug = filenameSlug.toLowerCase(Locale.ENGLISH);
+      filenameSlug = PAT_ALPHANUM_LOWER.matcher(filenameSlug).replaceAll(" ").trim().replace(' ',
+          '-').replaceAll("\\-\\-+", "-");
     } else {
-      filenameSlug = filenameRest;
-      filenameSlugSuffix = "";
+      filenameSlug = null;
+      date = null;
     }
-    filenameSlug = filenameSlug.toLowerCase(Locale.ENGLISH);
-    filenameSlug = PAT_ALPHANUM_LOWER.matcher(filenameSlug).replaceAll(" ").trim().replace(' ', '-')
-        .replaceAll("\\-\\-+", "-");
 
     matcher = PAT_PERMA_VAR.matcher(permalink);
     StringBuilder sb = new StringBuilder();
@@ -127,7 +129,17 @@ public final class PermalinkParser {
       String value = null;
       switch (key) {
         case "title":
+          if (filenameSlug == null) {
+            throw new IllegalStateException("filename not specified");
+          }
           value = permalinkTitle(pageVariables, filenameSlug);
+          break;
+        case "name":
+          String name = (String) pageVariables.get("name");
+          if (name == null) {
+            throw new IllegalStateException("Name unknown for " + permalink);
+          }
+          value = name;
           break;
         default:
           SimpleDateFormat sdf = DATE_KEYS.get(key);

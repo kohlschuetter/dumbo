@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.kohlschutter.dumbo.markdown.LiquidVariables;
+
 /**
  * Provides a Jekyll-compatible paginator object.
  *
@@ -36,7 +38,8 @@ public class PaginatorObject extends FilterMap.ReadOnlyFilterMap<String, Object>
   public PaginatorObject(Map<String, Object> commonVariables) {
     super(new HashMap<>());
 
-    this.posts = (List<Object>) ((Map<String, Object>) commonVariables.get("site")).get("posts");
+    this.posts = (List<Object>) ((Map<String, Object>) commonVariables.get(LiquidVariables.SITE))
+        .get(LiquidVariables.SITE_POSTS);
 
     Map<String, Object> map = getMap();
     int perPage = 5;

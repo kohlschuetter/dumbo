@@ -110,6 +110,10 @@ final class IOReaderSupplier {
     return new IOSupplier<Reader>() {
       @Override
       public Reader get() throws IOException {
+        if (f == null) {
+          return LengthAwareStringReader.withString("");
+        }
+
         long lenLong = Files.size(f);
         int len = lenLong >= Integer.MAX_VALUE ? -1 : (int) lenLong;
         // NOTE this assumes that the length doesn't change between these two calls (hard to

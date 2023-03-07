@@ -28,6 +28,10 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,18 +75,27 @@ final class MarkdownSupportImpl {
 
   private final SiteObject siteObject;
 
+  private final URL webappBaseURL;
+  private final File webappWorkDir;
+
   MarkdownSupportImpl(ServerApp app) throws IOException {
     this.app = app;
     this.liquid = new LiquidHelper(app, commonVariables);
     this.liquidMarkdown = new LiquidMarkdownHelper(liquid);
 
+    webappBaseURL = app.getResource("webapp/");
+    if (webappBaseURL == null) {
+      throw new IllegalStateException("Cannot get webapp base");
+    }
+
+    webappWorkDir = app.getWebappWorkDir();
+    webappWorkDir.mkdirs();
+
     commonVariables.put(LiquidVariables.DUMBO, commonDumboVariables);
 
     commonVariables.put(LiquidVariables.JEKYLL, new JekyllObject());
 
-    commonVariables.put(LiquidVariables.SITE, (siteObject = new SiteObject(app, liquid)));
-    siteObject.initCollections();
-
+    siteObject = SiteObject.addTo(app, liquid, commonVariables);
     commonVariables.put(LiquidVariables.PAGINATOR, new PaginatorObject(commonVariables));
 
     createFiles();
@@ -90,26 +103,48 @@ final class MarkdownSupportImpl {
 
   @SuppressWarnings("unchecked")
   private void createFiles() throws IOException {
+    Map<String, Map<String, Collection<Object>>> categoryArchives = new HashMap<>();
+    Map<String, Map<String, Collection<Object>>> tagArchives = new HashMap<>();
+    Map<String, Map<String, Map<String, Collection<Object>>>> archives = new HashMap<>();
+    archives.put("tags", tagArchives);
+    archives.put("categories", categoryArchives);
+
     for (String collectionId : ((Map<String, Object>) siteObject.get("collections")).keySet()) {
       SiteCollection sc = (SiteCollection) siteObject.get(collectionId);
       if (!sc.isOutput()) {
         continue;
       }
 
-      URL webappBaseURL = app.getResource("webapp/");
-      if (webappBaseURL == null) {
-        throw new IllegalStateException("Cannot get webapp base");
+      List<Map<String, Object>> list = (List<Map<String, Object>>) siteObject.get(collectionId);
+      for (Map<String, Object> l : list) {
+        for (String category : (Collection<String>) nullToEmptyCollection(l.get(
+            LiquidVariables.PAGE_CATEGORIES))) {
+          categoryArchives.computeIfAbsent(category, (k) -> new HashMap<>()).computeIfAbsent(
+              collectionId, (id) -> new ArrayList<>()).add(l);
+        }
+        for (String tag : (Collection<String>) nullToEmptyCollection(l.get(
+            LiquidVariables.PAGE_TAGS))) {
+          tagArchives.computeIfAbsent(tag, (k) -> new HashMap<>()).computeIfAbsent(collectionId, (
+              id) -> new ArrayList<>()).add(l);
+        }
       }
+    }
+    createArchives(archives);
 
-      File webappWorkDir = app.getWebappWorkDir();
-      webappWorkDir.mkdirs();
+    siteObject.initCategoriesAndTags(archives);
+
+    for (String collectionId : ((Map<String, Object>) siteObject.get("collections")).keySet()) {
+      SiteCollection sc = (SiteCollection) siteObject.get(collectionId);
+      if (!sc.isOutput()) {
+        continue;
+      }
 
       List<Map<String, Object>> list = (List<Map<String, Object>>) siteObject.get(collectionId);
       for (Map<String, Object> l : list) {
         Map<String, Object> variables = new HashMap<>(commonVariables);
-        variables.put("page", l);
+        variables.put(LiquidVariables.PAGE, l);
 
-        String permalink = (String) l.get("permalink");
+        String permalink = (String) l.get(LiquidVariables.PAGE_PERMALINK);
         if (permalink == null || permalink.isBlank()) {
           System.err.println("Skipping entry without permalink");
           continue;
@@ -134,32 +169,63 @@ final class MarkdownSupportImpl {
           continue;
         }
 
-        if (permalink.endsWith("/")) {
-          permalink += "index.html";
-        }
-        File permalinkFile = new File(webappWorkDir, permalink);
-        permalinkFile.getParentFile().mkdirs();
-
-        // System.out.println("- " + permalinkFile + ": <- " + resourceURL);
-
-        String layout = (String) l.get("layout");
-
-        Path path;
-        try {
-          path = Path.of(resourceURL.toURI());
-        } catch (URISyntaxException e) {
-          throw new IllegalStateException(e);
-        }
-
-        renderMarkdown(relativePath, path, permalinkFile, true, null, layout, collectionId);
+        renderMarkdownPage(permalink, resourceURL, relativePath, collectionId, l);
       }
+    }
+  }
+
+  private void renderMarkdownPage(String permalink, URL resourceURL, String relativePath,
+      String collectionId, Map<String, Object> pageVariables) throws IOException {
+    if (permalink.endsWith("/")) {
+      permalink += "index.html";
+    }
+    File permalinkFile = new File(webappWorkDir, permalink);
+    permalinkFile.getParentFile().mkdirs();
+
+    String layout = (String) pageVariables.get(LiquidVariables.PAGE_LAYOUT);
+
+    Path path;
+    try {
+      path = resourceURL == null ? null : Path.of(resourceURL.toURI());
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException(e);
+    }
+
+    renderMarkdown(relativePath, path, permalinkFile, true, null, layout, collectionId, Collections
+        .singletonMap(LiquidVariables.PAGE, pageVariables));
+  }
+
+  private static Collection<?> nullToEmptyCollection(Object obj) {
+    if (obj == null) {
+      return Collections.emptyList();
+    } else if (obj instanceof String) {
+      if (((String) obj).isEmpty()) {
+        return Collections.emptyList();
+      } else {
+        return Collections.singleton(obj);
+      }
+    } else if (obj instanceof Object[]) {
+      return Arrays.asList((Object[]) obj);
+    } else {
+      return ((Collection<?>) obj);
     }
   }
 
   public void renderMarkdown(String relativePath, Path mdPath, File targetFile,
       boolean generateHtmlFile, @Nullable HttpServletResponse resp, @Nullable String defaultLayout,
       @Nullable String collectionId) throws IOException {
+    renderMarkdown(relativePath, mdPath, targetFile, generateHtmlFile, resp, defaultLayout,
+        collectionId, null);
+  }
+
+  public void renderMarkdown(String relativePath, Path mdPath, File targetFile,
+      boolean generateHtmlFile, @Nullable HttpServletResponse resp, @Nullable String defaultLayout,
+      @Nullable String collectionId, Map<String, Object> variablesOverride) throws IOException {
+
     Map<String, Object> variables = new HashMap<>(commonVariables);
+    if (variablesOverride != null) {
+      variables.putAll(variablesOverride);
+    }
 
     @SuppressWarnings("unchecked")
     Map<String, Object> dumboVariables = (Map<String, Object>) variables.get(LiquidVariables.DUMBO);
@@ -184,7 +250,10 @@ final class MarkdownSupportImpl {
     if (defaultLayout == null) {
       defaultLayout = "default";
     }
-    pageObj.put("layout", defaultLayout);
+    if (defaultLayout != null && !pageObj.containsKey(LiquidVariables.PAGE_LAYOUT)) {
+      pageObj.put(LiquidVariables.PAGE_LAYOUT, defaultLayout);
+    }
+    pageObj.put(LiquidVariables.PAGE_COLLECTION, collectionId);
 
     Document document = liquidMarkdown.parseLiquidMarkdown(relativePath, mdPath, variables,
         collectionId);
@@ -291,6 +360,96 @@ final class MarkdownSupportImpl {
       };
     } else {
       return null;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void createArchives(Map<String, Map<String, Map<String, Collection<Object>>>> archivesMap)
+      throws IOException {
+    Map<String, Object> archivesConfig = (Map<String, Object>) siteObject.get(
+        LiquidVariables.JEKYLLARCHIVES);
+    if (archivesConfig == null || archivesConfig.isEmpty()) {
+      return;
+    }
+
+    Object enabledObj = archivesConfig.get(LiquidVariables.JEKYLLARCHIVES_ENABLED);
+    if (enabledObj == null) {
+      return;
+    } else if (enabledObj instanceof String) {
+      if ("all".equals(enabledObj)) {
+        enabledObj = List.of("year", "month", "day", "categories", "tags");
+      } else {
+        LOG.warn("Illegal string value for liquid-archives enabled: " + enabledObj);
+      }
+    }
+
+    Collection<String> enabled = (Collection<String>) enabledObj;
+    if (enabled.isEmpty()) {
+      return;
+    }
+
+    Map<String, String> permalinks = (Map<String, String>) archivesConfig.get(
+        LiquidVariables.JEKYLLARCHIVES_PERMALINKS);
+    if (permalinks == null || permalinks.isEmpty()) {
+      return;
+    }
+
+    String defaultLayout = (String) archivesConfig.get(LiquidVariables.JEKYLLARCHIVES_LAYOUT);
+
+    Map<String, String> layouts = (Map<String, String>) archivesConfig.get(
+        LiquidVariables.JEKYLLARCHIVES_LAYOUTS);
+    if (layouts == null) {
+      layouts = Collections.emptyMap();
+    }
+
+    for (String collectionId : enabled) {
+      Map<String, Map<String, Collection<Object>>> map = archivesMap.get(collectionId);
+      if (map == null || map.isEmpty()) {
+        continue;
+      }
+      String type = collectionIdSingular(collectionId);
+
+      String permalinkTemplate = permalinks.get(type);
+      if (permalinkTemplate == null || permalinkTemplate.isEmpty()) {
+        continue;
+      }
+
+      for (Map.Entry<String, Map<String, Collection<Object>>> en : map.entrySet()) {
+        String name = en.getKey();
+
+        Map<String, Object> pageVariables = new HashMap<>();
+        pageVariables.put(LiquidVariables.PAGE_TYPE, type);
+        pageVariables.put(LiquidVariables.PAGE_NAME, name);
+        pageVariables.put(LiquidVariables.PAGE_TITLE, name); // FIXME?
+        pageVariables.put(LiquidVariables.PAGE, pageVariables);
+
+        String layout = layouts.get(type);
+        if (layout == null) {
+          layout = defaultLayout;
+        }
+        pageVariables.put(LiquidVariables.PAGE_LAYOUT, layout);
+
+        String permalink;
+        try {
+          permalink = PermalinkParser.parsePermalink(permalinkTemplate, pageVariables);
+        } catch (ParseException e) {
+          LOG.warn("Cannot parse permalink: " + permalinkTemplate, e);
+          continue;
+        }
+        pageVariables.putAll(en.getValue());
+
+        renderMarkdownPage(permalink, null, null, collectionId, pageVariables);
+      }
+    }
+  }
+
+  private static String collectionIdSingular(String k) {
+    if ("categories".equals(k)) {
+      return "category";
+    } else if ("tags".equals(k)) {
+      return "tag";
+    } else {
+      return k;
     }
   }
 }

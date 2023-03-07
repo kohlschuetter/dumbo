@@ -24,6 +24,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,10 +33,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.snakeyaml.engine.v2.api.Load;
 
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.markdown.LiquidHelper;
+import com.kohlschutter.dumbo.markdown.LiquidVariables;
 import com.kohlschutter.dumbo.markdown.YAMLSupport;
 import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
 
@@ -44,10 +49,23 @@ import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
  * @author Christian Kohlschütter
  */
 public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object> {
+  private static final Logger LOG = LoggerFactory.getLogger(SiteObject.class);
+
   private static final int MAX_PATH_DEPTH = 64;
 
   private final ServerApp app;
   private final LiquidHelper liquid;
+
+  private final Map<String, Object> commonVariables;
+
+  public static SiteObject addTo(ServerApp app, LiquidHelper liquid,
+      Map<String, Object> commonVariables) {
+    SiteObject instance = new SiteObject(app, liquid, commonVariables);
+    commonVariables.put(LiquidVariables.SITE, instance);
+    instance.init();
+
+    return instance;
+  }
 
   @SuppressWarnings("unchecked")
   private static Map<String, Object> mergeMaps(Map<String, Object> target,
@@ -89,10 +107,11 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
     }
   }
 
-  public SiteObject(ServerApp app, LiquidHelper liquid) {
+  private SiteObject(ServerApp app, LiquidHelper liquid, Map<String, Object> commonVariables) {
     super(new HashMap<>());
     this.app = app;
     this.liquid = liquid;
+    this.commonVariables = commonVariables;
 
     Map<String, Object> map = getMap();
 
@@ -111,14 +130,19 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
       System.out.println("Not found: markdown/_config.yml");
     }
 
-    map.put("data", new SiteData(app, "markdown/_data"));
+    map.put(LiquidVariables.SITE_DATA, new SiteData(app, "markdown/_data"));
   }
 
-  public void initCollections() {
+  private void init() {
+    initCollections();
+  }
+
+  private void initCollections() {
     Map<String, Object> map = getMap();
 
     @SuppressWarnings("unchecked")
-    final Map<String, Object> collectionsConfig = (Map<String, Object>) map.get("collections");
+    final Map<String, Object> collectionsConfig = (Map<String, Object>) map.get(
+        LiquidVariables.SITE_COLLECTIONS);
 
     for (String collectionId : collectionsConfig.keySet()) {
       map.put(collectionId, new SiteCollection(liquid, collectionsConfig, collectionId,
@@ -160,6 +184,32 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
     } catch (IOException | URISyntaxException e) {
       e.printStackTrace();
       return Collections.emptyList();
+    }
+  }
+
+  public void initCategoriesAndTags(
+      Map<String, Map<String, Map<String, Collection<Object>>>> archives) {
+    Map<String, Object> siteMap = getMap();
+
+    for (String type : new String[] {"tags", "categories"}) {
+      Map<String, Map<String, Collection<Object>>> map = archives.get(type);
+
+      Map<String, Collection<?>> idToValues = new HashMap<>();
+      for (Map.Entry<String, Map<String, Collection<Object>>> en : map.entrySet()) {
+        String id = en.getKey();
+        List<Object> values = new ArrayList<>();
+        for (Object obj : en.getValue().values()) {
+          if (obj instanceof Collection) {
+            // FIXME: did we add a list of a list somewhere?
+            values.addAll((Collection<?>) obj);
+          } else {
+            values.add(obj);
+          }
+        }
+        idToValues.put(id, values);
+      }
+
+      siteMap.put(type, idToValues);
     }
   }
 }

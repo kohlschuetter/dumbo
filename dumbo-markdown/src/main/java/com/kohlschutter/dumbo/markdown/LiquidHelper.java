@@ -109,7 +109,7 @@ public class LiquidHelper {
 
   public Object prerenderLiquid(PathReaderSupplier inSup, Map<String, Object> variablesIn,
       Supplier<Map<String, Object>> pageVariablesSupplier) throws IOException {
-    return prerenderLiquid(inSup, variablesIn, "page", pageVariablesSupplier);
+    return prerenderLiquid(inSup, variablesIn, LiquidVariables.PAGE, pageVariablesSupplier);
   }
 
   public Object prerenderLiquid(PathReaderSupplier inSup, Map<String, Object> variablesIn,
@@ -135,7 +135,8 @@ public class LiquidHelper {
   public Object prerenderLiquid(PathReaderSupplier inSup, int expectedLen,
       Map<String, Object> variables, Supplier<Map<String, Object>> pageVariablesSupplier)
       throws IOException {
-    return prerenderLiquid(inSup, expectedLen, variables, "page", pageVariablesSupplier);
+    return prerenderLiquid(inSup, expectedLen, variables, LiquidVariables.PAGE,
+        pageVariablesSupplier);
   }
 
   @SuppressWarnings("unchecked")
@@ -183,10 +184,18 @@ public class LiquidHelper {
 
       parseFrontMatter(in, pageVariables);
 
-      Object tags = pageVariables.get("tags");
+      pageVariables.put(LiquidVariables.PAGE_COLLECTION, inSup.getType());
+
+      Object tags = pageVariables.get(LiquidVariables.PAGE_TAGS);
       if (tags instanceof String) {
         tags = new LinkedHashSet<>(Arrays.asList(((String) tags).split("[\\s]+")));
-        pageVariables.put("tags", tags);
+        pageVariables.put(LiquidVariables.PAGE_TAGS, tags);
+      }
+
+      Object categories = pageVariables.get(LiquidVariables.PAGE_CATEGORIES);
+      if (categories instanceof String) {
+        categories = new LinkedHashSet<>(Arrays.asList(((String) categories).split("[\\s]+")));
+        pageVariables.put(LiquidVariables.PAGE_CATEGORIES, categories);
       }
 
       String url;
@@ -196,9 +205,9 @@ public class LiquidHelper {
           CustomSiteVariables.copyPathAndFileName(pageVariables, variables);
         }
 
-        url = PermalinkParser.parsePermalink((String) pageVariables.get("permalink"),
-            pageVariables);
-        pageVariables.put("url", url);
+        url = PermalinkParser.parsePermalink((String) pageVariables.get(
+            LiquidVariables.PAGE_PERMALINK), pageVariables);
+        pageVariables.put(LiquidVariables.PAGE_URL, url);
       } catch (ParseException e) {
         e.printStackTrace();
       }

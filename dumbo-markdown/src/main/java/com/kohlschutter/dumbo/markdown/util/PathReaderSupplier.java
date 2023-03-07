@@ -76,4 +76,9 @@ public class PathReaderSupplier implements IOSupplier<Reader> {
   public String getType() {
     return type;
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + "[relativePath=" + relativePath + ";type=" + type + "]";
+  }
 }
