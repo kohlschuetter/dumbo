@@ -33,8 +33,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.snakeyaml.engine.v2.api.Load;
 
 import com.kohlschutter.dumbo.ServerApp;
@@ -49,18 +47,14 @@ import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
  * @author Christian Kohlschütter
  */
 public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object> {
-  private static final Logger LOG = LoggerFactory.getLogger(SiteObject.class);
-
   private static final int MAX_PATH_DEPTH = 64;
 
   private final ServerApp app;
   private final LiquidHelper liquid;
 
-  private final Map<String, Object> commonVariables;
-
   public static SiteObject addTo(ServerApp app, LiquidHelper liquid,
       Map<String, Object> commonVariables) {
-    SiteObject instance = new SiteObject(app, liquid, commonVariables);
+    SiteObject instance = new SiteObject(app, liquid);
     commonVariables.put(LiquidVariables.SITE, instance);
     instance.init();
 
@@ -107,11 +101,10 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
     }
   }
 
-  private SiteObject(ServerApp app, LiquidHelper liquid, Map<String, Object> commonVariables) {
+  private SiteObject(ServerApp app, LiquidHelper liquid) {
     super(new HashMap<>());
     this.app = app;
     this.liquid = liquid;
-    this.commonVariables = commonVariables;
 
     Map<String, Object> map = getMap();
 
