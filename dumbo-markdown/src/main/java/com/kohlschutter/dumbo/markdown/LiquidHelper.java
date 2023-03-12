@@ -40,7 +40,9 @@ import org.snakeyaml.engine.v2.api.LoadSettings;
 import com.kohlschutter.dumbo.RenderState;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.markdown.liqp.AssetPathTag;
+import com.kohlschutter.dumbo.markdown.liqp.DateToXmlschemaFilter;
 import com.kohlschutter.dumbo.markdown.liqp.DumboIncludeTag;
+import com.kohlschutter.dumbo.markdown.liqp.JsonifyFilter;
 import com.kohlschutter.dumbo.markdown.liqp.MarkdownifyFilter;
 import com.kohlschutter.dumbo.markdown.liqp.NumberOfWordsFilter;
 import com.kohlschutter.dumbo.markdown.liqp.SeoTag;
@@ -383,7 +385,9 @@ public class LiquidHelper {
             // filters
             .with(new MarkdownifyFilter(new MarkdownHelper())) //
             .with(new SlugifyFilter()) //
-            .with(new NumberOfWordsFilter())
+            .with(new NumberOfWordsFilter()) //
+            .with(new DateToXmlschemaFilter()) //
+            .with(new JsonifyFilter())
             // tags
             .with(new DumboIncludeTag()) //
             .with(new SeoTag()) //

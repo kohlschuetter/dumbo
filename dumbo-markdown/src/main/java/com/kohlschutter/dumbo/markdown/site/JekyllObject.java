@@ -33,5 +33,6 @@ public class JekyllObject extends FilterMap.ReadOnlyFilterMap<String, Object> {
 
     // FIXME
     map.put("environment", "development");
+    map.put("version", "Dumbo-1.0");
   }
 }

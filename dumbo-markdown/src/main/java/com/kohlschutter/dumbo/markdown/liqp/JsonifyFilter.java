@@ -17,28 +17,36 @@
  */
 package com.kohlschutter.dumbo.markdown.liqp;
 
-import java.util.Locale;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import liqp.TemplateContext;
 import liqp.filters.Filter;
 
-// FIXME: Support slugify modes (none, raw, default, pretty, ascii, latin)
-// see https://jekyllrb.com/docs/liquid/filters/
-public class SlugifyFilter extends Filter {
-  public SlugifyFilter() {
-    super("slugify");
+/**
+ * Data To JSON.
+ * 
+ * Convert Hash or Array to JSON.
+ * 
+ * @author Christian Kohlschütter
+ */
+public class JsonifyFilter extends Filter {
+  private final ObjectWriter ow = new ObjectMapper().setSerializationInclusion(Include.NON_ABSENT)
+      .writer().withFeatures(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
+
+  public JsonifyFilter() {
+    super("jsonify");
   }
 
   @Override
   public Object apply(Object value, TemplateContext context, Object... params) {
-    String content = super.asString(value, context);
-
-    if (content.isEmpty()) {
-      return content;
+    try {
+      return ow.writeValueAsString(value);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
     }
-
-    content.replace(' ', '-').toLowerCase(Locale.ENGLISH);
-
-    return content;
   }
 }
