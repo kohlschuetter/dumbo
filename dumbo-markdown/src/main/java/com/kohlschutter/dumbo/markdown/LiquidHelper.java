@@ -407,7 +407,7 @@ public class LiquidHelper {
             .withEnvironmentMapConfigurator((env) -> {
               env.put(ENVIRONMENT_KEY_DUMBO_APP, app);
             }).build()) //
-        .withErrorMode(ErrorMode.strict)
+        .withErrorMode(ErrorMode.warn)
         .build();
   }
 }
