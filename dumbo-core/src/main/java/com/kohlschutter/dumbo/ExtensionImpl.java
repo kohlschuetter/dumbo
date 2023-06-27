@@ -16,6 +16,7 @@
  */
 package com.kohlschutter.dumbo;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -260,10 +261,13 @@ final class ExtensionImpl extends ComponentImpl {
   }
 
   private String getContentsOfResource(String path) throws IOException {
-    // FIXME
-    try (InputStream in = getComponentResource("include/noLongerCurrent.html").openStream();
+    try (InputStream in = getComponentResource(path).openStream();
         Scanner sc = new Scanner(in, "UTF-8")) {
       return sc.useDelimiter("\\Z").next();
+    } catch (NullPointerException e) {
+      // FIXME This is Eclipse messing with us (build path entries are missing)
+      throw (FileNotFoundException) new FileNotFoundException("Cannot get contents of resource: "
+          + path + "; relative to " + getComponentClass()).initCause(e);
     }
   }
 
