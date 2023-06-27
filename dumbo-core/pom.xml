@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.kohlschutter.dumbo</groupId>
@@ -8,8 +10,7 @@
     </parent>
     <properties>
         <kohlschutter.project.base.directory>${project.basedir}/..</kohlschutter.project.base.directory>
-        <!-- NOTE: Use jetty from the jetty-12-ck branch on https://github.com/kohlschuetter/jetty.project -->
-        <jetty.version>12.0.0-SNAPSHOT</jetty.version>
+        <jetty.version>12.0.0.beta2</jetty.version>
         <dumbo.project.basedir>${project.basedir}/..</dumbo.project.basedir>
         <junixsocket.version>2.6.2</junixsocket.version>
         <slf4j.version>2.0.6</slf4j.version>
@@ -20,6 +21,12 @@
             <groupId>com.kohlschutter.dumbo</groupId>
             <artifactId>dumbo-api</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10</artifactId>
+            <version>${jetty.version}</version>
+            <type>pom</type>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty.ee10</groupId>
@@ -44,11 +51,6 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-session</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-ee</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>

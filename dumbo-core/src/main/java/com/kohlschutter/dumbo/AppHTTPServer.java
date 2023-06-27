@@ -56,7 +56,7 @@ import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.ErrorProcessor;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.util.resource.CombinedResource;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceFactory;
@@ -93,7 +93,7 @@ public class AppHTTPServer {
   private final ServerApp app;
   private final String jsonPath = "/json";
 
-  private final ErrorProcessor errorHandler;
+  private final ErrorHandler errorHandler;
 
   private final Map<String, String> pathsToRegenerate = new HashMap<>();
 
@@ -169,7 +169,7 @@ public class AppHTTPServer {
     Objects.requireNonNull(webappBaseURL, "Webapp baseURL not specified or resources not found");
     this.app = app;
 
-    this.errorHandler = new ErrorProcessor();
+    this.errorHandler = new ErrorHandler();
     errorHandler.setShowServlet(false);
 
     this.threadPool = new QueuedThreadPool();
@@ -369,7 +369,7 @@ public class AppHTTPServer {
     mt.addMimeMapping("xml", MimeTypes.Type.TEXT_XML_UTF_8.asString());
 
     wac.setWelcomeFiles(new String[] {"index.html", "index.html.jsp", "index.md"});
-    wac.setErrorProcessor(errorHandler);
+    wac.setErrorHandler(errorHandler);
 
     wac.setAttribute(AppHTTPServer.class.getName(), this);
 
