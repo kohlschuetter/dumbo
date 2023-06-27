@@ -721,11 +721,15 @@ public class AppHTTPServer {
     return false;
   }
 
-  private static final class ContextMetadata {
+  static final class ContextMetadata {
     private URI webappURI;
 
     ContextMetadata(URI webappURI) {
       this.webappURI = webappURI;
+    }
+
+    URI getWebappURI() {
+      return webappURI;
     }
   }
 }

@@ -26,6 +26,7 @@ public class ReflectionSupplierMap<V> extends SupplierMap<String, V> {
 
     for (Method m : getClass().getMethods()) {
       if (m.isAnnotationPresent(ValueSupplier.class) && m.canAccess(this)) {
+        @SuppressWarnings("null")
         ValueSupplier vs = m.getAnnotation(ValueSupplier.class);
         String[] keys = vs.key();
         if (keys.length == 0) {
