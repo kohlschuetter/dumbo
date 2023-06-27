@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 
@@ -69,6 +71,8 @@ import liqp.TemplateParser.ErrorMode;
 import liqp.parser.Flavor;
 
 public class LiquidHelper {
+  private static final Logger LOG = LoggerFactory.getLogger(LiquidHelper.class);
+
   private static final char[] FRONT_MATTER_LINE = new char[] {'-', '-', '-', '\n'};
 
   public static final String ENVIRONMENT_KEY_DUMBO_APP = ".dumbo.app";
@@ -310,7 +314,7 @@ public class LiquidHelper {
         Map<String, Object> map = (Map<String, Object>) o;
         page.putAll(map);
       } else {
-        System.err.println("Unexpected YAML object class in front matter: " + o.getClass());
+        LOG.warn("Unexpected YAML object class in front matter: " + o.getClass());
       }
     }
   }
@@ -356,11 +360,13 @@ public class LiquidHelper {
 
         try {
           Template template = liqpParser.parse(in);
+
+          contentSupply = template.renderToObjectUnguarded(variables);
+
           for (Exception exc : template.errors()) {
             // FIXME handle errors
-            exc.printStackTrace();
+            LOG.warn(exc.toString());
           }
-          contentSupply = template.renderToObjectUnguarded(variables);
         } catch (RuntimeException e) {
           throw new RuntimeException("Error in layout " + layoutId, e);
         }
@@ -407,7 +413,6 @@ public class LiquidHelper {
             .withEnvironmentMapConfigurator((env) -> {
               env.put(ENVIRONMENT_KEY_DUMBO_APP, app);
             }).build()) //
-        .withErrorMode(ErrorMode.warn)
-        .build();
+        .withErrorMode(ErrorMode.warn).build();
   }
 }
