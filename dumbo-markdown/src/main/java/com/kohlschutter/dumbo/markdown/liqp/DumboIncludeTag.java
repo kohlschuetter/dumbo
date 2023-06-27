@@ -42,7 +42,6 @@ public class DumboIncludeTag extends Tag {
     super("include");
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public Object render(TemplateContext context, LNode... nodes) {
     ServerApp app = (ServerApp) Objects.requireNonNull(context.getEnvironmentMap().get(
@@ -92,7 +91,7 @@ public class DumboIncludeTag extends Tag {
       }
     } catch (Exception e) {
       e.printStackTrace();
-      if (context.renderSettings.showExceptionsFromInclude) {
+      if (context.getRenderSettings().showExceptionsFromInclude) {
         throw new RuntimeException("problem with evaluating include: " + includeResource, e);
       } else {
         return "";

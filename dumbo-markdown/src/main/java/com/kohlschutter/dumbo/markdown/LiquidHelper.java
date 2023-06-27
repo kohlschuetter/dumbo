@@ -65,6 +65,7 @@ import liqp.ParseSettings;
 import liqp.RenderSettings;
 import liqp.Template;
 import liqp.TemplateParser;
+import liqp.TemplateParser.ErrorMode;
 import liqp.parser.Flavor;
 
 public class LiquidHelper {
@@ -215,7 +216,7 @@ public class LiquidHelper {
       }
 
       Template template = liqpParser.parse(in);
-      for (RuntimeException exc : template.errors()) {
+      for (Exception exc : template.errors()) {
         exc.printStackTrace();
       }
 
@@ -355,7 +356,7 @@ public class LiquidHelper {
 
         try {
           Template template = liqpParser.parse(in);
-          for (RuntimeException exc : template.errors()) {
+          for (Exception exc : template.errors()) {
             // FIXME handle errors
             exc.printStackTrace();
           }
@@ -399,13 +400,14 @@ public class LiquidHelper {
             .build()) //
         .withRenderSettings(new RenderSettings.Builder() //
             // .withRenderTransformer(RenderTransformer.DEFAULT) //
-            .withRaiseExceptionsInStrictMode(false).withStrictVariables(true) //
+            .withStrictVariables(true) //
             .withRenderTransformer(StringHolderRenderTransformer.getSharedCacheInstance()) //
             // .withRenderTransformer(StringsOnlyRenderTransformer.getInstance()) //
             .withShowExceptionsFromInclude(true) //
             .withEnvironmentMapConfigurator((env) -> {
               env.put(ENVIRONMENT_KEY_DUMBO_APP, app);
             }).build()) //
+        .withErrorMode(ErrorMode.strict)
         .build();
   }
 }
