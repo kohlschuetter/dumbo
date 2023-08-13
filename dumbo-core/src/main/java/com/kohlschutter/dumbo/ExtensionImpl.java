@@ -173,7 +173,7 @@ final class ExtensionImpl extends ComponentImpl {
   }
 
   private StringHolderSequence initHtmlHead(AppHTTPServer server) throws IOException {
-    StringHolderSequence sb = new StringHolderSequence();
+    StringHolderSequence sb = StringHolder.newSequence();
 
     final Predicate<StringHolder> optionalInclude = (sh) -> {
       RenderState rs = RenderState.get();
@@ -246,7 +246,7 @@ final class ExtensionImpl extends ComponentImpl {
   }
 
   private StringHolderSequence initHtmlBodyTop() throws IOException {
-    StringHolderSequence sb = new StringHolderSequence();
+    StringHolderSequence sb = StringHolder.newSequence();
 
     for (HTMLResource html : htmlResources) {
       if (html.target() != Target.BODY) {

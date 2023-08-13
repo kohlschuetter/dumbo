@@ -50,7 +50,7 @@ public class MarkdownifyFilter extends Filter {
     }
 
     try {
-      StringHolderSequence sh = new StringHolderSequence();
+      StringHolderSequence sh = StringHolder.newSequence();
       mh.render(mh.parseMarkdown(value), sh);
       return sh;
     } catch (IOException e) {

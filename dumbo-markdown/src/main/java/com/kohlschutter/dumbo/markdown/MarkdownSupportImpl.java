@@ -285,7 +285,7 @@ final class MarkdownSupportImpl {
 
       try (BufferedReader layoutIn = liquid.layoutReader(layoutId)) {
         // render the main content first
-        StringHolderSequence seq = new StringHolderSequence();
+        StringHolderSequence seq = StringHolder.newSequence();
         seq.setExpectedLength(document.getTextLength());
         liquidMarkdown.render(document, seq);
 

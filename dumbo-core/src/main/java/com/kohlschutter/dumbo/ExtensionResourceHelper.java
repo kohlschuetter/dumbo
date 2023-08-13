@@ -33,7 +33,7 @@ public final class ExtensionResourceHelper {
   }
 
   public static StringHolder htmlHead(final ServerApp app) {
-    StringHolderSequence sb = new StringHolderSequence();
+    StringHolderSequence sb = StringHolder.newSequence();
     for (ExtensionImpl ext : app.getExtensions()) {
       sb.append(ext.htmlHead(app));
     }
@@ -42,7 +42,7 @@ public final class ExtensionResourceHelper {
   }
 
   public static StringHolder htmlBodyTop(final ServerApp app) {
-    StringHolderSequence sb = new StringHolderSequence();
+    StringHolderSequence sb = StringHolder.newSequence();
 
     for (ExtensionImpl ext : app.getExtensions()) {
       sb.append(ext.htmlBodyTop(app));
