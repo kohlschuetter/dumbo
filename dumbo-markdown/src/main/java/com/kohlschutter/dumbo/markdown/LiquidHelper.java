@@ -63,8 +63,6 @@ import com.kohlschutter.stringhold.liqp.StringHolderRenderTransformer;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.util.sequence.LineAppendable;
 
-import liqp.ParseSettings;
-import liqp.RenderSettings;
 import liqp.Template;
 import liqp.TemplateParser;
 import liqp.TemplateParser.ErrorMode;
@@ -387,32 +385,30 @@ public class LiquidHelper {
 
   public static TemplateParser newLiqpParser(ServerApp app) {
     return new TemplateParser.Builder() //
-        .withParseSettings(new ParseSettings.Builder() //
-            .with(Flavor.JEKYLL.defaultParseSettings()) //
-            // filters
-            .with(new MarkdownifyFilter(new MarkdownHelper())) //
-            .with(new SlugifyFilter()) //
-            .with(new NumberOfWordsFilter()) //
-            .with(new DateToXmlschemaFilter()) //
-            .with(new JsonifyFilter())
-            // tags
-            .with(new DumboIncludeTag()) //
-            .with(new SeoTag()) //
-            .with(new AssetPathTag()) //
-            .with(new Conditional()) //
-            // blocks
-            .with(new Conditionally()) //
-            //
-            .build()) //
-        .withRenderSettings(new RenderSettings.Builder() //
-            // .withRenderTransformer(RenderTransformer.DEFAULT) //
-            .withStrictVariables(true) //
-            .withRenderTransformer(StringHolderRenderTransformer.getSharedCacheInstance()) //
-            // .withRenderTransformer(StringsOnlyRenderTransformer.getInstance()) //
-            .withShowExceptionsFromInclude(true) //
-            .withEnvironmentMapConfigurator((env) -> {
-              env.put(ENVIRONMENT_KEY_DUMBO_APP, app);
-            }).build()) //
-        .withErrorMode(ErrorMode.warn).build();
+        .withFlavor(Flavor.JEKYLL) //
+        // filters
+        .withFilter(new MarkdownifyFilter(new MarkdownHelper())) //
+        .withFilter(new SlugifyFilter()) //
+        .withFilter(new NumberOfWordsFilter()) //
+        .withFilter(new DateToXmlschemaFilter()) //
+        .withFilter(new JsonifyFilter())
+        // tags
+        .withInsertion(new DumboIncludeTag()) //
+        .withInsertion(new SeoTag()) //
+        .withInsertion(new AssetPathTag()) //
+        .withInsertion(new Conditional()) //
+        // blocks
+        .withInsertion(new Conditionally()) //
+        //
+        // .withRenderTransformer(RenderTransformer.DEFAULT) //
+        .withStrictVariables(true) //
+        .withRenderTransformer(StringHolderRenderTransformer.getSharedCacheInstance()) //
+        // .withRenderTransformer(StringsOnlyRenderTransformer.getInstance()) //
+        .withShowExceptionsFromInclude(true) //
+        .withEnvironmentMapConfigurator((env) -> {
+          env.put(ENVIRONMENT_KEY_DUMBO_APP, app);
+        }) //
+        .withErrorMode(ErrorMode.WARN) //
+        .build();
   }
 }

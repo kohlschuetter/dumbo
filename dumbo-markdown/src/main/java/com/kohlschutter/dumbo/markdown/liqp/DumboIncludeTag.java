@@ -71,7 +71,7 @@ public class DumboIncludeTag extends Tag {
         Template template;
         template = context.getParser().parse(in);
         if (nodes.length > 1) {
-          if (context.getParseSettings().flavor != Flavor.JEKYLL) {
+          if (context.getParser().flavor != Flavor.JEKYLL) {
             // check if there's an optional "with expression"
             Object value = nodes[1].render(context);
             context.put(includeResource, value);
@@ -91,7 +91,7 @@ public class DumboIncludeTag extends Tag {
       }
     } catch (Exception e) {
       e.printStackTrace();
-      if (context.getRenderSettings().showExceptionsFromInclude) {
+      if (context.getParser().showExceptionsFromInclude) {
         throw new RuntimeException("problem with evaluating include: " + includeResource, e);
       } else {
         return "";

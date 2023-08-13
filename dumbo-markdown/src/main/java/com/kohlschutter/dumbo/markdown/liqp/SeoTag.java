@@ -240,7 +240,7 @@ public class SeoTag extends Tag {
         }
       }
       if (v != null) {
-        v = String.valueOf(context.getFilters().get("date_to_xmlschema").apply(v, context));
+        v = String.valueOf(context.getParser().filters.get("date_to_xmlschema").apply(v, context));
       }
       return v;
     }
@@ -250,7 +250,7 @@ public class SeoTag extends Tag {
       String v = YAMLSupport.getVariableAsString(page, "date");
 
       if (v != null) {
-        v = String.valueOf(context.getFilters().get("date_to_xmlschema").apply(v, context));
+        v = String.valueOf(context.getParser().filters.get("date_to_xmlschema").apply(v, context));
       }
       return v;
     }
@@ -300,7 +300,7 @@ public class SeoTag extends Tag {
       String v = YAMLSupport.getVariableAsString(page, "canonical_url");
       if (v == null || v.isEmpty()) {
         v = YAMLSupport.getVariableAsString(page, "url");
-        Filter absoluteUrlFilter = context.getFilters().get("absolute_url");
+        Filter absoluteUrlFilter = context.getParser().filters.get("absolute_url");
         v = String.valueOf(absoluteUrlFilter.apply(v, context)).replaceFirst("/index\\.html$", "/");
       }
       return v;
@@ -431,7 +431,7 @@ public class SeoTag extends Tag {
     if (v == null) {
       return null;
     }
-    Filters filters = context.getFilters();
+    Filters filters = context.getParser().filters;
 
     for (String fn : FORMAT_STRING_FILTERS) {
       Filter f = filters.get(fn);
