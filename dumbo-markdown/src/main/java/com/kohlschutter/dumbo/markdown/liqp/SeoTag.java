@@ -20,6 +20,7 @@ package com.kohlschutter.dumbo.markdown.liqp;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -120,6 +121,7 @@ public class SeoTag extends Tag {
       pageNumber = null;
       Object pageCurrent;
       if (paginator != null && (pageCurrent = paginator.get("page")) != null) {
+        Objects.requireNonNull(pageCurrent); // silence warning
         // FIXME
       }
     }
