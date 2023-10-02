@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 import jakarta.servlet.Servlet;
 
 /**
- * Specifies a string-to-class mapping
+ * Specifies a string-to-class mapping.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

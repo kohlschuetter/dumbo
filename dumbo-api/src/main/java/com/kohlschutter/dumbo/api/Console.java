@@ -28,21 +28,21 @@ public interface Console extends Closeable {
   void add(Object o);
 
   /**
-   * Convenience method for {@code getPrintWriter().println(s);}
+   * Convenience method for {@code getPrintWriter().println(s);}.
    *
    * @param s The string to print.
    */
   void println(String s);
 
   /**
-   * Convenience method for {@code getPrintWriter().println(o);}
+   * Convenience method for {@code getPrintWriter().println(o);}.
    *
    * @param o The object to print.
    */
   void println(Object o);
 
   /**
-   * Convenience method for {@code getPrintWriter().println();}
+   * Convenience method for {@code getPrintWriter().println();}.
    */
   void println();
 

@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies a set of servlet mappings
+ * Specifies a set of servlet mappings.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

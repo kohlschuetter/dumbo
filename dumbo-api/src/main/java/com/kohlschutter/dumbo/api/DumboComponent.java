@@ -28,7 +28,7 @@ import com.kohlschutter.dumbo.annotations.Servlets;
 import jakarta.servlet.Servlet;
 
 /**
- * A component is something that can have annotations of the following types:
+ * A component is something that can have annotations. Usually of the following types:
  *
  * <ul>
  * <li>{@link Services} — Component exposes a Java/JSON RPC service</li>
