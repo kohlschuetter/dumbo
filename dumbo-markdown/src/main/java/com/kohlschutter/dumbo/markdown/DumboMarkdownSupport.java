@@ -18,6 +18,8 @@
 package com.kohlschutter.dumbo.markdown;
 
 import com.kohlschutter.dumbo.ConsoleSupport;
+import com.kohlschutter.dumbo.annotations.FilterMapping;
+import com.kohlschutter.dumbo.annotations.Filters;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
 import com.kohlschutter.dumbo.api.DumboComponent;
@@ -25,10 +27,15 @@ import com.kohlschutter.dumbo.appdefaults.AppDefaultsSupport;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
 import com.kohlschutter.dumbo.ext.prism.PrismSupport;
 
+import jakarta.servlet.DispatcherType;
+
 @Servlets({ //
-    @ServletMapping(map = "*.html", to = HtmlJspServlet.class, initOrder = 1),
     @ServletMapping(map = "*.md", to = MarkdownServlet.class, initOrder = 1),
     //
+})
+@Filters({ //
+    @FilterMapping(map = "*.html", to = HtmlJspFilter.class, initOrder = 1, //
+        dispatcherTypes = {DispatcherType.REQUEST}), //
 })
 public interface DumboMarkdownSupport extends DumboComponent, AppDefaultsSupport, BootstrapSupport,
     ConsoleSupport, PrismSupport {

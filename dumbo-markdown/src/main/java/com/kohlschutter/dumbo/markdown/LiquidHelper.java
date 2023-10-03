@@ -87,7 +87,7 @@ public class LiquidHelper {
   // FIXME revisit this
   static final class GraalVMStub {
     static final MarkdownServlet obj1 = new MarkdownServlet();
-    static final HtmlJspServlet obj2 = new HtmlJspServlet();
+    static final HtmlJspFilter obj2 = new HtmlJspFilter();
     static final HtmlRenderer obj3 = HtmlRenderer.builder().build();
     static final LineAppendable.Options[] obj4 = LineAppendable.Options.values();
   }

@@ -19,14 +19,12 @@ package com.kohlschutter.dumbo.markdown;
 
 import java.io.IOException;
 
-import org.eclipse.jetty.ee10.servlet.DefaultServlet;
-import org.eclipse.jetty.ee10.servlet.ServletHolder;
-
 import com.kohlschutter.dumbo.AppHTTPServer;
 
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -37,29 +35,22 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Christian Kohlschütter
  */
-public class HtmlJspServlet extends HttpServlet {
+public class HtmlJspFilter extends HttpFilter {
   private static final long serialVersionUID = 1L;
-  private DefaultServlet defaultServlet;
-  private ServletContext servletContext;
   private static final String[] suffixesWithoutHtml = new String[] {".jsp", ".md"};
   private static final String[] suffixesWithHtml = new String[] {".md", ".html.jsp"};
 
   @Override
-  public void init() throws ServletException {
-    this.servletContext = getServletContext();
-    defaultServlet = (DefaultServlet) ((ServletHolder) servletContext.getAttribute("holder."
-        + DefaultServlet.class.getName())).getServlet();
-  }
+  protected void doFilter(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
+      throws ServletException, IOException {
+    ServletContext servletContext = getServletContext();
 
-  @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-      IOException {
     String requestURI = req.getRequestURI();
     String pathInContext = requestURI.substring(req.getContextPath().length());
 
     if (AppHTTPServer.checkResourceExists(servletContext, pathInContext)) {
       // *.html file exists -> use DefaultServlet
-      defaultServlet.service(req, resp);
+      chain.doFilter(req, resp);
       return;
     }
 
