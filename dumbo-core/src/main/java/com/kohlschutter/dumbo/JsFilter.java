@@ -19,12 +19,10 @@ package com.kohlschutter.dumbo;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-import org.eclipse.jetty.ee10.servlet.DefaultServlet;
-import org.eclipse.jetty.ee10.servlet.ServletHolder;
-
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -45,34 +43,20 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Christian Kohlschütter
  */
-final class JspJsServlet extends HttpServlet {
+final class JsFilter extends HttpFilter {
   private static final long serialVersionUID = 1L;
-  private ServletContext servletContext;
-  private DefaultServlet defaultServlet;
-  private JspCachingServlet jspServlet;
   private static final Pattern PAT_JS = Pattern.compile("\\.js$");
 
   @Override
-  public void init() throws ServletException {
-    servletContext = getServletContext();
-    defaultServlet = (DefaultServlet) ((ServletHolder) getServletContext().getAttribute("holder."
-        + DefaultServlet.class.getName())).getServlet();
-    jspServlet = (JspCachingServlet) ((ServletHolder) getServletContext().getAttribute("holder."
-        + JspCachingServlet.class.getName())).getServlet();
-  }
+  protected void doFilter(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
+      throws ServletException, IOException {
+    ServletContext servletContext = getServletContext();
 
-  @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-      IOException {
     String requestURI = req.getRequestURI();
     String pathInContext = requestURI.substring(req.getContextPath().length());
 
     if (AppHTTPServer.checkResourceExists(servletContext, pathInContext)) {
-      if (pathInContext.contains(".jsp.js")) {
-        jspServlet.service(req, resp);
-      } else {
-        defaultServlet.service(req, resp);
-      }
+      chain.doFilter(req, resp);
       return;
     } else if (AppHTTPServer.checkResourceExists(servletContext, pathInContext + ".jsp")) {
       req.getRequestDispatcher(pathInContext + ".jsp").forward(req, resp);

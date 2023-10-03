@@ -27,6 +27,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -44,6 +46,7 @@ import org.eclipse.jetty.client.Result;
 import org.eclipse.jetty.client.transport.HttpClientTransportDynamic;
 import org.eclipse.jetty.ee10.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.ee10.servlet.DefaultServlet;
+import org.eclipse.jetty.ee10.servlet.FilterHolder;
 import org.eclipse.jetty.ee10.servlet.ServletHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
@@ -67,11 +70,15 @@ import org.newsclub.net.unix.jetty.AFSocketServerConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.dumbo.annotations.FilterMapping;
+import com.kohlschutter.dumbo.annotations.Filters;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 import com.kohlschutter.dumbo.util.DevTools;
 
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletResponse;
@@ -381,6 +388,7 @@ public class AppHTTPServer {
     ServletHandler sh = wac.getServletHandler();
 
     mapServlets(comp, sc, sh);
+    mapFilters(comp, sc, sh);
   }
 
   private void mapServlets(ComponentImpl comp, ServletContext sc, ServletHandler sh) {
@@ -431,6 +439,44 @@ public class AppHTTPServer {
       sc.setAttribute("holder." + mapToClass.getName(), holder);
 
       sh.addServletWithMapping(holder, mapPath);
+    }
+  }
+
+  private void mapFilters(ComponentImpl comp, ServletContext sc, ServletHandler sh) {
+    Map<String, List<FilterMapping>> mappings = new HashMap<>();
+    for (Filters f : comp.getAnnotatedMappingsFromAllReachableComponents(Filters.class)) {
+      for (FilterMapping mapping : f.value()) {
+        String mapPath = mapping.map();
+        mappings.computeIfAbsent(mapPath, (k) -> {
+          return new ArrayList<>();
+        }).add(mapping);
+      }
+    }
+
+    for (Map.Entry<String, List<FilterMapping>> en : mappings.entrySet()) {
+      String mapPath = en.getKey();
+      List<FilterMapping> list = en.getValue();
+
+      for (FilterMapping m : list) {
+        Class<? extends Filter> mapToClass = m.to();
+        EnumSet<DispatcherType> types = EnumSet.copyOf(Arrays.asList(m.dispatcherTypes()));
+
+        FilterHolder holder;
+        if (mapToClass.getPackage() == AppHTTPServer.class.getPackage()) {
+          Filter filter;
+          try {
+            filter = Objects.requireNonNull(mapToClass.getDeclaredConstructor().newInstance());
+          } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+              | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+            throw new IllegalStateException(e);
+          }
+          holder = new FilterHolder(filter);
+        } else {
+          holder = new FilterHolder(mapToClass);
+        }
+
+        sh.addFilterWithMapping(holder, mapPath, types);
+      }
     }
   }
 

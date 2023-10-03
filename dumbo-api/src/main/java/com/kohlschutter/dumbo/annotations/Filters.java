@@ -21,17 +21,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jakarta.servlet.Servlet;
-
 /**
- * Specifies a string-to-class mapping for servlets.
+ * Specifies a set of filter mappings.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ServletMapping {
-  Class<? extends Servlet> to();
-
-  String map();
-
-  int initOrder() default -1;
+public @interface Filters {
+  FilterMapping[] value() default {};
 }

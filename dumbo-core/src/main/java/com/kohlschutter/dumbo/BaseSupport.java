@@ -16,24 +16,35 @@
  */
 package com.kohlschutter.dumbo;
 
+import com.kohlschutter.dumbo.annotations.FilterMapping;
+import com.kohlschutter.dumbo.annotations.Filters;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
 import com.kohlschutter.dumbo.api.DumboComponent;
 
+import jakarta.servlet.DispatcherType;
+
 /**
  * Base resources, such as jQuery and json-rpc.
  */
 @Servlets({ //
-    @ServletMapping(map = "*.js", to = JspJsServlet.class, initOrder = 0),
+    @ServletMapping(map = "*.jsp.js", to = JspCachingServlet.class, initOrder = 0),
     @ServletMapping(map = "*.jsp", to = JspCachingServlet.class, initOrder = 0),
     //
 })
+@Filters({@FilterMapping(map = "*.js", to = JsFilter.class, initOrder = 0, //
+    dispatcherTypes = {DispatcherType.REQUEST}),
+//
+})
 @JavaScriptResources({
-    @JavaScriptResource({"js/jquery.min.js"}), @JavaScriptResource({"js/jsonrpc.js"}),
+    @JavaScriptResource({"js/jquery.min.js"}), //
+    @JavaScriptResource({"js/jsonrpc.js"}), //
     @JavaScriptResource({"js/app.js"}),})
+//
 @ServletContextPath("/app_/base")
 @ResourcePath("/com/kohlschutter/dumbo/appbase/")
+//
 interface BaseSupport extends DumboComponent {
 }

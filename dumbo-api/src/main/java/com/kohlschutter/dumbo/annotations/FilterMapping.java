@@ -21,17 +21,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jakarta.servlet.Servlet;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
 
 /**
- * Specifies a string-to-class mapping for servlets.
+ * Specifies a string-to-class mapping for filters.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ServletMapping {
-  Class<? extends Servlet> to();
+public @interface FilterMapping {
+  Class<? extends Filter> to();
 
   String map();
 
   int initOrder() default -1;
+
+  DispatcherType[] dispatcherTypes();
 }
