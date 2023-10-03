@@ -411,7 +411,6 @@ public class AppHTTPServer {
     holderDefaultServlet.setInitParameter("useFileMappedBuffer", "true");
     holderDefaultServlet.setInitParameter("stylesheet", AppHTTPServer.class.getResource(
         "/com/kohlschutter/dumbo/appbase/css/jetty-dir.css").toExternalForm());
-    sc.setAttribute("holder." + DefaultServlet.class.getName(), holderDefaultServlet);
 
     for (Map.Entry<String, ServletMapping> en : mappings.entrySet()) {
       String mapPath = en.getKey();
@@ -436,7 +435,6 @@ public class AppHTTPServer {
       }
 
       holder.setInitOrder(m.initOrder());
-      sc.setAttribute("holder." + mapToClass.getName(), holder);
 
       sh.addServletWithMapping(holder, mapPath);
     }
