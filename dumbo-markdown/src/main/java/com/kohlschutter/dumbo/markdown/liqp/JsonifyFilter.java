@@ -28,9 +28,9 @@ import liqp.filters.Filter;
 
 /**
  * Data To JSON.
- * 
+ *
  * Convert Hash or Array to JSON.
- * 
+ *
  * @author Christian Kohlschütter
  */
 public class JsonifyFilter extends Filter {

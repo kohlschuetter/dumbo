@@ -37,7 +37,7 @@ import liqp.tags.Tag;
 
 /**
  * Jekyll SEO tag filter.
- * 
+ *
  * @see <a href=
  *      "https://github.com/jekyll/jekyll-seo-tag">https://github.com/jekyll/jekyll-seo-tag</a>
  * @see <a href=
