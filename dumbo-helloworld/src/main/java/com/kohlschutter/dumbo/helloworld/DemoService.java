@@ -30,4 +30,6 @@ public interface DemoService {
   String hello(boolean error) throws Exception;
 
   float echoFloat(float f);
+
+  Object echoObject(Object obj);
 }

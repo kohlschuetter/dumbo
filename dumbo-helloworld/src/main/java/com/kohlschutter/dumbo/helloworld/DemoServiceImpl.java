@@ -34,4 +34,9 @@ public class DemoServiceImpl implements DemoService {
   public float echoFloat(float f) {
     return f;
   }
+
+  @Override
+  public Object echoObject(Object obj) {
+    return obj;
+  }
 }
