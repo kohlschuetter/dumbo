@@ -543,7 +543,7 @@ public class AppHTTPServer {
             LOG.warn("Regeneration is taking a long time");
           }
           cdl.await();
-          LOG.info("Regeneration  completed after " + (System.currentTimeMillis() - time) + "ms");
+          LOG.info("Regeneration completed after " + (System.currentTimeMillis() - time) + "ms");
         } finally {
           client.stop();
         }
