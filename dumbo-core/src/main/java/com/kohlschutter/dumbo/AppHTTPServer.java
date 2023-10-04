@@ -182,6 +182,7 @@ public class AppHTTPServer {
     this.threadPool = new QueuedThreadPool();
 
     this.server = new Server(threadPool);
+    // server.setDumpAfterStart(true); // for debugging
 
     this.contextPath = "/" + (path.replaceFirst("^/", "").replaceFirst("/$", ""));
     app.registerCloseable(new Closeable() {
