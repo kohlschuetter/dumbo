@@ -222,7 +222,7 @@ public class AppHTTPServer {
 
       initWebAppContext(app.getApplicationExtensionImpl(), wac);
 
-      ServletHolder sh = new ServletHolder(new JabsorbJSONRPCBridgeServlet());
+      ServletHolder sh = new ServletHolder(new JSONRPCBridgeServlet());
       sh.setInitOrder(0); // initialize right upon start
       wac.addServlet(sh, jsonPath);
 

@@ -54,10 +54,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 /**
- * A Jabsorb-based JSON-RPC Servlet.
+ * A Dumborb-based JSON-RPC Servlet.
  */
-class JabsorbJSONRPCBridgeServlet extends HttpServlet {
-  private static final Logger LOG = LoggerFactory.getLogger(JabsorbJSONRPCBridgeServlet.class);
+class JSONRPCBridgeServlet extends HttpServlet {
+  private static final Logger LOG = LoggerFactory.getLogger(JSONRPCBridgeServlet.class);
   private static final long serialVersionUID = 1L;
   private static final Charset UTF_8 = Charset.forName("UTF-8");
   private JSONRPCBridge bridge;
