@@ -339,7 +339,7 @@ final class MarkdownSupportImpl {
     }
 
     File htmlFile = new File(targetFile.getParentFile(), filename);
-    System.out.println("WD " + app.getWorkDir() + " " + app.getWorkDir().exists());
+    // System.out.println("WD " + app.getWorkDir() + " " + app.getWorkDir().exists());
 
     if (generateHtmlFile || !htmlFile.exists()) {
       LOG.info("Generating " + htmlFile);
