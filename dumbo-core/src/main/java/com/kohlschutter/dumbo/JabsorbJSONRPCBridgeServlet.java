@@ -30,10 +30,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jetty.io.EofException;
-import org.jabsorb.ExceptionTransformer;
-import org.jabsorb.JSONRPCBridge;
-import org.jabsorb.serializer.response.results.FailedResult;
-import org.jabsorb.serializer.response.results.JSONRPCResult;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.slf4j.Logger;
@@ -43,6 +39,11 @@ import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.console.ConsoleService;
 import com.kohlschutter.dumbo.exceptions.NoSessionException;
 import com.kohlschutter.dumbo.exceptions.PermanentRPCException;
+import com.kohlschutter.dumborb.ExceptionTransformer;
+import com.kohlschutter.dumborb.JSONRPCBridge;
+import com.kohlschutter.dumborb.security.ClassResolver;
+import com.kohlschutter.dumborb.serializer.response.results.FailedResult;
+import com.kohlschutter.dumborb.serializer.response.results.JSONRPCResult;
 
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
@@ -72,10 +73,8 @@ class JabsorbJSONRPCBridgeServlet extends HttpServlet {
       ServletContext ctx = config.getServletContext();
       this.app = (ServerApp) ctx.getAttribute(ServerApp.class.getName());
 
-      bridge = new JSONRPCBridge();
+      bridge = new JSONRPCBridge(ClassResolver.withDefaults()); // FIXME
       bridge.setExceptionTransformer(new ExceptionTransformer() {
-        private static final long serialVersionUID = 1L;
-
         @Override
         public Object transform(Throwable t) {
           LOG.warn("Error during JSON method call: " + tlMethod.get(), t);

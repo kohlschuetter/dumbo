@@ -55,7 +55,7 @@
     </dependencies>
 
     <modules>
-        <module>dumbo-jabsorb</module>
+        <module>dumborb</module>
         <module>dumbo-api</module>
         <module>dumbo-core</module>
         <module>dumbo-extensions</module>
