@@ -9,7 +9,9 @@ var delayStep = delayStepInitial;
 
 const chunkJob = function(chunk, err) {
     if (err != null) {
-        console.error("requestNextChunk error", err);
+        if (err.code != 0) {
+            console.error("requestNextChunk error", err);
+        }
 
         self.postMessage({ command: "error", error: err });
         return;
