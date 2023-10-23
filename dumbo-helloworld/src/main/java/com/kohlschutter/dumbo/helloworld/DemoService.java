@@ -16,9 +16,12 @@
  */
 package com.kohlschutter.dumbo.helloworld;
 
+import com.kohlschutter.dumbo.annotations.DumboService;
+
 /**
  * A simple demo service.
  */
+@DumboService
 public interface DemoService {
   /**
    * A simple test method.

@@ -16,6 +16,7 @@
  */
 package com.kohlschutter.dumbo.console;
 
+import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.dumbo.api.Console;
 
 /**
@@ -23,6 +24,7 @@ import com.kohlschutter.dumbo.api.Console;
  *
  * @see Console
  */
+@DumboService(rpcName = "ConsoleService")
 public interface ConsoleService {
   /**
    * Requests the next chunk of input readable from the console.

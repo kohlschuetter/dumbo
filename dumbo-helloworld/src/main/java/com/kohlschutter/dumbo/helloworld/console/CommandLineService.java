@@ -16,9 +16,12 @@
  */
 package com.kohlschutter.dumbo.helloworld.console;
 
+import com.kohlschutter.dumbo.annotations.DumboService;
+
 /**
  * Service to send a line of text.
  */
+@DumboService
 public interface CommandLineService {
   /**
    * Sends a line of text.
