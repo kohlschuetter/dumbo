@@ -16,11 +16,13 @@
  */
 package com.kohlschutter.dumbo.helloworld.console;
 
+import com.kohlschutter.dumbo.annotations.DumboSafe;
 import com.kohlschutter.dumbo.api.Console;
 
 /**
  * A simple message that we send via the {@link Console}.
  */
+@DumboSafe
 public final class ColorMessage {
   final String message;
   final String color;
