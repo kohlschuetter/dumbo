@@ -1,5 +1,5 @@
-(function($) {
-    $(document).ready(
+(function(Dumbo,$) {
+    Dumbo.whenLoaded(
         function() {
             $('.dropdown-menu').on('click', function(e) {
                 if ($(this).hasClass('dropdown-menu-form')) {
@@ -8,4 +8,4 @@
             });
         }
     );
-})(jQuery);
+})(Dumbo,jQuery);
