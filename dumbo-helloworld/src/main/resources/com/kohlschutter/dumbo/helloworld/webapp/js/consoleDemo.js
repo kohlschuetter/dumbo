@@ -1,61 +1,61 @@
-(function($) {
+(function(Dumbo) {
   if (location.search == "?static") {
     return;
   }
 
-  $.fn.commandLineIn = function() {
-    var target = this;
-    target.change(function(_ev) {
-      var line = target.val();
+  var commandLineIn = function(target) {
+    var service;
+
+    target.addEventListener('change', function(_ev) {
+      var line = target.value;
+
+      service = service || Dumbo.getService("com.kohlschutter.dumbo.helloworld.console.CommandLineService");
 
       try {
-        $.rpc.CommandLineService.sendLine(line);
-        target.val("");
+        service.sendLine(line);
+        target.value = "";
       } catch (e) {
-        console.log(e);
+        console.error(e);
         alert(e);
       }
 
       return false;
     });
 
-    target.closest("FORM").submit(function(ev) {
-      ev.preventDefault();
-    });
+    let enclosingForm = target.closest("FORM");
+    if (enclosingForm) {
+        enclosingForm.submit((ev) => ev.preventDefault());
+    };
   };
 
-  $.app.console.templates.exception = $("#console .app-console-exception:first")
-      .clone(true);
+  Dumbo.app.console.templates.exception = Dumbo.clone("#console .app-console-exception");
 
-  var colorMessageProto = $("#console .color-message:first").clone(true);
-  $("#console").empty();
+  var colorMessageProto = Dumbo.clone("#console .color-message");
+  Dumbo.empty("#console");
 
-  $(document).ready(
+  Dumbo.whenLoaded(
       function() {
-        $("#link-to-source").attr("href", "view-source:" + location.href);
-
-        $("#console").appConsole(
+        Dumbo.setConsole("#console",
             // Here we define our custom object renderer for "ColorMessage"
             // Try to take this code out (uncomment the null&& line),
             // and see what happens!
 
-            // null&&
             function(chunk) {
               if (typeof chunk == "object") {
                 if (typeof chunk.color != "undefined"
                     && typeof chunk.message != "undefined") {
-                  var elem = colorMessageProto.clone(true);
-                  var text = elem.find(".message-text");
-                  text.css("color", chunk.color);
-                  text.text(chunk.message);
+                  var elem = Dumbo.clone(colorMessageProto);
+                  var text = elem.querySelector(".message-text");
+                  text.style.color = chunk.color;
+                  text.textContent = chunk.message;
                   return elem;
                 }
               }
 
-              return $.app.console.defaultObjConverter(chunk);
+              return Dumbo.app.console.defaultObjConverter(chunk);
             });
 
         // Setup our console input
-        $("#commandLine").commandLineIn();
+        commandLineIn(document.getElementById("commandLine"));
       });
-})(jQuery);
+})(Dumbo);

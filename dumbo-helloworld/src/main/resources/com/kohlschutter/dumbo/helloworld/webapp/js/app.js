@@ -1,24 +1,27 @@
-$.app.whenLoaded(function() {
-  $("#link-to-source").attr("href", "view-source:" + location.href);
-});
+(function(Dumbo) {
+    Dumbo.whenLoaded(function() {
+    });
 
-$.app.whenStatic(function() {
-});
+    Dumbo.whenStatic(function() {
+    });
 
-$.app.whenLive(function() {
-  // asynchronous call (good, safe)
-  $.rpc.DemoService.hello(function(ret,err) {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    
-    $("#rpcResponse").text(ret);
-  }, false);
-  
-  // synchronous call (discouraged, easier to write)
-  // $("#rpcResponse").text(r$.rpc.DemoService.hello(false));
-});
+    Dumbo.whenLive(function() {
+        // asynchronous call (good, safe)
+        const demoService = Dumbo.getService("com.kohlschutter.dumbo.helloworld.DemoService");
 
-$.app.whenReady(function() {
-});
+        demoService.hello(function(ret, err) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+
+            document.getElementById("rpcResponse").textContent = ret;
+        }, false);
+
+        // synchronous call (discouraged, easier to write)
+        // document.getElementById("rpcResponse").textContent = demoService.hello(false);
+    });
+
+    Dumbo.whenReady(function() {
+    });
+})(Dumbo);

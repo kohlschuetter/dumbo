@@ -1,10 +1,12 @@
-(function($) {
+(function(Dumbo) {
     if (location.search == "?static") {
         return;
     }
 
-    $("#console").empty();
-    $(document).ready(function() {
-        $("#console").appConsole();
-    });
-})(jQuery);
+    let consoleElement = document.getElementById("console");
+    consoleElement.innerHTML = "";
+
+    Dumbo.whenLoaded(() =>
+        Dumbo.setConsole(consoleElement)
+    );
+})(Dumbo);
