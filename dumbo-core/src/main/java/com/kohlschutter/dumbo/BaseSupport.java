@@ -39,7 +39,6 @@ import jakarta.servlet.DispatcherType;
 //
 })
 @JavaScriptResources({
-    @JavaScriptResource({"js/jquery.min.js"}), //
     @JavaScriptResource({"js/jsonrpc.js"}), //
     @JavaScriptResource({"js/app.js"}),})
 //

@@ -1,26 +1,42 @@
-(function($) {
+var Dumbo;
+(function (Dumbo) {
+    Dumbo.getService = function(id) {
+      var service = Dumbo.rpc[id];
+      if (!service && id && id.endsWith("Async")) {
+          id = id.substring(0, id.length - 5);
+          service = Dumbo.rpc[id];
+      }
+
+      if (!service) {
+          console.error("Cannot resolve Dumbo service: " + id);
+          throw new Error("Cannot resolve Dumbo service: " + id);
+      }
+
+      return service;
+    };
+
     const jsonUrl = '<%@page session="false" contentType="application/javascript" %><%= application.getAttribute("jsonPath") %>';
 
-    $.rpc = null;
-    $.app = {
+    Dumbo.rpc = null;
+    Dumbo.app = {
         proto: {}
     };
 
     /**
      * A reusable dummy callback method that simply ignores the result.
      */
-    $.app.ASYNC_IGNORE_RESPONSE = function(_, _) { };
+    Dumbo.app.ASYNC_IGNORE_RESPONSE = function(_, _) { };
 
-    $.app._onLoadedCallbacks = [];
-    $.app._onLiveModeCallbacks = [];
-    $.app._onLiveModeCallbacks.condition = function() {
+    Dumbo.app._onLoadedCallbacks = [];
+    Dumbo.app._onLiveModeCallbacks = [];
+    Dumbo.app._onLiveModeCallbacks.condition = function() {
         return location.search != "?static";
     };
-    $.app._onStaticModeCallbacks = [];
-    $.app._onStaticModeCallbacks.condition = function() {
+    Dumbo.app._onStaticModeCallbacks = [];
+    Dumbo.app._onStaticModeCallbacks.condition = function() {
         return location.search == "?static";
     };
-    $.app._onReadyCallbacks = [];
+    Dumbo.app._onReadyCallbacks = [];
 
     var _addCallback = function(list, f) {
         if (list.done) {
@@ -39,11 +55,14 @@
             return;
         }
         if (list.condition == null || list.condition()) {
-            $.each(list, function(_, value) {
-                window.setTimeout(function() {
-                    value();
-                }, 0);
-            });
+            for (var i = 0, n = list.length; i < n; i++) {
+                const el = list[i];
+                if (el) {
+                    window.setTimeout(function() {
+                        el();
+                    }, 0);
+                }
+            }
         }
         if (list.afterwards) {
             window.setTimeout(function() {
@@ -53,61 +72,125 @@
         }
         list.length = 0;
         list.done = true;
-    }
+    };
 
     /**
      * Adds a function to the list of callbacks that should be called as soon as
      * the application is loaded. If the app is already initialized, the function
      * is called immediately (via a timeout).
      */
-    $.app.whenLoaded = function(f) {
-        _addCallback($.app._onLoadedCallbacks, f);
-    }
+    Dumbo.whenLoaded = function(f) {
+        _addCallback(Dumbo.app._onLoadedCallbacks, f);
+    };
 
     /**
      * Adds a function to the list of callbacks that should be called as soon as
      * the application is in live mode.
      */
-    $.app.whenLive = function(f) {
-        _addCallback($.app._onLiveModeCallbacks, f);
-    }
+    Dumbo.whenLive = function(f) {
+        _addCallback(Dumbo.app._onLiveModeCallbacks, f);
+    };
 
     /**
      * Adds a function to the list of callbacks that should be called as soon as
      * the application is in live mode.
      */
-    $.app.whenStatic = function(f) {
-        _addCallback($.app._onStaticModeCallbacks, f);
-    }
+    Dumbo.whenStatic = function(f) {
+        _addCallback(Dumbo.app._onStaticModeCallbacks, f);
+    };
 
     /**
      * Adds a function to the list of callbacks that should be called as soon as
      * the application is ready. If the app is already initialized, the function
      * is called immediately (via a timeout).
      */
-    $.app.whenReady = function(f) {
-        _addCallback($.app._onReadyCallbacks, f);
-    }
+    Dumbo.whenReady = function(f) {
+        _addCallback(Dumbo.app._onReadyCallbacks, f);
+    };
 
-    $(document).ready(
+    Dumbo.parseHTML = function(t) {
+        var doc = document.implementation.createHTMLDocument("");
+        var base = doc.createElement("base");
+        base.href = document.location.href;
+
+        var node = doc.createElement("div");
+        doc.body.appendChild(node);
+
+        doc.head.appendChild(base);
+
+        node.innerHTML = t;
+
+        return node;
+    };
+
+    Dumbo.clone = function(n) {
+        if (typeof n == "string") {
+            n = document.querySelector(n);
+        }
+
+        var cloned = n.cloneNode(true);
+
+        // FIXME re-attach event listeners
+
+        return cloned;
+    };
+
+    Dumbo.forEach = function(node, selector, op) {
+        if (typeof node == "string" && typeof op == "undefined") {
+            op = selector;
+            selector = node;
+            node = document.body;
+        }
+
+        node.querySelectorAll(selector).forEach(op);
+    };
+
+    Dumbo.setText = function(node, selector, text) {
+        if (typeof node == "string" && typeof text == "undefined") {
+            text = selector;
+            selector = node;
+            node = document.body;
+        }
+
+        if (text && text.textContent) {
+            text = text.textContent;
+        }
+        if (text == null) {
+            text = "";
+        } else {
+            text = "" + text;
+        }
+        Dumbo.forEach(node, selector, n => { n.textContent = text; });
+    };
+
+    Dumbo.empty = function(n) {
+        if (typeof n == "string") {
+            n = document.querySelector(n);
+        }
+        if (n) {
+            n.innerHTML = "";
+        }
+    };
+
+    window.addEventListener('load', 
         function() {
-            $.rpc = new JSONRpcClient(function(_, _) {
+            Dumbo.rpc = new JSONRpcClient(function(_, _) {
                 var cb;
-                if ($.app._onStaticModeCallbacks.condition()) {
-                    cb = $.app._onStaticModeCallbacks;
+                if (Dumbo.app._onStaticModeCallbacks.condition()) {
+                    cb = Dumbo.app._onStaticModeCallbacks;
                 } else {
-                    cb = $.app._onLiveModeCallbacks;
+                    cb = Dumbo.app._onLiveModeCallbacks;
                 }
 
                 cb.afterwards = function() {
-                    _runCallbacks($.app._onReadyCallbacks);
+                    _runCallbacks(Dumbo.app._onReadyCallbacks);
                 };
 
-                $.app._onLoadedCallbacks.afterwards = function() {
+                Dumbo.app._onLoadedCallbacks.afterwards = function() {
                     _runCallbacks(cb);
                 };
 
-                _runCallbacks($.app._onLoadedCallbacks);
+                _runCallbacks(Dumbo.app._onLoadedCallbacks);
             }, jsonUrl);
         });
-}(jQuery));
+})(Dumbo || (window.Dumbo = Dumbo = {}));

@@ -1,7 +1,7 @@
 /*
- * jabsorb - a Java to JavaScript Advanced Object Request Broker
- * http://www.jabsorb.org
- *
+ * dumborb - a Java to JavaScript Advanced Object Request Broker
+ * 
+ * based upon jabsorb
  * Copyright 2007-2009 The jabsorb team
  * Copyright (c) 2005 Michael Clark, Metaparadigm Pte Ltd
  * Copyright (c) 2003-2004 Jan-Klaas Kollhof
@@ -524,6 +524,29 @@ JSONRpcClient._createMethod = function(client, methodName) {
     return serverMethodCaller;
 };
 
+JSONRpcClient._createMethodPromise = function(client, methodName) {
+    return function() {
+        var args = [];
+        for (var i = 0; i < arguments.length; i++) {
+            args.push(arguments[i]);
+        }
+
+        return new Promise((success, failure) => {
+            var callback = function(ret, err) {
+                if(err) {
+                    failure(err);
+                } else {
+                    success(ret);
+                }
+            };
+
+            var req = JSONRpcClient._makeRequest(client, methodName, args, client.objectID, callback);
+            JSONRpcClient.async_requests.push(req);
+            JSONRpcClient.kick_async();
+        });
+    };
+}
+
 /**
  * Creates a new object from the bridge. A callback may optionally be given as
  * the first argument to make this an async call.
@@ -560,7 +583,7 @@ JSONRpcClient.prototype.createObject = function() {
     }
 };
 
-JSONRpcClient.CALLABLE_REFERENCE_METHOD_PREFIX = ".ref";
+JSONRpcClient.CALLABLE_REFERENCE_METHOD_PREFIX = ";ref";
 
 /**
  * This is used to add a list of methods to this.
@@ -588,21 +611,33 @@ JSONRpcClient.prototype._addMethods = function(methodNames, dontAdd) {
     for (var i = 0; i < methodNames.length; i++) {
         obj = this;
 
-        names = methodNames[i].split(".");
-        startIndex = methodNames[i].indexOf("[");
-        endIndex = methodNames[i].indexOf("]");
+        var methodName = methodNames[i];
+        startIndex = methodName.indexOf("[");
+        endIndex = methodName.indexOf("]");
         if (
-            (methodNames[i].substring(0,
+            (methodName.substring(0,
                 JSONRpcClient.CALLABLE_REFERENCE_METHOD_PREFIX.length) ==
                 JSONRpcClient.CALLABLE_REFERENCE_METHOD_PREFIX)
             && (startIndex != -1) && (endIndex != -1) && (startIndex < endIndex)) {
-            javaClass = methodNames[i].substring(startIndex + 1, endIndex);
+            javaClass = methodName.substring(startIndex + 1, endIndex);
         }
         else {
             //Create intervening objects in the path to the method name.
             //For example with the method name "system.listMethods", we first
             //create a new object called "system" and then add the "listMethod"
             //function to that object.
+            // names = methodName.split(".");
+
+            // Actually, only split the last one
+            // so we can lookup something like
+            // $.rpc["com.kohlschutter.dumbo.example.MyService"]
+            var lastDot = methodName.lastIndexOf('.');
+            if(lastDot == -1) {
+                names = [methodName];
+            } else {
+                names = [methodName.substring(0,lastDot), methodName.substring(lastDot+1)];
+            }
+
             for (n = 0; n < names.length - 1; n++) {
                 name = names[n];
                 if (obj[name]) {
@@ -627,10 +662,15 @@ JSONRpcClient.prototype._addMethods = function(methodNames, dontAdd) {
             JSONRpcClient.knownClasses[javaClass][name] = method;
         }
         else {
-            method = JSONRpcClient._createMethod(this, methodNames[i]);
+            method = JSONRpcClient._createMethod(this, methodName);
             //If it doesn't yet exist and it is to be added to this
             if ((!obj[name]) && (!dontAdd)) {
                 obj[name] = JSONRpcClient.bind(method, this);
+
+                if (name.indexOf("$async") == -1) {
+                    var methodPromise = JSONRpcClient._createMethodPromise(this, methodName);
+                    obj[name+"$async"] = JSONRpcClient.bind(methodPromise, this);
+                }
             }
             //maintain a list of all methods created so that methods[i]==methodNames[i]
             methods.push(method);
@@ -742,7 +782,7 @@ JSONRpcClient._makeRequest = function(client, methodName, args, objectID, cb) {
     var obj = "{id:" + req.requestId + ",method:";
 
     if ((objectID) && (objectID > 0)) {
-        obj += "\".obj[" + objectID + "]." + methodName + "\"";
+        obj += "\";obj[" + objectID + "]." + methodName + "\"";
     }
     else {
         obj += "\"" + methodName + "\"";
@@ -1060,16 +1100,6 @@ JSONRpcClient.poolReturnHTTPRequest = function(http) {
     }
 };
 
-/* the search order here may seem strange, but it's
-   actually what Microsoft recommends */
-JSONRpcClient.msxmlNames = [
-    "MSXML2.XMLHTTP.6.0",
-    "MSXML2.XMLHTTP.3.0",
-    "MSXML2.XMLHTTP",
-    "MSXML2.XMLHTTP.5.0",
-    "MSXML2.XMLHTTP.4.0",
-    "Microsoft.XMLHTTP"];
-
 JSONRpcClient.getHTTPRequest = function() {
     /* Look for a browser native XMLHttpRequest implementation (Mozilla/IE7/Opera/Safari, etc.) */
     try {
@@ -1077,16 +1107,6 @@ JSONRpcClient.getHTTPRequest = function() {
         return new XMLHttpRequest();
     }
     catch (e) {
-    }
-
-    /* Microsoft MSXML ActiveX for IE versions < 7 */
-    for (var i = 0; i < JSONRpcClient.msxmlNames.length; i++) {
-        try {
-            JSONRpcClient.httpObjectName = JSONRpcClient.msxmlNames[i];
-            return new ActiveXObject(JSONRpcClient.msxmlNames[i]);
-        }
-        catch (e) {
-        }
     }
 
     /* None found */

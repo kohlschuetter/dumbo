@@ -1,33 +1,30 @@
-(function($) {
+(function (Dumbo) {
     const contextPath = '<%@page session="false" contentType="application/javascript" %><%= application.getContextPath() %>';
-    $.app.console = new Object();
+    Dumbo.app.console = new Object();
 
     if (location.search == "?static") {
-        $.app.console.whenLoaded = function(f) { $.app.whenReady(f); };
+        Dumbo.app.console.whenLoaded = function(f) { Dumbo.whenReady(f); };
         return;
     }
 
-    $.app.console.templates = new Object();
-    $.app.console.templates.exception = $($
-        .parseHTML("<div class=\"app-console-exception app-default\"><div class=\"app-javaClass\"></div><div class=\"app-exceptionMessage\"></div></div>"));
-    $.app.console.templates.plaintext = $($
-        .parseHTML("<div class=\"app-console-plaintext app-default\"><div class=\"app-text\"></div></div>"));
-    $.app.console.templates.unknown = $($
-        .parseHTML("<div class=\"app-console-unknown app-default\"><div class=\"app-json\"></div></div>"));
+    Dumbo.app.console.templates = new Object();
+    Dumbo.app.console.templates.exception = Dumbo.parseHTML("<div class=\"app-console-exception app-default\"><div class=\"app-javaClass\"></div><div class=\"app-exceptionMessage\"></div></div>");
+    Dumbo.app.console.templates.plaintext = Dumbo.parseHTML("<div class=\"app-console-plaintext app-default\"><div class=\"app-text\"></div></div>");
+    Dumbo.app.console.templates.unknown = Dumbo.parseHTML("<div class=\"app-console-unknown app-default\"><div class=\"app-json\"></div></div>");
 
-    $.app.console.defaultObjConverter = function(chunk) {
+    Dumbo.app.console.defaultObjConverter = function(chunk) {
         if (chunk == null) {
             return null;
         }
 
-        var noTarget = $($.app.console.target).length == 0;
+        var noTarget = Dumbo.app.console.target == null;
 
         if (typeof chunk == "string") {
             if (noTarget) {
                 return chunk;
             } else {
-                var elem = $.app.console.templates.plaintext.clone(true);
-                elem.find(".app-text").text(chunk);
+                var elem = Dumbo.clone(Dumbo.app.console.templates.plaintext);
+                Dumbo.setText(elem, ".app-text", chunk);
 
                 return elem;
             }
@@ -38,9 +35,9 @@
             && typeof chunk.message != "undefined"
             && typeof chunk.stackTrace != "undefined") {
             // probably an exception
-            var elem = $.app.console.templates.exception.clone(true);
-            elem.find(".app-javaClass").text(chunk.javaClass);
-            elem.find(".app-exceptionMessage").text(chunk.message);
+            var elem = Dumbo.clone(Dumbo.app.console.templates.exception);
+            Dumbo.setText(elem, ".app-javaClass", chunk.javaClass);
+            Dumbo.setText(elem, ".app-exceptionMessage", chunk.message);
 
             console.error(chunk);
 
@@ -53,7 +50,7 @@
 
         if (typeof o == "object") {
             if (o._ == "ClearConsole") {
-                $($.app.console.target).empty();
+                Dumbo.empty(Dumbo.app.console.target);
                 return null;
             }
         }
@@ -62,48 +59,49 @@
             return null;
         }
 
-        var elem = $.app.console.templates.unknown.clone(true);
-        elem.find(".app-json").append(JSON.stringify(chunk, null, 2));
+        var elem = Dumbo.clone(Dumbo.app.console.templates.unknown);
+
+        const jsonText = JSON.stringify(chunk, null, 2);
+        Dumbo.forEach(elem, ".app-json", (e) => { e.appendChild(jsonText); });
         return elem;
     };
 
-    $.app.console.onClose = function() {
+    Dumbo.app.console.onClose = function() {
 
     };
-    $.app.console._onClose = function() {
-        if ($.app.console.worker) {
-            $.app.console.worker.terminate();
-            $.app.console.worker = null;
+    Dumbo.app.console._onClose = function() {
+        const worker = Dumbo.app.console.worker;
+        if (worker) {
+            worker.terminate();
+            Dumbo.app.console.worker = null;
         }
-        $.app.console.onClose();
+        Dumbo.app.console.onClose();
     };
 
-    $.app.console.objConverter = $.app.console.defaultObjConverter;
-    $.app.console.target = null;
+    Dumbo.app.console.objConverter = Dumbo.app.console.defaultObjConverter;
+    Dumbo.app.console.target = null;
 
-    $.fn.appConsole = function(objConverter) {
-        $.app.console.target = $(this);
-        if ($(this).length == 0) {
-            $.app.console.target = null;
+    Dumbo.setConsole = function(targetElement, objConverter) {
+        if (typeof targetElement == "string") {
+            targetElement = document.body.querySelector(targetElement);
         }
-
+        Dumbo.app.console.target = targetElement;
         if (objConverter != null) {
-            $.app.console.objConverter = objConverter;
+            Dumbo.app.console.objConverter = objConverter;
         }
-
-        return this;
     };
 
     var connProblemsTimeoutId = -1;
     var connProblemsCheckEnabled = true;
     const connProblems = function() {
-        var callout = $('#noLongerCurrentTopCallout');
-        if (callout.size() >= 0) {
-            $('BODY').addClass("noLongerCurrent");
-            callout.removeClass("bs-callout-danger");
-            callout.addClass("bs-callout-info");
-            callout.text("There are connection problems.");
-            callout.removeClass("hidden");
+        var callout = document.getElementById("noLongerCurrentTopCallout");
+        if (callout) {
+            document.body.classList.add("noLongerCurrent");
+            var cl = callout.classList;
+            cl.remove("bs-callout-danger");
+            cl.add("bs-callout-info");
+            callout.textContent = "There are connection problems.";
+            cl.remove("hidden");
         }
     };
     const connProblemsCheck = function() {
@@ -120,8 +118,11 @@
             clearTimeout(connProblemsTimeoutId);
             connProblemsTimeoutId = -1;
         }
-        $('#noLongerCurrentTopCallout').addClass("hidden");
-        $('BODY').removeClass("noLongerCurrent");
+        var callout = document.getElementById("noLongerCurrentTopCallout");
+        if (callout) {
+            callout.classList.add("hidden");
+        }
+        document.body.classList.remove("noLongerCurrent");
     };
 
     if (addEventListener) {
@@ -132,15 +133,13 @@
         connProblemsGone();
         if (chunk == null) {
             // console was closed
-            $.app.console._onClose();
+            Dumbo.app.console._onClose();
             return false;
         } else if (chunk == "") {
             // no-op, continue
             return true;
         } else if (chunk.javaClass == "com.kohlschutter.dumbo.MultipleChunks") {
-            $.each(chunk.chunks, function(_, value) {
-                processChunk(value);
-            });
+            chunk.chunks.forEach(v => processChunk(v));
             return true;
         } else if (chunk.javaClass == "com.kohlschutter.dumbo.ShutdownNotice") {
             // close console and shutdown app as if the window was closed.
@@ -148,18 +147,24 @@
 
             if (chunk.clean) {
                 // don't show modal on clean shutdowns
-                $("#noLongerCurrentModal").remove();
+                var modal = document.getElementById("noLongerCurrentModal");
+                if (modal) {
+                    modal.remove();
+                }
             }
-            $.app.console._onClose();
+            Dumbo.app.console._onClose();
             return false;
         }
 
-        chunk = $.app.console.objConverter(chunk);
+        chunk = Dumbo.app.console.objConverter(chunk);
         if (chunk != null) {
-            var target = $.app.console.target;
+            var target = Dumbo.app.console.target;
             if (target == null) {
                 console.log(chunk);
             } else {
+                if (chunk && chunk.get) {
+                    chunk = chunk.get();
+                }
                 target.append(chunk);
             }
         }
@@ -169,15 +174,15 @@
     const useWebWorkers = window.Worker != null;
 
     const noWorkerLoop = useWebWorkers ? null : function() {
-        $.rpc.ConsoleService.requestNextChunk(chunkJob);
+        Dumbo.getService("ConsoleService").requestNextChunk(chunkJob);
     };
     const delayStepInitial = 8;
+    const delayStepMax = 12;
     var delayStep = delayStepInitial;
 
-    const checkError = function(e) {
-        connProblemsCheck();
+    const checkError = function(e, step) {
         if (e) {
-            console.error("ConsoleService.requestNextChunk error", e);
+            // console.error("ConsoleService.requestNextChunk error", e);
             switch (e.code) {
                 case 401: // unauthorized
                 case 403: // forbidden
@@ -186,36 +191,48 @@
                     // session no longer valid
                     processChunk(null);
                     return true;
+                default:
+                    if (step < delayStepMax) {
+                        // we're optimistic...
+                        break;
+                    } else {
+                        // ... up to a point.
+                        processChunk(null);
+                        return true;
+                    }
             }
         }
+        connProblemsCheck();
+
         return false;
     };
 
     var chunkJob = useWebWorkers ? null : function(chunk, e) {
         if (e != null) {
-            if (checkError(e)) {
+            if (checkError(e, delayStep)) {
                 return;
             }
 
             setTimeout(noWorkerLoop, 2 ** (delayStep));
-            if (++delayStep >= 12) {
-                delayStep = 12;
+            if (++delayStep > delayStepMax) {
+                delayStep = delayStepMax;
             }
             return;
         }
         connProblemsGone();
 
         if (processChunk(chunk)) {
-            $.rpc.ConsoleService.requestNextChunk(chunkJob);
+            Dumbo.getService("ConsoleService").requestNextChunk(chunkJob);
         } else {
             connProblemsCheck();
             console.log("Console service stopped");
         }
     };
 
-    $.app.whenReady(function() {
-        if ($.rpc.ConsoleService) {
-            // $.rpc.dontQueueCalls = true;
+    Dumbo.whenReady(function() {
+        const consoleService = Dumbo.getService("ConsoleService");
+        if (consoleService) {
+            // Dumbo.rpc.dontQueueCalls = true;
 
             setTimeout(function() {
                 if (noWorkerLoop) {
@@ -223,7 +240,7 @@
                     return;
                 }
 
-                var worker = $.app.console.worker = new Worker(contextPath + "/js/app-console-webworker.js");
+                var worker = Dumbo.app.console.worker = new Worker(contextPath + "/js/app-console-webworker.js");
 
                 var workerNextMessage = function(delay) {
                     worker.postMessage({ command: "next", delay: delay });
@@ -240,7 +257,7 @@
                                 console.log("Console service stopped");
                             }
                         } else if (e.data.command == "error") {
-                            if (!checkError(e.data.error)) {
+                            if (!checkError(e.data.error, delayStep)) {
                                 workerNextMessage(2 ** (delayStep));
                                 if (++delayStep >= 12) {
                                     delayStep = 12;
@@ -249,9 +266,8 @@
                         }
                     }
                 };
-                worker.postMessage({ command: "init", url: $.rpc.serverURL });
+                worker.postMessage({ command: "init", url: Dumbo.rpc.serverURL });
             }, 0);
         }
     });
-
-}(jQuery));
+}(Dumbo));
