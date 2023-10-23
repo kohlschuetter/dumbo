@@ -30,11 +30,13 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jetty.io.EofException;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.console.ConsoleService;
 import com.kohlschutter.dumbo.exceptions.NoSessionException;
@@ -125,7 +127,17 @@ class JSONRPCBridgeServlet extends HttpServlet {
       }
 
       classToInstance.put(serviceInterface, instance);
-      bridge.registerObject(serviceInterface.getSimpleName(), instance, serviceInterface);
+
+      String rpcName = serviceInterface.getName();
+      if (serviceInterface.isAnnotationPresent(DumboService.class)) {
+        DumboService service = serviceInterface.getAnnotation(DumboService.class);
+        String declaredRpcName = service.rpcName();
+        if (!declaredRpcName.isEmpty()) {
+          rpcName = declaredRpcName;
+        }
+      }
+
+      bridge.registerObject(rpcName, instance, serviceInterface);
     }
 
     @SuppressWarnings("unchecked")
@@ -174,17 +186,16 @@ class JSONRPCBridgeServlet extends HttpServlet {
 
     DumboSession dumboSession;
     String newServerURL = null;
+    String pageId = request.getParameter("pageId");
     if (maxPagesPerSession != 0) {
-      String pageId = request.getParameter("pageId");
       if (pageId == null && maxPagesPerSession != 0) {
         triggerOnAppLoaded = true;
         pageId = DumboSessionImpl.newPageId(context, maxPagesPerSession);
         newServerURL = request.getRequestURI();
         String qs = request.getQueryString();
+        newServerURL += "?pageId=" + response.encodeURL(pageId);
         if (qs != null && !qs.isEmpty()) {
-          newServerURL += "?" + qs + "&pageId=" + response.encodeURL(pageId);
-        } else {
-          newServerURL += "?pageId=" + response.encodeURL(pageId);
+          newServerURL += "&" + qs;
         }
       }
 
@@ -201,7 +212,15 @@ class JSONRPCBridgeServlet extends HttpServlet {
     JSONRPCResult result;
     try {
       JSONTokener jt = new JSONTokener(request.getReader());
-      JSONObject jsonRequest = new JSONObject(jt);
+      JSONObject jsonRequest;
+      try {
+        jsonRequest = new JSONObject(jt);
+      } catch (JSONException e) {
+        LOG.info("Could not parse JSON request; pageId=" + pageId, e);
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+        response.flushBuffer();
+        return;
+      }
 
       String method = jsonRequest.getString("method");
       tlMethod.set(method);
