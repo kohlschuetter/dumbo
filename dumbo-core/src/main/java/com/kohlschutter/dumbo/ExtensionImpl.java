@@ -158,7 +158,7 @@ final class ExtensionImpl extends ComponentImpl {
     return getComponentResource("webapp/");
   }
 
-  private boolean isRelativePath(String path) {
+  private boolean isLocalPath(String path) {
     return !path.startsWith("/") && !path.contains("://");
   }
 
@@ -185,7 +185,7 @@ final class ExtensionImpl extends ComponentImpl {
       for (String path : css.value()) {
         String url = toAbsolutePath(path);
 
-        if (isRelativePath(url) && !server.checkResourceExists(url)) {
+        if (isLocalPath(path) && !server.checkResourceExists(url)) {
           // CSS resource doesn't exist, and can be optimized away
           if (css.optional()) {
             LOG.info("Skipping CSS resource " + url + "; missing from " + this);
@@ -212,10 +212,10 @@ final class ExtensionImpl extends ComponentImpl {
       for (String path : js.value()) {
         String url = toAbsolutePath(path);
 
-        if (isRelativePath(url) && !server.checkResourceExists(url)) {
+        if (isLocalPath(path) && !server.checkResourceExists(url)) {
           // JavaScript resource doesn't exist, and can be optimized away
           if (js.optional()) {
-            LOG.info("Skipping JavaScript resource " + url + "; missing from " + this);
+            LOG.info("Skipping optional JavaScript resource " + path + "; missing from " + this);
             continue;
           } else {
             LOG.warn("JavaScript" + url + " is missing from " + this);

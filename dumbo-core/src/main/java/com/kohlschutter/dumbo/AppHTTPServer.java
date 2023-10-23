@@ -754,10 +754,29 @@ public class AppHTTPServer {
       }
 
       String pathInContext = path.substring(cp.length());
+      if (pathInContext.isEmpty()) {
+        return false;
+      } else if (pathInContext.charAt(0) != '/') {
+        pathInContext = "/" + pathInContext;
+      }
 
       try {
         if (wac.getResource(pathInContext) != null) {
           return true;
+        } else if (wac.getResource(pathInContext + ".jsp") != null) {
+          return true;
+        } else {
+          // if resource is "something.js", also check "something.jsp.js", for example.
+          // this code will only run for filename suffixes less than 10 characters
+          int lastDot = pathInContext.lastIndexOf('.');
+          if (lastDot != -1 && lastDot >= pathInContext.length() - 10 && pathInContext.indexOf('/',
+              lastDot + 1) == -1) {
+            String path2 = pathInContext.substring(0, lastDot) + ".jsp" + pathInContext.substring(
+                lastDot);
+            if (wac.getResource(path2) != null) {
+              return true;
+            }
+          }
         }
       } catch (MalformedURLException e) {
         // ignore
