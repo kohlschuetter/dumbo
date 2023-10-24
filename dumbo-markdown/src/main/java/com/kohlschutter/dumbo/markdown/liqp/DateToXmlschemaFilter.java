@@ -29,8 +29,8 @@ public class DateToXmlschemaFilter extends Filter {
   private static final liqp.filters.Date LIQP_DATE_FILTER = new liqp.filters.Date() {
   };
   private static final SimpleDateFormat[] PARSERS = new SimpleDateFormat[] {
-      new SimpleDateFormat("yyyy-MM-dd hh:mm:ss zzz"), new SimpleDateFormat(
-          "yyyy-MM-dd hh:mm zzz")};
+      new SimpleDateFormat("yyyy-MM-dd hh:mm:ss zzz", Locale.ENGLISH), new SimpleDateFormat(
+          "yyyy-MM-dd hh:mm zzz", Locale.ENGLISH)};
   private static final SimpleDateFormat ISO_8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ",
       Locale.ENGLISH);
 

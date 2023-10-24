@@ -26,6 +26,7 @@ import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -354,7 +355,7 @@ final class MarkdownSupportImpl {
             LOG.debug("renamed successfully: " + htmlFile);
           } else {
             LOG.warn("Failed to create " + htmlFile);
-            mdFileHtmlTmp.delete();
+            Files.deleteIfExists(mdFileHtmlTmp.toPath());
           }
         }
       };
