@@ -207,7 +207,7 @@ public class AppHTTPServer {
       Resource res;
       try {
         res = ResourceFactory.root().newResource(List.of(app.getWebappWorkDir().toURI(),
-            webappBaseURL.toURI()));
+            webappBaseURL.toURI(), AppHTTPServer.class.getResource("jettydir-overlay/").toURI()));
       } catch (URISyntaxException e) {
         throw new IllegalStateException(e);
       }
@@ -349,7 +349,13 @@ public class AppHTTPServer {
     } catch (URISyntaxException e) {
       throw new IllegalStateException(e);
     }
-    Resource res = ResourceFactory.root().newResource(resourceBaseUri);
+    Resource res;
+    try {
+      res = ResourceFactory.root().newResource(List.of(resourceBaseUri, AppHTTPServer.class
+          .getResource("jettydir-overlay/").toURI()));
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException(e);
+    }
 
     String prefix = (contextPath + contextPrefix).replaceAll("//+", "/");
     WebAppContext wac = new WebAppContext(res, prefix);
@@ -410,8 +416,7 @@ public class AppHTTPServer {
     holderDefaultServlet.setInitParameter("etags", "true");
     // holderDefaultServlet.setInitParameter("dirAllowed", "false");
     holderDefaultServlet.setInitParameter("useFileMappedBuffer", "true");
-    holderDefaultServlet.setInitParameter("stylesheet", AppHTTPServer.class.getResource(
-        "/com/kohlschutter/dumbo/appbase/css/jetty-dir.css").toExternalForm());
+    holderDefaultServlet.setInitParameter("stylesheet", "/css/jetty-dir.css");
 
     for (Map.Entry<String, ServletMapping> en : mappings.entrySet()) {
       String mapPath = en.getKey();
