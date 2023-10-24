@@ -1,18 +1,21 @@
 var Dumbo;
 (function (Dumbo) {
     Dumbo.getService = function(id) {
-      var service = Dumbo.rpc[id];
-      if (!service && id && id.endsWith("Async")) {
-          id = id.substring(0, id.length - 5);
-          service = Dumbo.rpc[id];
-      }
+        if (id && id.__class) {
+            id = id.__class;
+        }
+        var service = Dumbo.rpc[id];
+        if (!service && id && id.endsWith && id.endsWith("Async")) {
+            id = id.substring(0, id.length - 5);
+            service = Dumbo.rpc[id];
+        }
 
-      if (!service) {
-          console.error("Cannot resolve Dumbo service: " + id);
-          throw new Error("Cannot resolve Dumbo service: " + id);
-      }
+        if (!service) {
+            console.error("Cannot resolve Dumbo service: " + id);
+            throw new Error("Cannot resolve Dumbo service: " + id);
+        }
 
-      return service;
+        return service;
     };
 
     const jsonUrl = '<%@page session="false" contentType="application/javascript" %><%= application.getAttribute("jsonPath") %>';
