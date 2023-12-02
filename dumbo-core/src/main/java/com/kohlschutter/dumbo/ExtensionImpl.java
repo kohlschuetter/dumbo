@@ -188,7 +188,9 @@ final class ExtensionImpl extends ComponentImpl {
         if (isLocalPath(path) && !server.checkResourceExists(url)) {
           // CSS resource doesn't exist, and can be optimized away
           if (css.optional()) {
-            LOG.info("Skipping CSS resource " + url + "; missing from " + this);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Skipping optional CSS resource " + url + "; missing from " + this);
+            }
             continue;
           } else {
             LOG.warn("CSS resource " + url + " is missing from " + this);
@@ -215,7 +217,9 @@ final class ExtensionImpl extends ComponentImpl {
         if (isLocalPath(path) && !server.checkResourceExists(url)) {
           // JavaScript resource doesn't exist, and can be optimized away
           if (js.optional()) {
-            LOG.info("Skipping optional JavaScript resource " + path + "; missing from " + this);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Skipping optional JavaScript resource " + path + "; missing from " + this);
+            }
             continue;
           } else {
             LOG.warn("JavaScript" + url + " is missing from " + this);
