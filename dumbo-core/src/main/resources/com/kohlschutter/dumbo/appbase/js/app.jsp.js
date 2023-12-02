@@ -1,8 +1,12 @@
 var Dumbo;
 (function (Dumbo) {
     Dumbo.getService = function(id) {
+        var unaliased = Dumbo.serviceAliases[id];
+        if (unaliased) {
+            id = unaliased; // for jacline/j2cl
+        }
         if (id && id.__class) {
-            id = id.__class;
+            id = id.__class; // for jsweet
         }
         var service = Dumbo.rpc[id];
         if (!service && id && id.endsWith && id.endsWith("Async")) {
@@ -18,9 +22,14 @@ var Dumbo;
         return service;
     };
 
+    Dumbo.setServiceAlias = function(al,service) {
+        Dumbo.serviceAliases[al] = service;
+    };
+
     const jsonUrl = '<%@page session="false" contentType="application/javascript" %><%= application.getAttribute("jsonPath") %>';
 
     Dumbo.rpc = null;
+    Dumbo.serviceAliases = {};
     Dumbo.app = {
         proto: {}
     };
@@ -76,6 +85,11 @@ var Dumbo;
         list.length = 0;
         list.done = true;
     };
+
+    /**
+     * Dummy method to prevent dead code removal by Closure etc.
+     */
+    Dumbo.keep = function(obj) { };
 
     /**
      * Adds a function to the list of callbacks that should be called as soon as
