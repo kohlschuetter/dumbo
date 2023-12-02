@@ -160,7 +160,7 @@
         if (chunk != null) {
             var target = Dumbo.app.console.target;
             if (target == null) {
-                console.log(chunk);
+                console.log("Dumbo chunk", chunk);
             } else {
                 if (chunk && chunk.get) {
                     chunk = chunk.get();
