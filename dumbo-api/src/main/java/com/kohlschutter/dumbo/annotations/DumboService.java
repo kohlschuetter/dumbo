@@ -29,7 +29,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a certain type as a Dumbo RPC service.
+ * Marks a certain interface as a Dumbo RPC service.
  *
  * @author Christian Kohlschütter
  */
