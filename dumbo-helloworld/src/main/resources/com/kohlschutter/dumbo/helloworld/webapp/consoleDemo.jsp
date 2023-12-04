@@ -33,26 +33,27 @@ com.kohlschutter.dumbo.JSPSupport.markComponentUsed(session,
 		<hr />
 
 		<div id="console">
-			<div class="color-message">
-				<div class="card" style="margin: 6pt 0pt 6pt 0pt">
-					<div class="card-body">
-						<div class="panel-body">
-							<div class="message-text">This is a test message</div>
+			<template id="consoleTemplates">
+				<div class="color-message">
+					<div class="card" style="margin: 6pt 0pt 6pt 0pt">
+						<div class="card-body">
+							<div class="panel-body">
+								<div class="message-text">This is a test message</div>
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
 
-			<div class="app-console-exception" style="margin-top: 0.5em">
-				<div class="card">
-					<div class="card-header bg-danger text-white">Exception</div>
-					<div class="card-body">
-						<div class="app-javaClass">javaClass</div>
-						<div class="app-exceptionMessage">Exception Message</div>
+				<div class="app-console-exception" style="margin-top: 0.5em">
+					<div class="card">
+						<div class="card-header bg-danger text-white">Exception</div>
+						<div class="card-body">
+							<div class="app-javaClass">javaClass</div>
+							<div class="app-exceptionMessage">Exception Message</div>
+						</div>
 					</div>
 				</div>
-			</div>
-
+			</template>
 		</div>
 	</div>
 	<script type="text/javascript" src="/js/consoleDemo.js"></script>

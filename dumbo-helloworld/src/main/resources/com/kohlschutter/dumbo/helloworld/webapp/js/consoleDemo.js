@@ -28,9 +28,9 @@
     };
   };
 
-  Dumbo.app.console.templates.exception = Dumbo.clone("#console .app-console-exception");
+  Dumbo.app.console.templates.exception = Dumbo.cloneTemplate("#consoleTemplates", ".app-console-exception");
 
-  var colorMessageProto = Dumbo.clone("#console .color-message");
+  var colorMessageProto = Dumbo.cloneTemplate("#consoleTemplates", ".color-message");
   Dumbo.empty("#console");
 
   Dumbo.whenLoaded(
