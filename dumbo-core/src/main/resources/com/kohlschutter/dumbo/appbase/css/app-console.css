@@ -1,3 +1,9 @@
+.static-design-mode.static-design-mode-outline .templates {
+    background: repeating-linear-gradient(-45deg,
+            hwb(187deg 50% 14%), hwb(187deg 50% 14%) 2pt,
+            white 2pt, white 4pt);
+    outline: 2pt dotted hwb(187deg 50% 14%)
+}
 .app-console-exception.app-default {
 	border: 2pt solid red;
 	padding: 4pt;

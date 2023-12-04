@@ -26,7 +26,7 @@ var Dumbo;
         Dumbo.serviceAliases[al] = service;
     };
 
-    const jsonUrl = '<%@page session="false" contentType="application/javascript" %><%= application.getAttribute("jsonPath") %>';
+    const jsonUrl = '<%@page session="false" contentType="application/javascript; charset=UTF-8" %><%= application.getAttribute("jsonPath") %>';
 
     Dumbo.rpc = null;
     Dumbo.serviceAliases = {};
@@ -152,6 +152,30 @@ var Dumbo;
         return cloned;
     };
 
+    Dumbo.cloneTemplate = function(template, n) {
+        if (typeof template == "string") {
+            template = document.querySelector(template);
+        }
+
+        var base = document;
+        if (template) {
+            base = template;
+            if (base.content) {
+                base = base.content;
+            }
+        }
+
+        if (typeof n == "string") {
+            n = base.querySelector(n);
+        }
+
+        var cloned = n.cloneNode(true);
+
+        // FIXME re-attach event listeners
+
+        return cloned;
+    };
+
     Dumbo.forEach = function(node, selector, op) {
         if (typeof node == "string" && typeof op == "undefined") {
             op = selector;
@@ -210,4 +234,28 @@ var Dumbo;
                 _runCallbacks(Dumbo.app._onLoadedCallbacks);
             }, jsonUrl);
         });
+
+    if (location.search == "?static") {
+        let showOutline = (location.hash == "#outline");
+
+        console.log("Static design mode enabled; outline " + (showOutline ? "enabled" : "disabled — enable by adding #outline to URL"));
+
+        Dumbo.whenLoaded(function() {
+            var templates = document.getElementsByTagName("template");
+            for (var i = 0, n = templates.length; i < n; i++) {
+                var template = templates[i];
+                var div = document.createElement("DIV");
+                div.classList = template.classList;
+                div.classList.add("templates");
+                div.append(template.content);
+                template.parentNode.insertBefore(div, template);
+                template.parentNode.removeChild(template);
+                div.id = template.id;
+            }
+            document.body.classList.add("static-design-mode");
+            if (showOutline) {
+                document.body.classList.add("static-design-mode-outline");
+            }
+        });
+    }
 })(Dumbo || (window.Dumbo = Dumbo = {}));
