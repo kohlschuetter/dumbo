@@ -1,0 +1,78 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.kohlschutter.dumbo</groupId>
+        <artifactId>dumbo-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>dumbo-jacline</artifactId>
+
+    <properties>
+        <kohlschutter.project.notice.file>${project.parent.basedir}/NOTICE</kohlschutter.project.notice.file>
+        <jacline.version>1.0.0-SNAPSHOT</jacline.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.kohlschutter.jacline</groupId>
+                <artifactId>jacline-maven-plugin</artifactId>
+                <version>${jacline.version}</version>
+                <executions>
+                    <execution>
+                        <id>default-jacline-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <createLibrary>true</createLibrary>
+                            <transpileSourceRoots>
+                                <transpileSourceRoot>src/main/java</transpileSourceRoot>
+                            </transpileSourceRoots>
+                            <javascriptSourceRoots>
+                                <javascriptSourceRoot>src/main/jacline</javascriptSourceRoot>
+                            </javascriptSourceRoots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.kohlschutter.jacline</groupId>
+            <artifactId>jacline-lib-common</artifactId>
+            <version>${jacline.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.kohlschutter.dumbo</groupId>
+            <artifactId>dumbo-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kohlschutter.dumbo</groupId>
+            <artifactId>dumbo-extensions</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.kohlschutter</groupId>
+            <artifactId>kohlschutter-test-util</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

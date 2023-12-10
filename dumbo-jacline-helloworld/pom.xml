@@ -1,0 +1,99 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.kohlschutter.dumbo</groupId>
+        <artifactId>dumbo-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>dumbo-jacline-helloworld</artifactId>
+
+    <properties>
+        <kohlschutter.project.notice.file>${project.parent.basedir}/NOTICE</kohlschutter.project.notice.file>
+        <jacline.version>1.0.0-SNAPSHOT</jacline.version>
+        <mainClass>com.kohlschutter.dumbo.jacline.helloworld.HelloWorldApp</mainClass>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/server/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.kohlschutter.jacline</groupId>
+                <artifactId>jacline-maven-plugin</artifactId>
+                <version>${jacline.version}</version>
+                <executions>
+                    <execution>
+                        <id>default-jacline-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <createLibrary>true</createLibrary>
+                            <transpileSourceRoots>
+                                <transpileSourceRoot>src/main/java</transpileSourceRoot>
+                            </transpileSourceRoots>
+                            <javascriptSourceRoots>
+                                <javascriptSourceRoot>src/main/jacline</javascriptSourceRoot>
+                            </javascriptSourceRoots>
+                            <outputFile>
+                                com/kohlschutter/dumbo/jacline/helloworld/webapp/js/jacline-generated.js</outputFile>
+                            <createSourceMaps>true</createSourceMaps>
+                            <sourceMapOutputDirectory>
+                                ${project.build.outputDirectory}/com/kohlschutter/dumbo/jacline/helloworld/webapp/</sourceMapOutputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- Call "mvn clean compile exec:java" to run this app from the
+                command line -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>${mainClass}</mainClass>
+                </configuration>
+            </plugin>
+
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>src/server/resources</directory>
+            </resource>
+        </resources>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.kohlschutter.dumbo</groupId>
+            <artifactId>dumbo-jacline</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>
