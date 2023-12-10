@@ -60,7 +60,7 @@ public final class ServerApp implements Closeable, Cloneable {
 
   private final LinkedHashMap<Class<?>, ExtensionImpl> extensions = new LinkedHashMap<>();
   private final Map<Class<?>, Object> instances = new HashMap<>();
-  private final List<EventHandler> eventHandlers = new ArrayList<>();
+  private final LinkedHashSet<EventHandler> eventHandlers = new LinkedHashSet<>();
 
   private AtomicBoolean initDone = new AtomicBoolean(false);
   private volatile boolean closed = false;
