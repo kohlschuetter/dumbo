@@ -1,13 +1,6 @@
 /*
- * dumborb - a Java to JavaScript Advanced Object Request Broker
- *
- * Copyright 2022-2023 Christian Kohlschütter
- *
- * based on jabsorb Copyright 2007-2009 The jabsorb team
- * based on original code from
- * JSON-RPC-Java - a JSON-RPC to Java Bridge with dynamic invocation
- * Copyright Metaparadigm Pte. Ltd. 2004.
- * Michael Clark <michael@metaparadigm.com>
+ * Copyright 2022,2023 Christian Kohlschütter
+ * Copyright 2014,2015 Evernote Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +31,9 @@ import java.lang.annotation.Target;
 public @interface DumboService {
   /**
    * If non-empty, the name (identifier) used for this RPC service.
-   * 
+   *
    * By default, the fully qualified classname is used.
-   * 
+   *
    * @return The name, or empty for default.
    */
   String rpcName() default "";
