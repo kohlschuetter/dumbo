@@ -56,6 +56,7 @@ import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -171,6 +172,11 @@ public class AppHTTPServer {
 
   public AppHTTPServer(int tcpPort, final ServerApp app, final String path, final URL webappBaseURL)
       throws IOException {
+    this(tcpPort, app, path, webappBaseURL, null);
+  }
+
+  public AppHTTPServer(int tcpPort, final ServerApp app, final String path, final URL webappBaseURL,
+      RequestLog requestLog) throws IOException {
     int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081")) : tcpPort;
 
     Objects.requireNonNull(webappBaseURL, "Webapp baseURL not specified or resources not found");
@@ -182,6 +188,10 @@ public class AppHTTPServer {
     this.threadPool = new QueuedThreadPool();
 
     this.server = new Server(threadPool);
+
+    if (requestLog != null) {
+      server.setRequestLog(requestLog);
+    }
     // server.setDumpAfterStart(true); // for debugging
 
     this.contextPath = "/" + (path.replaceFirst("^/", "").replaceFirst("/$", ""));
