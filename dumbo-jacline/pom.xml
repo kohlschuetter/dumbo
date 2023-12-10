@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.kohlschutter.dumbo</groupId>
         <artifactId>dumbo-parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -14,7 +14,6 @@
 
     <properties>
         <kohlschutter.project.notice.file>${project.parent.basedir}/NOTICE</kohlschutter.project.notice.file>
-        <jacline.version>1.0.0-SNAPSHOT</jacline.version>
     </properties>
 
     <build>
