@@ -42,7 +42,7 @@ public final class JSPSupport {
     if (app == null) {
       return "";
     } else {
-      return htmlHead(app).toString();
+      return htmlHead(app);
     }
   }
 
@@ -86,7 +86,7 @@ public final class JSPSupport {
     if (app == null) {
       return "";
     } else {
-      return htmlBodyTop(app).toString();
+      return htmlBodyTop(app);
     }
   }
 

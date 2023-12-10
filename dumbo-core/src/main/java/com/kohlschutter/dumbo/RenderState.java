@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
@@ -42,6 +43,7 @@ public final class RenderState {
   private final Set<String> included = new LinkedHashSet<>();
   private String relativePath;
 
+  @SuppressFBWarnings("MS_EXPOSE_REP")
   public static ThreadLocal<RenderState> getThreadLocal() {
     return THREADLOCAL;
   }
@@ -50,6 +52,7 @@ public final class RenderState {
     return getThreadLocal().get();
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Set<String> getIncluded() {
     return included;
   }
@@ -77,10 +80,12 @@ public final class RenderState {
     this.componentsMarkedUseAll = allUsed;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public ServerApp getApp() {
     return app;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setApp(ServerApp app) {
     this.app = app;
   }

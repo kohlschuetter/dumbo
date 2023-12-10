@@ -30,12 +30,8 @@ import com.kohlschutter.dumbo.AppHTTPServer;
 public final class DevTools {
   private static final Logger LOG = LoggerFactory.getLogger(DevTools.class);
   private static boolean staticMode;
-
-  private DevTools() {
-    throw new IllegalStateException("No instances");
-  }
-
   private static final String PATH_TO_MODIFIERKEYS;
+
   static {
     String path = null;
     for (String p : new String[] {"/usr/local/bin/modifierkeys"}) {
@@ -46,6 +42,10 @@ public final class DevTools {
     }
 
     PATH_TO_MODIFIERKEYS = path;
+  }
+
+  private DevTools() {
+    throw new IllegalStateException("No instances");
   }
 
   public static boolean isShiftPressed() {
@@ -86,7 +86,7 @@ public final class DevTools {
         url += "?static";
       }
 
-      LOG.info("Opening page in browser: " + url);
+      LOG.info("Opening page in browser: {}", url);
       DevTools.openURL(url);
     } catch (Exception e) {
       LOG.error("Can't open page in browser", e);

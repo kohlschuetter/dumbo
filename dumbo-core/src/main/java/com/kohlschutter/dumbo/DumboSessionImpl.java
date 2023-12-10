@@ -29,6 +29,7 @@ import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.NonNull;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.api.Console;
 import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.exceptions.InvalidSessionException;
@@ -41,9 +42,10 @@ public final class DumboSessionImpl extends DumboSession {
   private final Map<String, Object> pageScope = new HashMap<>();
   private final HttpSession context;
   private final Console console = new ConsoleImpl(this);
-  private AtomicBoolean invalid = new AtomicBoolean(false);
+  private final AtomicBoolean invalid = new AtomicBoolean(false);
 
   DumboSessionImpl(String pageId, HttpSession context) {
+    super();
     this.pageId = pageId;
     this.context = context;
   }
@@ -180,9 +182,7 @@ public final class DumboSessionImpl extends DumboSession {
         }
       }
     }
-    if (session != null) {
-      session.invalidate();
-    }
+    session.invalidate();
   }
 
   private void checkValid() {
@@ -212,6 +212,7 @@ public final class DumboSessionImpl extends DumboSession {
    *
    * @return The console.
    */
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public Console getConsole() {
     checkValid();

@@ -43,6 +43,7 @@ import org.eclipse.jdt.annotation.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.annotations.EventHandlers;
 import com.kohlschutter.dumbo.annotations.Services;
 import com.kohlschutter.dumbo.api.DumboApplication;
@@ -55,14 +56,18 @@ import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 /**
  * Internal base class for a lightweight Server-based application.
  */
-public final class ServerApp implements Closeable, Cloneable {
+public final class ServerApp implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
 
+  @SuppressWarnings("PMD.LooseCoupling")
   private final LinkedHashMap<Class<?>, ExtensionImpl> extensions = new LinkedHashMap<>();
   private final Map<Class<?>, Object> instances = new HashMap<>();
+  @SuppressWarnings("PMD.LooseCoupling")
   private final LinkedHashSet<EventHandler> eventHandlers = new LinkedHashSet<>();
+  private final List<Closeable> closeables = Collections.synchronizedList(
+      new ArrayList<Closeable>());
 
-  private AtomicBoolean initDone = new AtomicBoolean(false);
+  private final AtomicBoolean initDone = new AtomicBoolean(false);
   private volatile boolean closed = false;
   private RPCRegistry rpcRegistry;
 
@@ -85,7 +90,7 @@ public final class ServerApp implements Closeable, Cloneable {
   public ServerApp(Class<? extends DumboApplication> applicationClass) {
     this.applicationClass = applicationClass;
     this.applicationExtensionImpl = new ExtensionImpl(applicationClass, true);
-    resolveExtensions(applicationClass);
+    resolveExtensions();
 
     initEventHandlers();
   }
@@ -98,8 +103,8 @@ public final class ServerApp implements Closeable, Cloneable {
    * access the implementation.
    *
    * @param identity The implementation identity.
-   * @return The implementatioin instance.
-   * @throws IOException
+   * @return The implementation instance.
+   * @throws IOException on error.
    */
   @SuppressWarnings({"unchecked"})
   public <K> @NonNull K getImplementationByIdentity(ImplementationIdentity<K> identity,
@@ -112,8 +117,7 @@ public final class ServerApp implements Closeable, Cloneable {
     return instance;
   }
 
-  private void resolveExtensions(Class<? extends DumboComponent> mainComponent)
-      throws ExtensionDependencyException {
+  private void resolveExtensions() throws ExtensionDependencyException {
     LinkedHashSet<Class<?>> reachableComponents = applicationExtensionImpl.getReachableComponents();
 
     for (Class<?> compClass : reachableComponents) {
@@ -147,8 +151,7 @@ public final class ServerApp implements Closeable, Cloneable {
     }
   }
 
-  final synchronized void init(AppHTTPServer server, String path, URL webappBaseURL)
-      throws IOException {
+  synchronized void init(AppHTTPServer server, String path, URL webappBaseURL) throws IOException {
     if (appServer != null) {
       throw new IllegalStateException("Already initialized");
     }
@@ -158,7 +161,7 @@ public final class ServerApp implements Closeable, Cloneable {
     File dir = Files.createTempDirectory("dumbo-workdir").toRealPath().toFile();
 
     this.workDir = new File(dir, path);
-    workDir.mkdirs();
+    Files.createDirectories(workDir.toPath());
 
     // FIXME move to AppHTTPServer
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -169,10 +172,15 @@ public final class ServerApp implements Closeable, Cloneable {
             if (f.isDirectory()) {
               delete(f);
             }
-            f.delete();
+            deleteFile(f);
           }
         }
-        d.delete();
+        deleteFile(d);
+      }
+
+      @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
+      private void deleteFile(File f) {
+        f.delete();
       }
 
       @Override
@@ -181,12 +189,12 @@ public final class ServerApp implements Closeable, Cloneable {
       }
     });
     this.webappWorkDir = new File(this.workDir, "webapp");
-    webappWorkDir.mkdirs();
+    Files.createDirectories(webappWorkDir.toPath());
 
     LOG.info("Workdir: {}", workDir);
   }
 
-  final void initComponents(AppHTTPServer server) throws IOException {
+  void initComponents(AppHTTPServer server) throws IOException {
     if (!initDone.compareAndSet(false, true)) {
       throw new IllegalStateException("App is already initialized");
     }
@@ -201,16 +209,13 @@ public final class ServerApp implements Closeable, Cloneable {
     }
   }
 
-  private final List<Closeable> closeables = Collections.synchronizedList(
-      new ArrayList<Closeable>());
-
   /**
    * Registers the designated RPC services.
    *
    * @param registry The target RPC registry.
    */
   @SuppressWarnings({"rawtypes", "unchecked"})
-  final void initRPC(RPCRegistry registry) {
+  void initRPC(RPCRegistry registry) {
     this.rpcRegistry = registry;
 
     registry.registerRPCService(ConsoleService.class, new ConsoleService() {
@@ -252,6 +257,13 @@ public final class ServerApp implements Closeable, Cloneable {
     eventHandlers.forEach((eh) -> eh.onAppLoaded(session));
   }
 
+  /**
+   * This method will be called upon application start.
+   */
+  private void onAppStart() {
+    // FIXME call event handlers
+  }
+
   @Override
   public void close() throws IOException {
     if (closed) {
@@ -264,22 +276,12 @@ public final class ServerApp implements Closeable, Cloneable {
       try {
         cl.close();
       } catch (Exception e) {
-        LOG.info("Error while closing object of type " + cl.getClass(), e);
+        if (LOG.isInfoEnabled()) {
+          LOG.info("Error while closing object of type " + cl.getClass(), e);
+        }
       }
     }
     closed = true;
-  }
-
-  /**
-   * Called when the application has been quit, for example when all browser windows have been
-   * closed.
-   */
-  protected void onQuit() {
-    try {
-      close();
-    } catch (IOException e) {
-      LOG.info("Could not close app", e);
-    }
   }
 
   /**
@@ -366,7 +368,7 @@ public final class ServerApp implements Closeable, Cloneable {
    *
    * @see #initRPC(RPCRegistry)
    */
-  protected final void onStart() {
+  void onStart() {
     new Thread() {
       @Override
       public void run() {
@@ -375,7 +377,7 @@ public final class ServerApp implements Closeable, Cloneable {
         } catch (Exception e) {
           LOG.error("Error upon app start", e);
         }
-      };
+      }
     }.start();
   }
 
@@ -409,12 +411,6 @@ public final class ServerApp implements Closeable, Cloneable {
     }
 
     throw new IllegalStateException("Could not find a way to initialize " + clazz);
-  }
-
-  /**
-   * This method will be called upon application start.
-   */
-  protected void onAppStart() {
   }
 
   public File getWorkDir() {

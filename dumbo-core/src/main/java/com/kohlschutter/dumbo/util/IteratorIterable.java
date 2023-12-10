@@ -18,6 +18,8 @@ package com.kohlschutter.dumbo.util;
 
 import java.util.Iterator;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
+
 /**
  * Constructs an {@link Iterable} from an {@link Iterator}.
  *
@@ -27,19 +29,20 @@ import java.util.Iterator;
  * @author Christian Kohlschütter
  */
 public final class IteratorIterable<T> implements Iterable<T> {
-  private final Iterator<T> iterator;
+  private final Iterator<T> iterator; // NOPMD.AvoidFieldNameMatchingMethodName
 
   private IteratorIterable(Iterator<T> iterator) {
     this.iterator = iterator;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public Iterator<T> iterator() {
     return iterator;
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> Iterable<T> of(Iterator<T> it) {
+  public static <T> Iterable<T> of(Iterator<T> it) { // NOPMD.ShortMethodName
     if (it instanceof Iterable) {
       return ((Iterable<T>) it);
     } else {

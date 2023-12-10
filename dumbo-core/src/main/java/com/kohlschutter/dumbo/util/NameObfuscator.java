@@ -22,22 +22,25 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 public final class NameObfuscator {
-  private static final MessageDigest SHA1;
+  private static final ThreadLocal<MessageDigest> TL_SHA1 = new ThreadLocal<>() {
 
-  static {
-    try {
-      SHA1 = MessageDigest.getInstance("SHA-1");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
+    @Override
+    protected MessageDigest initialValue() {
+      try {
+        return MessageDigest.getInstance("SHA-1");
+      } catch (NoSuchAlgorithmException e) {
+        throw new IllegalStateException(e);
+      }
     }
 
-  }
+  };
 
   private NameObfuscator() {
     throw new IllegalStateException("No instances");
   }
 
   public static String obfuscate(String s) {
-    return Base64.getUrlEncoder().encodeToString(SHA1.digest(s.getBytes(StandardCharsets.UTF_8)));
+    return Base64.getUrlEncoder().encodeToString(TL_SHA1.get().digest(s.getBytes(
+        StandardCharsets.UTF_8)));
   }
 }

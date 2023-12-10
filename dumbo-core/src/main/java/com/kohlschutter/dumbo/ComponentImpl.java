@@ -44,6 +44,7 @@ class ComponentImpl implements BaseSupport {
 
   private final Class<? extends DumboComponent> componentClass;
 
+  @SuppressWarnings("PMD.LooseCoupling")
   private LinkedHashSet<Class<?>> reachableComponents = null;
 
   private final Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> componentToSubComponents =
@@ -63,6 +64,7 @@ class ComponentImpl implements BaseSupport {
    * @param extra An additional class to retrieve {@link DumboComponent}s from.
    * @return A collection of {@link DumboComponent} instances, in dependency order.
    */
+  @SuppressWarnings("PMD.LooseCoupling")
   protected synchronized LinkedHashSet<Class<?>> getReachableComponents() {
     if (reachableComponents == null) {
       reachableComponents = new LinkedHashSet<>();
@@ -75,6 +77,7 @@ class ComponentImpl implements BaseSupport {
     return reachableComponents;
   }
 
+  @SuppressWarnings("PMD.LooseCoupling")
   <T extends Annotation> LinkedHashSet<T> getAnnotations(Class<T> annotationClass) {
     LinkedHashSet<T> set = new LinkedHashSet<>();
     for (Class<?> comp : getReachableComponents()) {
@@ -99,6 +102,7 @@ class ComponentImpl implements BaseSupport {
     return AnnotationUtil.getAnnotations(componentClass, annotationClass);
   }
 
+  @SuppressWarnings("PMD.LooseCoupling")
   final <T extends Annotation> LinkedHashSet<T> getAnnotatedMappingsFromAllReachableComponents(
       Class<T> annotationClass) {
     LinkedHashSet<T> annotations = new LinkedHashSet<>();
@@ -108,6 +112,7 @@ class ComponentImpl implements BaseSupport {
     return annotations;
   }
 
+  @SuppressWarnings("PMD.LooseCoupling")
   private static Collection<Class<?>> linearizeComponentHierarchy(Class<?> leafClass,
       Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> componentToSubcomponentsMap) {
     LinkedHashMap<Class<? extends DumboComponent>, AtomicInteger> countMap = new LinkedHashMap<>();
@@ -121,6 +126,7 @@ class ComponentImpl implements BaseSupport {
     return list.stream().map((e) -> e.getKey()).collect(Collectors.toList());
   }
 
+  @SuppressWarnings("PMD.LooseCoupling")
   private static void traverseComponentHierarchy(Class<?> clazzToInspect0,
       LinkedHashMap<Class<? extends DumboComponent>, AtomicInteger> countMap,
       Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> componentToSubcomponentsMap) {

@@ -54,12 +54,12 @@ final class ConsoleImpl implements Console {
   };
   private final PrintWriter consoleOut = new PrintWriter(sw, true) {
     @Override
-    public final void close() {
+    public void close() {
     }
   };
 
-  private AtomicBoolean closed = new AtomicBoolean();
-  private AtomicBoolean shutdownNoticeSent = new AtomicBoolean();
+  private final AtomicBoolean closed = new AtomicBoolean();
+  private final AtomicBoolean shutdownNoticeSent = new AtomicBoolean();
   private ShutdownNotice shutdownRequested = null;
 
   // FIXME this should be a circular buffer of some large maximum size to prevent OOMEs
@@ -80,20 +80,6 @@ final class ConsoleImpl implements Console {
   // }
   // }
   // };
-
-  /**
-   * Creates a new {@link ConsoleImpl}.
-   */
-  ConsoleImpl(DumboSession session) {
-    this.session = session;
-    // app.registerCloseable(this);
-
-    // Runtime.getRuntime().addShutdownHook(CHECK_UNCLEAN_SHUTDOWN);
-  }
-
-  ConsoleService getConsoleService() {
-    return consoleService;
-  }
 
   private final ConsoleService consoleService = new ConsoleService() {
     @Override
@@ -119,7 +105,8 @@ final class ConsoleImpl implements Console {
                 try {
                   consoleService.wait(maxWait);
                   chunk = requestNextChunk(0);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ignore) {
+                  // ignore
                 }
               }
               return chunk;
@@ -140,6 +127,20 @@ final class ConsoleImpl implements Console {
   };
 
   private boolean markedDontFlush = false;
+
+  /**
+   * Creates a new {@link ConsoleImpl}.
+   */
+  ConsoleImpl(DumboSession session) {
+    this.session = session;
+    // app.registerCloseable(this);
+
+    // Runtime.getRuntime().addShutdownHook(CHECK_UNCLEAN_SHUTDOWN);
+  }
+
+  ConsoleService getConsoleService() {
+    return consoleService;
+  }
 
   private Object getChunkFromBuffer() {
     synchronized (consoleService) {
@@ -179,7 +180,7 @@ final class ConsoleImpl implements Console {
    *
    * This can be used to logically group content before sending it to the client.
    *
-   * @throws IOException
+   * @throws IOException on error.
    * @see #resumeFlushing()
    */
   public void suspendFlushing() throws IOException {
@@ -200,7 +201,7 @@ final class ConsoleImpl implements Console {
    *
    * This can be used to logically group content before sending it to the client.
    *
-   * @throws IOException
+   * @throws IOException on error.
    * @see #suspendFlushing()
    */
   public void resumeFlushing() throws IOException {
@@ -233,7 +234,7 @@ final class ConsoleImpl implements Console {
   }
 
   /**
-   * Convenience method for {@code getPrintWriter().println(s);}
+   * Convenience method for {@code getPrintWriter().println(s);}.
    *
    * @param s The string to print.
    */
@@ -243,7 +244,7 @@ final class ConsoleImpl implements Console {
   }
 
   /**
-   * Convenience method for {@code getPrintWriter().println(o);}
+   * Convenience method for {@code getPrintWriter().println(o);}.
    *
    * @param o The object to print.
    */
@@ -253,7 +254,7 @@ final class ConsoleImpl implements Console {
   }
 
   /**
-   * Convenience method for {@code getPrintWriter().println();}
+   * Convenience method for {@code getPrintWriter().println();}.
    */
   @Override
   public void println() {
@@ -275,7 +276,7 @@ final class ConsoleImpl implements Console {
    *
    * @return {@code true} if closed.
    */
-  public final boolean isClosed() {
+  public boolean isClosed() {
     return closed.get();
   }
 
@@ -285,14 +286,14 @@ final class ConsoleImpl implements Console {
    *
    * @throws IOException if closed.
    */
-  public final void checkClosed() throws IOException {
+  public void checkClosed() throws IOException {
     if (isClosed()) {
       throw new IOException("Console is closed");
     }
   }
 
   @Override
-  public final void close() {
+  public void close() {
     synchronized (consoleService) {
       if (!closed.compareAndSet(false, true)) {
         return;

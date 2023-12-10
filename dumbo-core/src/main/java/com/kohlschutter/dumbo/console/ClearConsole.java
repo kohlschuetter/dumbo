@@ -17,10 +17,10 @@
 package com.kohlschutter.dumbo.console;
 
 /**
- * Message to tell the app to clear the console
+ * Message to tell the app to clear the console.
  */
 public class ClearConsole {
-  public String get_() {
+  public String get_() { // NOPMD.MethodNamingConventions
     return "ClearConsole";
   }
 }

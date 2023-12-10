@@ -25,7 +25,7 @@ public final class ShutdownNotice {
   public static final ShutdownNotice CLEAN = new ShutdownNotice(true);
   public static final ShutdownNotice NOT_CLEAN = new ShutdownNotice(false);
 
-  private boolean clean;
+  private final boolean clean;
 
   private ShutdownNotice(boolean clean) {
     this.clean = clean;

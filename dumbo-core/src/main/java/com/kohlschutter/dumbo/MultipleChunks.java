@@ -16,12 +16,15 @@
  */
 package com.kohlschutter.dumbo;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
+
 /**
  * A series of chunks, encapsulated into one.
  */
 public final class MultipleChunks {
-  private Object[] chunks;
+  private final Object[] chunks;
 
+  @SuppressWarnings("PMD.ArrayIsStoredDirectly")
   MultipleChunks(final Object[] chunks) {
     this.chunks = chunks;
   }
@@ -31,6 +34,8 @@ public final class MultipleChunks {
    *
    * @return The chunks.
    */
+  @SuppressWarnings("PMD.MethodReturnsInternalArray")
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Object[] getChunks() {
     return chunks;
   }

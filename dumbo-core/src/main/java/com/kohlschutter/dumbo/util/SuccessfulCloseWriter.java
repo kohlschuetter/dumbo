@@ -66,7 +66,7 @@ public abstract class SuccessfulCloseWriter extends FilterWriter {
    * Called as the last step in {@link #close()}.
    *
    * @param success The state set via {@link #setSuccessful(boolean)}; {@code false} by default.
-   * @throws IOException
+   * @throws IOException on error.
    */
   protected abstract void onClosed(boolean success) throws IOException;
 }

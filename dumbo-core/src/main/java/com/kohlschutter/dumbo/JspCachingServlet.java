@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,13 +42,14 @@ final class JspCachingServlet extends JettyJspServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger LOG = LoggerFactory.getLogger(JspCachingServlet.class);
 
-  private ServletContext context;
+  private transient ServletContext context;
 
   @Override
   public void init() throws ServletException {
     this.context = getServletContext();
   }
 
+  @SuppressWarnings("PMD.NcssCount")
   private boolean checkCache(String path, String generatedPath, HttpServletRequest req,
       HttpServletResponse resp) throws ServletException, IOException {
 
@@ -68,7 +70,7 @@ final class JspCachingServlet extends JettyJspServlet {
 
     File generatedFileParent = generatedFile.getParentFile();
     if (!generatedFileParent.canWrite()) {
-      LOG.warn("Cannot write to location: " + generatedFile);
+      LOG.warn("Cannot write to location: {}", generatedFile);
       return false;
     }
 
@@ -166,7 +168,7 @@ final class JspCachingServlet extends JettyJspServlet {
           }
         }
       } finally {
-        tmpFile.delete();
+        Files.deleteIfExists(tmpFile.toPath());
       }
     }
     return true;

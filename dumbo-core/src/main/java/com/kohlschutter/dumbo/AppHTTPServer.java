@@ -71,6 +71,7 @@ import org.newsclub.net.unix.jetty.AFSocketServerConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.annotations.FilterMapping;
 import com.kohlschutter.dumbo.annotations.Filters;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
@@ -90,8 +91,10 @@ import jakarta.servlet.http.HttpSession;
  *
  * See {@code HelloWorldApp} for a simple demo.
  */
+@SuppressWarnings("PMD.ExcessiveImports")
 public class AppHTTPServer {
   private static final Logger LOG = LoggerFactory.getLogger(AppHTTPServer.class);
+  private static final String JSON_PATH = "/json";
 
   private final Server server;
   private final String contextPath;
@@ -99,7 +102,6 @@ public class AppHTTPServer {
 
   private final ContextHandlerCollection contextHandlers;
   private final ServerApp app;
-  private final String jsonPath = "/json";
 
   private final ErrorHandler errorHandler;
 
@@ -107,28 +109,10 @@ public class AppHTTPServer {
 
   private AFUNIXSocketAddress serverUNIXSocketAddress = null;
 
-  private final QueuedThreadPool threadPool;
-
+  @SuppressWarnings("PMD.LooseCoupling")
   private final LinkedHashMap<WebAppContext, ContextMetadata> contexts = new LinkedHashMap<>();
 
-  private static URL getWebappBaseURL(final ServerApp app) {
-    URL u;
-
-    u = app.getApplicationExtensionImpl().getComponentResource("webapp/");
-    if (u != null) {
-      return u;
-    }
-
-    // FIXME
-    String path = "/" + app.getApplicationClass().getPackage().getName().replace('.', '/')
-        + "/webapp/";
-    u = app.getApplicationClass().getResource(path);
-    Objects.requireNonNull(u, () -> {
-      return "Resource path is missing: " + path;
-    });
-
-    return u;
-  }
+  private final Set<URI> scannedFiles = new HashSet<>();
 
   /**
    * Creates a new HTTP server for the given {@link ServerApp} on a free port.
@@ -175,9 +159,12 @@ public class AppHTTPServer {
     this(tcpPort, app, path, webappBaseURL, null);
   }
 
+  @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public AppHTTPServer(int tcpPort, final ServerApp app, final String path, final URL webappBaseURL,
       RequestLog requestLog) throws IOException {
-    int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081")) : tcpPort;
+    final int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081"))
+        : tcpPort;
 
     Objects.requireNonNull(webappBaseURL, "Webapp baseURL not specified or resources not found");
     this.app = app;
@@ -185,9 +172,7 @@ public class AppHTTPServer {
     this.errorHandler = new ErrorHandler();
     errorHandler.setShowServlet(false);
 
-    this.threadPool = new QueuedThreadPool();
-
-    this.server = new Server(threadPool);
+    this.server = new Server(new QueuedThreadPool());
 
     if (requestLog != null) {
       server.setRequestLog(requestLog);
@@ -234,7 +219,7 @@ public class AppHTTPServer {
 
       ServletHolder sh = new ServletHolder(new JSONRPCBridgeServlet());
       sh.setInitOrder(0); // initialize right upon start
-      wac.addServlet(sh, jsonPath);
+      wac.addServlet(sh, JSON_PATH);
 
       registerContext(wac, webappBaseURI);
 
@@ -249,7 +234,24 @@ public class AppHTTPServer {
     server.setConnectors(initConnectors(port, server));
   }
 
-  private final Set<URI> scannedFiles = new HashSet<>();
+  private static URL getWebappBaseURL(final ServerApp app) {
+    URL u;
+
+    u = app.getApplicationExtensionImpl().getComponentResource("webapp/");
+    if (u != null) {
+      return u;
+    }
+
+    // FIXME
+    String path = "/" + app.getApplicationClass().getPackage().getName().replace('.', '/')
+        + "/webapp/";
+    u = app.getApplicationClass().getResource(path);
+    Objects.requireNonNull(u, () -> {
+      return "Resource path is missing: " + path;
+    });
+
+    return u;
+  }
 
   private static String normalizeFileSlashes(String uri) {
     return uri.replace("file:///", "file:/");
@@ -264,6 +266,7 @@ public class AppHTTPServer {
    * @param dir The directory resource.
    * @throws IOException on error.
    */
+  @SuppressWarnings("PMD.CognitiveComplexity")
   private void scanWebApp(String contextPrefix, String[] dirPrefixes, Resource dir)
       throws IOException {
     URI key = dir.getURI();
@@ -349,7 +352,7 @@ public class AppHTTPServer {
    * @param contextPrefix The context prefix.
    * @param pathToWebAppURL The URL pointing to the resources that should be served.
    * @return The context.
-   * @throws IOException
+   * @throws IOException on error.
    */
   public WebAppContext registerContext(ComponentImpl comp, final String contextPrefix,
       final URL pathToWebAppURL) throws IOException {
@@ -397,18 +400,18 @@ public class AppHTTPServer {
 
     wac.setAttribute(AppHTTPServer.class.getName(), this);
 
-    wac.setAttribute("jsonPath", (contextPath + "/" + jsonPath).replaceAll("//+", "/"));
+    wac.setAttribute("jsonPath", (contextPath + "/" + JSON_PATH).replaceAll("//+", "/"));
 
     ServletContext sc = wac.getServletContext();
     sc.setAttribute(ServerApp.class.getName(), app);
 
     ServletHandler sh = wac.getServletHandler();
 
-    mapServlets(comp, sc, sh);
-    mapFilters(comp, sc, sh);
+    mapServlets(comp, sh);
+    mapFilters(comp, sh);
   }
 
-  private void mapServlets(ComponentImpl comp, ServletContext sc, ServletHandler sh) {
+  private void mapServlets(ComponentImpl comp, ServletHandler sh) {
     Map<String, ServletMapping> mappings = new HashMap<>();
     for (Servlets s : comp.getAnnotatedMappingsFromAllReachableComponents(Servlets.class)) {
       for (ServletMapping mapping : s.value()) {
@@ -436,7 +439,7 @@ public class AppHTTPServer {
 
       ServletHolder holder;
 
-      if (mapToClass.getPackage() == AppHTTPServer.class.getPackage()) {
+      if (mapToClass.getPackage().equals(AppHTTPServer.class.getPackage())) {
         Servlet servlet;
         try {
           servlet = Objects.requireNonNull(mapToClass.getDeclaredConstructor().newInstance());
@@ -456,7 +459,7 @@ public class AppHTTPServer {
     }
   }
 
-  private void mapFilters(ComponentImpl comp, ServletContext sc, ServletHandler sh) {
+  private void mapFilters(ComponentImpl comp, ServletHandler sh) {
     Map<String, List<FilterMapping>> mappings = new HashMap<>();
     for (Filters f : comp.getAnnotatedMappingsFromAllReachableComponents(Filters.class)) {
       for (FilterMapping mapping : f.value()) {
@@ -476,7 +479,7 @@ public class AppHTTPServer {
         EnumSet<DispatcherType> types = EnumSet.copyOf(Arrays.asList(m.dispatcherTypes()));
 
         FilterHolder holder;
-        if (mapToClass.getPackage() == AppHTTPServer.class.getPackage()) {
+        if (mapToClass.getPackage().equals(AppHTTPServer.class.getPackage())) {
           Filter filter;
           try {
             filter = Objects.requireNonNull(mapToClass.getDeclaredConstructor().newInstance());
@@ -514,6 +517,7 @@ public class AppHTTPServer {
     return new HttpClient(new HttpClientTransportDynamic(clientConnector));
   }
 
+  @SuppressWarnings("PMD.CognitiveComplexity")
   private CompletableFuture<Void> regeneratePaths() throws Exception {
     if (pathsToRegenerate.isEmpty()) {
       return CompletableFuture.completedFuture((Void) null);
@@ -532,9 +536,11 @@ public class AppHTTPServer {
         CountDownLatch cdl = new CountDownLatch(pathsToRegenerate.size());
         client.setMaxConnectionsPerDestination(1);
         try {
-          LOG.info("Regenerating " + cdl.getCount() + " paths...");
+          if (LOG.isInfoEnabled()) {
+            LOG.info("Regenerating " + cdl.getCount() + " paths...");
+          }
           for (String path : pathsToRegenerate.keySet()) {
-            LOG.info("Regenerating " + path);
+            LOG.info("Regenerating {}", path);
             String uri = serverURIBase + path + "?reload=true";
             try {
               client.newRequest(uri).method(HttpMethod.HEAD).send(new CompleteListener() {
@@ -542,23 +548,31 @@ public class AppHTTPServer {
                 @Override
                 public void onComplete(Result result) {
                   if (result.isFailed()) {
-                    LOG.warn("Regeneration failed for path: " + path, result.getFailure());
+                    if (LOG.isWarnEnabled()) {
+                      LOG.warn("Regeneration failed for path: " + path, result.getFailure());
+                    }
                   } else if (result.getResponse().getStatus() != HttpServletResponse.SC_OK) {
-                    LOG.warn("Regeneration failed with response " + result.getResponse()
-                        + " for path: " + path);
+                    if (LOG.isWarnEnabled()) {
+                      LOG.warn("Regeneration failed with response " + result.getResponse()
+                          + " for path: " + path);
+                    }
                   }
                   cdl.countDown();
                 }
               });
-            } catch (Throwable t) {
+            } catch (Throwable t) { // NOPMD
               t.printStackTrace();
             }
           }
           if (!cdl.await(1, TimeUnit.MINUTES)) {
-            LOG.warn("Regeneration is taking a long time");
+            if (LOG.isWarnEnabled()) {
+              LOG.warn("Regeneration is taking a long time");
+            }
           }
           cdl.await();
-          LOG.info("Regeneration completed after " + (System.currentTimeMillis() - time) + "ms");
+          if (LOG.isInfoEnabled()) {
+            LOG.info("Regeneration completed after " + (System.currentTimeMillis() - time) + "ms");
+          }
         } finally {
           client.stop();
         }
@@ -631,18 +645,20 @@ public class AppHTTPServer {
       }
 
       @Override
+      @SuppressFBWarnings("DM_EXIT")
       public void run() {
         try {
           Thread.sleep(5000);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
+          // ignored
         }
-        System.exit(0);
+        System.exit(0); // NOPMD.DoNotTerminateVM
       }
     }.start();
   }
 
   /**
-   * This method is called upon any exception during server startup or shutdown
+   * This method is called upon any exception during server startup or shutdown.
    *
    * @param e The Exception
    */
@@ -761,6 +777,7 @@ public class AppHTTPServer {
     }
   }
 
+  @SuppressWarnings("PMD.CognitiveComplexity")
   public boolean checkResourceExists(String path) {
     for (WebAppContext wac : contexts.keySet()) {
       String cp = wac.getContextPath();
@@ -801,7 +818,7 @@ public class AppHTTPServer {
   }
 
   static final class ContextMetadata {
-    private URI webappURI;
+    private final URI webappURI;
 
     ContextMetadata(URI webappURI) {
       this.webappURI = webappURI;

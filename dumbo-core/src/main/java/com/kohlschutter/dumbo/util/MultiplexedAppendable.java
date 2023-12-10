@@ -38,6 +38,7 @@ public class MultiplexedAppendable implements Appendable {
    *
    * @param targets The list of targets.
    */
+  @SuppressWarnings("PMD.ArrayIsStoredDirectly")
   public MultiplexedAppendable(Appendable... targets) {
     this.targets = targets;
     this.excluded = new BitSet(targets.length);
@@ -120,7 +121,7 @@ public class MultiplexedAppendable implements Appendable {
     }
 
     private void setThrowable(Appendable target, int index, Throwable t) {
-      if (targets[index] == target) {
+      if (targets[index] == target) { // NOPMD
         if (errors[index] == null) {
           errors[index] = t;
         }
@@ -205,7 +206,7 @@ public class MultiplexedAppendable implements Appendable {
     public Throwable getError(Appendable target) {
       int index = 0;
       for (Appendable app : targets) {
-        if (app == target && errors[index] != null) {
+        if (app == target && errors[index] != null) { // NOPMD
           return errors[index];
         }
         index++;
@@ -328,7 +329,7 @@ public class MultiplexedAppendable implements Appendable {
    * @param index The index of the {@link Appendable} in the array of targets.
    */
   protected final void exclude(Appendable target, int index) {
-    if (targets[index] == target) {
+    if (targets[index] == target) { // NOPMD
       excluded.set(index);
     }
   }

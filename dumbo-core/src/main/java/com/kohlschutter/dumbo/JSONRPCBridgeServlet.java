@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.WritableByteChannel;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -61,11 +61,10 @@ import jakarta.servlet.http.HttpSession;
 class JSONRPCBridgeServlet extends HttpServlet {
   private static final Logger LOG = LoggerFactory.getLogger(JSONRPCBridgeServlet.class);
   private static final long serialVersionUID = 1L;
-  private static final Charset UTF_8 = Charset.forName("UTF-8");
-  private JSONRPCBridge bridge;
-  private JSONRPCRegistryImpl registry;
-  private final ThreadLocal<String> tlMethod = new ThreadLocal<>();
-  private ServerApp app;
+  private transient JSONRPCBridge bridge;
+  private transient JSONRPCRegistryImpl registry;
+  private final transient ThreadLocal<String> tlMethod = new ThreadLocal<>();
+  private transient ServerApp app;
 
   @Override
   public void init(ServletConfig config) throws ServletException {
@@ -79,7 +78,9 @@ class JSONRPCBridgeServlet extends HttpServlet {
       bridge.setExceptionTransformer(new ExceptionTransformer() {
         @Override
         public Object transform(Throwable t) {
-          LOG.warn("Error during JSON method call: " + tlMethod.get(), t);
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Error during JSON method call: " + tlMethod.get(), t);
+          }
           if (t instanceof PermanentRPCException) {
             throw (PermanentRPCException) t;
           }
@@ -105,8 +106,8 @@ class JSONRPCBridgeServlet extends HttpServlet {
 
   private static final class JSONRPCRegistryImpl implements RPCRegistry {
     private final JSONRPCBridge bridge;
+    private final Map<Class<?>, Object> classToInstance = new HashMap<>();
     private ConsoleService consoleService;
-    private Map<Class<?>, Object> classToInstance = new HashMap<>();
 
     public JSONRPCRegistryImpl(final JSONRPCBridge bridge) {
       this.bridge = bridge;
@@ -167,6 +168,9 @@ class JSONRPCBridgeServlet extends HttpServlet {
     }
   }
 
+  @SuppressWarnings({
+      "PMD.NcssCount", "PMD.CognitiveComplexity", "PMD.NPathComplexity",
+      "PMD.CyclomaticComplexity"})
   private void doPost0(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
 
@@ -216,7 +220,9 @@ class JSONRPCBridgeServlet extends HttpServlet {
       try {
         jsonRequest = new JSONObject(jt);
       } catch (JSONException e) {
-        LOG.info("Could not parse JSON request; pageId=" + pageId, e);
+        if (LOG.isInfoEnabled()) {
+          LOG.info("Could not parse JSON request; pageId=" + pageId, e);
+        }
         response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         response.flushBuffer();
         return;
@@ -240,7 +246,7 @@ class JSONRPCBridgeServlet extends HttpServlet {
 
       int statusCode = HttpServletResponse.SC_OK;
 
-      if (e instanceof NoSessionException) {
+      if (e instanceof NoSessionException) { // NOPMD
         if (app.getMaximumPagesPerSession() == 0) {
           statusCode = HttpServletResponse.SC_FORBIDDEN;
         } else {
@@ -266,7 +272,7 @@ class JSONRPCBridgeServlet extends HttpServlet {
       DumboSessionImpl.removeSession();
     }
 
-    ByteBuffer byteBuffer = UTF_8.encode(result.toJSONString(newServerURL));
+    ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(result.toJSONString(newServerURL));
     response.setContentLength(byteBuffer.remaining());
     response.setContentType("application/json;charset=utf-8");
     try (OutputStream out = response.getOutputStream();

@@ -29,6 +29,7 @@ import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.CSSResources;
 import com.kohlschutter.dumbo.annotations.HTMLResource;
@@ -51,8 +52,8 @@ final class ExtensionImpl extends ComponentImpl {
   private String serverContextPath;
   private String contextPath;
 
-  private StringHolderSequence htmlHead = null;
-  private StringHolderSequence htmlBodyTop = null;
+  private StringHolderSequence htmlHeadSeq = null;
+  private StringHolderSequence htmlBodyTopSeq = null;
 
   private List<JavaScriptResource> jsResources;
   private List<CSSResource> cssResources;
@@ -140,8 +141,8 @@ final class ExtensionImpl extends ComponentImpl {
       }
     }
 
-    htmlHead = this.initHtmlHead(server);
-    htmlBodyTop = this.initHtmlBodyTop();
+    htmlHeadSeq = this.initHtmlHead(server);
+    htmlBodyTopSeq = this.initHtmlBodyTop();
   }
 
   /**
@@ -172,6 +173,7 @@ final class ExtensionImpl extends ComponentImpl {
     }
   }
 
+  @SuppressWarnings({"PMD.CognitiveComplexity", "PMD.CyclomaticComplexity", "PMD.NPathComplexity"})
   private StringHolderSequence initHtmlHead(AppHTTPServer server) throws IOException {
     StringHolderSequence sb = StringHolder.newSequence();
 
@@ -193,7 +195,9 @@ final class ExtensionImpl extends ComponentImpl {
             }
             continue;
           } else {
-            LOG.warn("CSS resource " + url + " is missing from " + this);
+            if (LOG.isWarnEnabled()) {
+              LOG.warn("CSS resource " + url + " is missing from " + this);
+            }
           }
         }
 
@@ -222,7 +226,9 @@ final class ExtensionImpl extends ComponentImpl {
             }
             continue;
           } else {
-            LOG.warn("JavaScript" + url + " is missing from " + this);
+            if (LOG.isWarnEnabled()) {
+              LOG.warn("JavaScript" + url + " is missing from " + this);
+            }
           }
         }
 
@@ -264,6 +270,7 @@ final class ExtensionImpl extends ComponentImpl {
     return sb;
   }
 
+  @SuppressFBWarnings("DCN_NULLPOINTER_EXCEPTION")
   private String getContentsOfResource(String path) throws IOException {
     try (InputStream in = getComponentResource(path).openStream();
         Scanner sc = new Scanner(in, "UTF-8")) {
@@ -286,7 +293,7 @@ final class ExtensionImpl extends ComponentImpl {
    * @return The HTML string.
    */
   StringHolderSequence htmlHead(final ServerApp app) {
-    return htmlHead.clone();
+    return htmlHeadSeq.clone();
   }
 
   /**
@@ -297,7 +304,7 @@ final class ExtensionImpl extends ComponentImpl {
    * @return The HTML string.
    */
   StringHolderSequence htmlBodyTop(final ServerApp app) {
-    return htmlBodyTop.clone();
+    return htmlBodyTopSeq.clone();
   }
 
   private static String xmlEntities(final String in) {

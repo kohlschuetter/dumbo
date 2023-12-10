@@ -27,7 +27,7 @@ public interface RPCRegistry {
    * @param serviceInterface The service interface
    * @param instance The service implementation.
    */
-  <T> void registerRPCService(final Class<T> serviceInterface, final T instance);
+  <T> void registerRPCService(Class<T> serviceInterface, T instance);
 
-  <T> T getRPCService(final Class<T> serviceInterface);
+  <T> T getRPCService(Class<T> serviceInterface);
 }
