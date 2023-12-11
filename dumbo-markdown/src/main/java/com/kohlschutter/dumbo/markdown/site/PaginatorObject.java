@@ -32,7 +32,7 @@ import com.kohlschutter.dumbo.markdown.LiquidVariables;
  */
 // FIXME not fully implemented yet
 public class PaginatorObject extends FilterMap.ReadOnlyFilterMap<String, Object> {
-  private final List<Object> posts;
+  private final List<Object> posts; // NOPMD.SingularField
 
   @SuppressWarnings("unchecked")
   public PaginatorObject(Map<String, Object> commonVariables) {

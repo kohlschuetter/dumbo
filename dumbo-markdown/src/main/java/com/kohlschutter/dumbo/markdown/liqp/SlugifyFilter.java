@@ -37,7 +37,7 @@ public class SlugifyFilter extends Filter {
       return content;
     }
 
-    content.replace(' ', '-').toLowerCase(Locale.ENGLISH);
+    content = content.replace(' ', '-').toLowerCase(Locale.ENGLISH);
 
     return content;
   }

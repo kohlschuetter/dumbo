@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.kohlschutter.dumbo.util.SuppliedThreadLocal;
+
 public final class PermalinkParser {
   private static final Pattern PAT_PERMA_VAR = Pattern.compile(":([a-z_]+)\\b");
 
@@ -35,10 +37,11 @@ public final class PermalinkParser {
 
   private static final Pattern PAT_ALPHANUM_LOWER = Pattern.compile("[^a-z0-9]+");
 
-  private static final SimpleDateFormat SDF_YMD = new SimpleDateFormat("YYYY-MM-dd",
-      Locale.ENGLISH);
+  private static final ThreadLocal<SimpleDateFormat> SDF_YMD = SuppliedThreadLocal.of(
+      () -> new SimpleDateFormat("YYYY-MM-dd", Locale.ENGLISH));
 
   private static final Map<String, String> STYLES = new HashMap<>();
+
   static {
     STYLES.put("date", "/:categories/:year/:month/:day/:title:output_ext");
     STYLES.put("pretty", "/:categories/:year/:month/:day/:title/");
@@ -48,6 +51,7 @@ public final class PermalinkParser {
   }
 
   private static final Map<String, SimpleDateFormat> DATE_KEYS = new HashMap<>();
+
   static {
     DATE_KEYS.put("year", new SimpleDateFormat("YYYY", Locale.ENGLISH));
     DATE_KEYS.put("short_year", new SimpleDateFormat("YY", Locale.ENGLISH));
@@ -67,6 +71,7 @@ public final class PermalinkParser {
   private PermalinkParser() {
   }
 
+  @SuppressWarnings({"PMD.NcssCount", "PMD.CognitiveComplexity", "PMD.CyclomaticComplexity"})
   public static String parsePermalink(String permalink, Map<String, Object> pageVariables)
       throws ParseException {
     if (permalink == null) {
@@ -96,7 +101,7 @@ public final class PermalinkParser {
       matcher = PAT_DATE_FILENAME.matcher(filename);
       String filenameRest;
       if (matcher.find()) {
-        date = SDF_YMD.parse(matcher.group(1));
+        date = SDF_YMD.get().parse(matcher.group(1));
         filenameRest = matcher.group(2);
       } else {
         date = null;

@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.RenderState;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.markdown.liqp.AssetPathTag;
@@ -71,7 +72,7 @@ import liqp.parser.Flavor;
 public class LiquidHelper {
   private static final Logger LOG = LoggerFactory.getLogger(LiquidHelper.class);
 
-  private static final char[] FRONT_MATTER_LINE = new char[] {'-', '-', '-', '\n'};
+  private static final char[] FRONT_MATTER_LINE = {'-', '-', '-', '\n'};
 
   public static final String ENVIRONMENT_KEY_DUMBO_APP = ".dumbo.app";
 
@@ -86,10 +87,10 @@ public class LiquidHelper {
 
   // FIXME revisit this
   static final class GraalVMStub {
-    static final MarkdownServlet obj1 = new MarkdownServlet();
-    static final HtmlJspFilter obj2 = new HtmlJspFilter();
-    static final HtmlRenderer obj3 = HtmlRenderer.builder().build();
-    static final LineAppendable.Options[] obj4 = LineAppendable.Options.values();
+    static final MarkdownServlet OBJ1 = new MarkdownServlet();
+    static final HtmlJspFilter OBJ2 = new HtmlJspFilter();
+    static final HtmlRenderer OBJ3 = HtmlRenderer.builder().build();
+    static final LineAppendable.Options[] OBJ4 = LineAppendable.Options.values();
   }
 
   LiquidHelper(ServerApp app, Map<String, Object> commonVariables) {
@@ -120,16 +121,7 @@ public class LiquidHelper {
   public Object prerenderLiquid(PathReaderSupplier inSup, Map<String, Object> variablesIn,
       String collectionItemType, Supplier<Map<String, Object>> itemVariablesSupplier)
       throws IOException {
-    int expectedLen;
-    if (inSup instanceof HasLength) {
-      expectedLen = ((HasLength) inSup).length();
-    } else if (inSup instanceof HasExpectedLength) {
-      expectedLen = ((HasExpectedLength) inSup).getExpectedLength();
-    } else {
-      expectedLen = 0;
-    }
-    return prerenderLiquid(inSup, expectedLen, variablesIn, collectionItemType,
-        itemVariablesSupplier);
+    return prerenderLiquid(inSup, 0, variablesIn, collectionItemType, itemVariablesSupplier);
   }
 
   public Object prerenderLiquid(PathReaderSupplier inSup, int expectedLen,
@@ -159,6 +151,8 @@ public class LiquidHelper {
         false);
   }
 
+  @SuppressWarnings("PMD.CognitiveComplexity")
+  @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   private Object prerenderLiquid(PathReaderSupplier inSup, int expectedLen,
       Map<String, Object> variables, String collectionItemType,
       Supplier<Map<String, Object>> pageVariablesSupplier, boolean justParseFrontMatter)
@@ -168,7 +162,7 @@ public class LiquidHelper {
 
     if (in instanceof HasLength) {
       expectedLen = ((HasLength) in).length();
-    } else if (inSup instanceof HasExpectedLength) {
+    } else if (in instanceof HasExpectedLength) {
       expectedLen = ((HasExpectedLength) in).getExpectedLength();
     }
 
@@ -247,6 +241,7 @@ public class LiquidHelper {
     }
   }
 
+  @SuppressWarnings("PMD.CognitiveComplexity")
   private void initDefaults(String type, String relativePath, Map<String, Object> pageVariables) {
     @SuppressWarnings("unchecked")
     List<Map<String, Map<String, Object>>> cv =
@@ -312,7 +307,9 @@ public class LiquidHelper {
         Map<String, Object> map = (Map<String, Object>) o;
         page.putAll(map);
       } else {
-        LOG.warn("Unexpected YAML object class in front matter: " + o.getClass());
+        if (LOG.isWarnEnabled()) {
+          LOG.warn("Unexpected YAML object class in front matter: " + o.getClass());
+        }
       }
     }
   }
@@ -335,7 +332,7 @@ public class LiquidHelper {
     @SuppressWarnings("unchecked")
     Set<String> includedLayouts = (((ThreadLocal<RenderState>) ((Map<String, Object>) variables.get(
         LiquidVariables.DUMBO)).get(LiquidVariables.DUMBO_STATE_TL)).get()).getIncluded();
-    do {
+    do { // NOPMD.WhileLoopWithLiteralBoolean
       if (!includedLayouts.add(layoutId)) {
         IOException e = new IOException("Circular reference detected: Layout " + layoutId
             + " already detected: " + includedLayouts);
@@ -363,10 +360,10 @@ public class LiquidHelper {
 
           for (Exception exc : template.errors()) {
             // FIXME handle errors
-            LOG.warn(exc.toString());
+            LOG.warn("Template error", exc);
           }
         } catch (RuntimeException e) {
-          throw new RuntimeException("Error in layout " + layoutId, e);
+          throw new IllegalStateException("Error in layout " + layoutId, e);
         }
 
         in.close();
@@ -378,7 +375,7 @@ public class LiquidHelper {
       if (in == null) {
         break;
       }
-    } while (true);
+    } while (true); // NOPMD.WhileLoopWithLiteralBoolean
 
     return contentSupply;
   }

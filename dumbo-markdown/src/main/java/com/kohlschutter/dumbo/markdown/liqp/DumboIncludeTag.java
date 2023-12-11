@@ -36,7 +36,7 @@ import liqp.parser.Flavor;
 import liqp.tags.Tag;
 
 public class DumboIncludeTag extends Tag {
-  public static String DEFAULT_EXTENSION = ".liquid";
+  public static final String DEFAULT_EXTENSION = ".liquid";
 
   public DumboIncludeTag() {
     super("include");
@@ -92,7 +92,7 @@ public class DumboIncludeTag extends Tag {
     } catch (Exception e) {
       e.printStackTrace();
       if (context.getParser().showExceptionsFromInclude) {
-        throw new RuntimeException("problem with evaluating include: " + includeResource, e);
+        throw new IllegalStateException("problem with evaluating include: " + includeResource, e);
       } else {
         return "";
       }

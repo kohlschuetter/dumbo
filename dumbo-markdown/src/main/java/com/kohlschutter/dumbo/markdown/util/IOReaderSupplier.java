@@ -42,6 +42,7 @@ import com.kohlschutter.stringhold.IOSupplier;
  *
  * @author Christian Kohlschütter
  */
+// CPD-OFF
 final class IOReaderSupplier {
   @ExcludeFromCodeCoverageGeneratedReport(reason = "unreachable")
   private IOReaderSupplier() {

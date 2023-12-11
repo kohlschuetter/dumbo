@@ -35,7 +35,7 @@ public class ReflectionSupplierMap<V> extends SupplierMap<String, V> {
     String[] key();
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "PMD.CognitiveComplexity", "PMD.CyclomaticComplexity"})
   public ReflectionSupplierMap(Class<? extends V> valueType, String... partialOrder) {
     super();
 

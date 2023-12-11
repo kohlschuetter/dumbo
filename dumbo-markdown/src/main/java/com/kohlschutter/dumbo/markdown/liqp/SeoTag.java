@@ -18,12 +18,14 @@
 package com.kohlschutter.dumbo.markdown.liqp;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.markdown.YAMLSupport;
 import com.kohlschutter.dumbo.markdown.util.ReflectionSupplierMap;
 
@@ -49,7 +51,7 @@ import liqp.tags.Tag;
 public class SeoTag extends Tag {
   private static final Pattern PAT_HOMEPAGE_OR_ABOUT = Pattern.compile(
       "^/(about/)?(index.html?)?$");
-  private static final String[] FORMAT_STRING_FILTERS = new String[] {
+  private static final String[] FORMAT_STRING_FILTERS = {
       "markdownify", "strip_html", "normalize_whitespace", "escape_once"};
   private static final String TITLE_SEPARATOR = " | ";
   private static final String VERSION = "Dumbo-1.0";
@@ -89,8 +91,8 @@ public class SeoTag extends Tag {
     variables.put("seo_tag", seoTagMap);
 
     Template template;
-    try {
-      template = context.getParser().parse(SeoTag.class.getResourceAsStream("seo-template.html"));
+    try (InputStream in = SeoTag.class.getResourceAsStream("seo-template.html")) {
+      template = context.getParser().parse(in);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
@@ -110,6 +112,7 @@ public class SeoTag extends Tag {
     private final String pageNumber;
 
     @SuppressWarnings("unchecked")
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public SeoTagMap(TemplateContext context) {
       super(Object.class);
       this.context = context;
@@ -320,6 +323,7 @@ public class SeoTag extends Tag {
   protected static class JsonLdMap extends ReflectionSupplierMap<Object> {
     private final SeoTagMap seoTagMap;
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public JsonLdMap(SeoTagMap seoTagMap) {
       super(Object.class);
       this.seoTagMap = seoTagMap;

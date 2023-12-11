@@ -42,12 +42,12 @@ import com.vladsch.flexmark.util.sequence.BasedSequence;
  * The node renderer that renders all the core nodes (comes last in the order of node renderers).
  */
 public class CustomFencedCodeRenderer implements NodeRenderer {
-  final public static AttributablePart LOOSE_LIST_ITEM = new AttributablePart("LOOSE_LIST_ITEM");
-  final public static AttributablePart TIGHT_LIST_ITEM = new AttributablePart("TIGHT_LIST_ITEM");
-  final public static AttributablePart PARAGRAPH_LINE = new AttributablePart("PARAGRAPH_LINE");
-  final public static AttributablePart CODE_CONTENT = new AttributablePart("FENCED_CODE_CONTENT");
+  public static final AttributablePart LOOSE_LIST_ITEM = new AttributablePart("LOOSE_LIST_ITEM");
+  public static final AttributablePart TIGHT_LIST_ITEM = new AttributablePart("TIGHT_LIST_ITEM");
+  public static final AttributablePart PARAGRAPH_LINE = new AttributablePart("PARAGRAPH_LINE");
+  public static final AttributablePart CODE_CONTENT = new AttributablePart("FENCED_CODE_CONTENT");
 
-  final private boolean codeContentBlock;
+  private final boolean codeContentBlock;
 
   public CustomFencedCodeRenderer(DataHolder options) {
     codeContentBlock = Parser.FENCED_CODE_CONTENT_BLOCK.get(options);
@@ -59,6 +59,7 @@ public class CustomFencedCodeRenderer implements NodeRenderer {
         this::render)));
   }
 
+  @SuppressWarnings("PMD.CognitiveComplexity")
   void render(FencedCodeBlock node, NodeRendererContext context, HtmlWriter html) {
     html.line();
 

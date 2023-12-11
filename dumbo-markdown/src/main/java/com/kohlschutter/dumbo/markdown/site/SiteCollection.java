@@ -30,6 +30,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.markdown.LiquidHelper;
 import com.kohlschutter.dumbo.markdown.LiquidVariables;
 import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
@@ -44,11 +45,11 @@ import com.kohlschutter.stringhold.StringHolder;
 public final class SiteCollection implements List<Object> {
   private final LiquidHelper liquid;
   private final String collectionId;
-  private Iterable<PathReaderSupplier> objectSuppliers;
+  private final Iterable<PathReaderSupplier> objectSuppliers;
   private List<Object> objects;
   private final Map<String, Object> variables;
-  private Integer size;
-  private boolean output;
+  private Integer size; // NOPMD.AvoidFieldNameMatchingMethodName
+  private final boolean output;
 
   SiteCollection(LiquidHelper liquid, Map<String, Object> collectionsConfig, String collectionId,
       Map<String, Object> variables, Iterable<PathReaderSupplier> entries) {
@@ -66,6 +67,8 @@ public final class SiteCollection implements List<Object> {
       sortBy(collectionConfig.get("sort_by"));
 
       this.output = Boolean.valueOf(String.valueOf(collectionConfig.get("output")));
+    } else {
+      this.output = false;
     }
   }
 
@@ -87,6 +90,7 @@ public final class SiteCollection implements List<Object> {
     Collections.sort(objects, new Comparator<Object>() {
 
       @SuppressWarnings("unchecked")
+      @SuppressFBWarnings("RV_NEGATING_RESULT_OF_COMPARETO")
       @Override
       public int compare(Object o1, Object o2) {
         if (o1 instanceof Map && o2 instanceof Map) {
@@ -116,6 +120,7 @@ public final class SiteCollection implements List<Object> {
     return this;
   }
 
+  @SuppressWarnings("PMD.CognitiveComplexity")
   private Map<String, Object> loadObject(PathReaderSupplier supp, int index)
       throws FileNotFoundException, IOException {
     Map<String, Object> map = new HashMap<>();
@@ -140,6 +145,7 @@ public final class SiteCollection implements List<Object> {
         return super.toString() + "(FilteredMap site.collection;id=" + collectionId + ")";
       }
 
+      @SuppressFBWarnings("IA_AMBIGUOUS_INVOCATION_OF_INHERITED_OR_OUTER_METHOD") // size()
       @Override
       public Object get(Object key) {
         if (key instanceof CharSequence) {
@@ -236,7 +242,7 @@ public final class SiteCollection implements List<Object> {
   public Iterator<Object> iterator() {
     final Iterator<PathReaderSupplier> it = objectSuppliers.iterator();
     return new Iterator<Object>() {
-      int i = 0;
+      int index = 0;
 
       @Override
       public boolean hasNext() {
@@ -245,16 +251,16 @@ public final class SiteCollection implements List<Object> {
 
       @Override
       public Object next() {
-        int index = i++;
+        int i = index++;
         PathReaderSupplier supp = it.next();
-        if (objects != null && index < objects.size()) {
-          Object obj = get(index);
+        if (objects != null && i < objects.size()) {
+          Object obj = get(i);
           if (obj != null) {
             return obj;
           }
         }
 
-        return updateObject(supp, index);
+        return updateObject(supp, i);
       }
     };
   }

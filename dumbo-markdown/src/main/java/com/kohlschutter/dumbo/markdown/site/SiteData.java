@@ -55,6 +55,7 @@ public class SiteData extends FilterMap.ReadOnlyFilterMap<String, Object> {
     throw new UnsupportedOperationException();
   }
 
+  @SuppressWarnings("PMD.UseTryWithResources")
   @Override
   public Object get(Object k) {
     String key = k.toString();

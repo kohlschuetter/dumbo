@@ -52,6 +52,31 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
   private final ServerApp app;
   private final LiquidHelper liquid;
 
+  private SiteObject(ServerApp app, LiquidHelper liquid) {
+    super(new HashMap<>());
+    this.app = app;
+    this.liquid = liquid;
+
+    Map<String, Object> map = getMap();
+
+    // Load default config
+    URL defaultConfigYml = getClass().getResource("defaultConfig.yml");
+    if (defaultConfigYml == null) {
+      throw new IllegalStateException("defaultConfig.yml not found");
+    }
+    mergeConfig(defaultConfigYml);
+
+    // Load site-specific config
+    URL configYml = app.getResource("markdown/_config.yml");
+    if (configYml != null) {
+      mergeConfig(configYml);
+    } else {
+      System.out.println("Not found: markdown/_config.yml");
+    }
+
+    map.put(LiquidVariables.SITE_DATA, new SiteData(app, "markdown/_data"));
+  }
+
   public static SiteObject addTo(ServerApp app, LiquidHelper liquid,
       Map<String, Object> commonVariables) {
     SiteObject instance = new SiteObject(app, liquid);
@@ -97,33 +122,8 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
       Map<String, Object> configMap = (Map<String, Object>) config;
       mergeMaps(map, configMap);
     } catch (IOException e) {
-      throw new IllegalStateException("Could not parse " + configYml);
+      throw new IllegalStateException("Could not parse " + configYml, e);
     }
-  }
-
-  private SiteObject(ServerApp app, LiquidHelper liquid) {
-    super(new HashMap<>());
-    this.app = app;
-    this.liquid = liquid;
-
-    Map<String, Object> map = getMap();
-
-    // Load default config
-    URL defaultConfigYml = getClass().getResource("defaultConfig.yml");
-    if (defaultConfigYml == null) {
-      throw new IllegalStateException("defaultConfig.yml not found");
-    }
-    mergeConfig(defaultConfigYml);
-
-    // Load site-specific config
-    URL configYml = app.getResource("markdown/_config.yml");
-    if (configYml != null) {
-      mergeConfig(configYml);
-    } else {
-      System.out.println("Not found: markdown/_config.yml");
-    }
-
-    map.put(LiquidVariables.SITE_DATA, new SiteData(app, "markdown/_data"));
   }
 
   private void init() {
@@ -160,12 +160,12 @@ public final class SiteObject extends FilterMap.ReadOnlyFilterMap<String, Object
       try (Stream<Path> paths = Files.find(p, MAX_PATH_DEPTH, (path, attr) -> !attr.isDirectory()
           && path.toString().endsWith(".md")).sorted(Collections.reverseOrder())) {
         return paths.map((path) -> {
-          String uString = path.toUri().toString();
-          if (!uString.startsWith(rootUriPrefix)) {
+          String uriString = path.toUri().toString();
+          if (!uriString.startsWith(rootUriPrefix)) {
             throw new IllegalStateException("URL does not start with " + rootUriPrefix + ": "
-                + uString);
+                + uriString);
           }
-          String relativeUrl = uString.substring(rootUriPrefix.length());
+          String relativeUrl = uriString.substring(rootUriPrefix.length());
           if (relativeUrl.startsWith("/")) {
             relativeUrl = relativeUrl.substring(1);
           }

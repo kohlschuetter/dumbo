@@ -17,38 +17,40 @@
  */
 package com.kohlschutter.dumbo.markdown;
 
-public interface LiquidVariables {
-  String DUMBO = "dumbo";
-  String DUMBO_HTMLHEAD = "htmlHead";
-  String DUMBO_HTMLBODYTOP = "htmlBodyTop";
-  String DUMBO_STATE_TL = " tlState";
+public final class LiquidVariables {
+  public static final String DUMBO = "dumbo";
+  public static final String DUMBO_HTMLHEAD = "htmlHead";
+  public static final String DUMBO_HTMLBODYTOP = "htmlBodyTop";
+  public static final String DUMBO_STATE_TL = " tlState";
 
-  String SITE = "site";
-  String SITE_DATA = "data";
-  String SITE_TAGS = "tags";
-  String SITE_CATEGORIES = "categories";
-  String SITE_COLLECTIONS = "collections";
-  String SITE_POSTS = "posts";
+  public static final String SITE = "site";
+  public static final String SITE_DATA = "data";
+  public static final String SITE_TAGS = "tags";
+  public static final String SITE_CATEGORIES = "categories";
+  public static final String SITE_COLLECTIONS = "collections";
+  public static final String SITE_POSTS = "posts";
 
-  String JEKYLL = "jekyll";
+  public static final String JEKYLL = "jekyll";
 
-  String PAGE = "page";
-  String PAGE_LAYOUT = "layout";
-  String PAGE_TAGS = "tags";
-  String PAGE_CATEGORIES = "categories";
-  String PAGE_PERMALINK = "permalink";
-  String PAGE_URL = "url";
-  String PAGE_COLLECTION = "collection";
-  String PAGE_TYPE = "type";
-  String PAGE_NAME = "name";
-  String PAGE_TITLE = "title";
+  public static final String PAGE = "page";
+  public static final String PAGE_LAYOUT = "layout";
+  public static final String PAGE_TAGS = "tags";
+  public static final String PAGE_CATEGORIES = "categories";
+  public static final String PAGE_PERMALINK = "permalink";
+  public static final String PAGE_URL = "url";
+  public static final String PAGE_COLLECTION = "collection";
+  public static final String PAGE_TYPE = "type";
+  public static final String PAGE_NAME = "name";
+  public static final String PAGE_TITLE = "title";
 
-  String PAGINATOR = "paginator";
+  public static final String PAGINATOR = "paginator";
 
-  String JEKYLLARCHIVES = "jekyll-archives";
-  String JEKYLLARCHIVES_ENABLED = "enabled";
-  String JEKYLLARCHIVES_LAYOUT = "layout";
-  String JEKYLLARCHIVES_LAYOUTS = "layouts";
-  String JEKYLLARCHIVES_PERMALINKS = "permalinks";
+  public static final String JEKYLLARCHIVES = "jekyll-archives";
+  public static final String JEKYLLARCHIVES_ENABLED = "enabled";
+  public static final String JEKYLLARCHIVES_LAYOUT = "layout";
+  public static final String JEKYLLARCHIVES_LAYOUTS = "layouts";
+  public static final String JEKYLLARCHIVES_PERMALINKS = "permalinks";
 
+  private LiquidVariables() {
+  }
 }

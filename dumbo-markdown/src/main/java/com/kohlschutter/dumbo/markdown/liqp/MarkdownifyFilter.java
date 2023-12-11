@@ -54,7 +54,7 @@ public class MarkdownifyFilter extends Filter {
       mh.render(mh.parseMarkdown(value), sh);
       return sh;
     } catch (IOException e) {
-      throw new RuntimeException("Cannot markdownify content");
+      throw new IllegalStateException("Cannot markdownify content", e);
     }
   }
 }

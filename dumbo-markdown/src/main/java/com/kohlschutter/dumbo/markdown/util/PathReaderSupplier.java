@@ -27,7 +27,7 @@ import java.nio.file.Path;
 
 import com.kohlschutter.stringhold.IOSupplier;
 
-public class PathReaderSupplier implements IOSupplier<Reader> {
+public final class PathReaderSupplier implements IOSupplier<Reader> {
   private final IOSupplier<Reader> supplier;
   private final String relativePath;
   private final String type;

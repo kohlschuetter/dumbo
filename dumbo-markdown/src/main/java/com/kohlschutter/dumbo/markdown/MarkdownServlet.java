@@ -36,11 +36,10 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class MarkdownServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
-  private ServletContext servletContext;
+  private transient ServletContext servletContext;
 
-  private ServerApp app;
-
-  private MarkdownSupportImpl mdConfig;
+  private transient ServerApp app;
+  private transient MarkdownSupportImpl mdConfig;
 
   @Override
   public void init() throws ServletException {

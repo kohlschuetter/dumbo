@@ -76,7 +76,6 @@ final class MarkdownSupportImpl {
 
   private final SiteObject siteObject;
 
-  private final URL webappBaseURL;
   private final File webappWorkDir;
 
   MarkdownSupportImpl(ServerApp app) throws IOException {
@@ -84,13 +83,13 @@ final class MarkdownSupportImpl {
     this.liquid = new LiquidHelper(app, commonVariables);
     this.liquidMarkdown = new LiquidMarkdownHelper(liquid);
 
-    webappBaseURL = app.getResource("webapp/");
+    URL webappBaseURL = app.getResource("webapp/");
     if (webappBaseURL == null) {
       throw new IllegalStateException("Cannot get webapp base");
     }
 
     webappWorkDir = app.getWebappWorkDir();
-    webappWorkDir.mkdirs();
+    Files.createDirectories(webappWorkDir.toPath());
 
     commonVariables.put(LiquidVariables.DUMBO, commonDumboVariables);
 
@@ -102,7 +101,7 @@ final class MarkdownSupportImpl {
     createFiles();
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "PMD.CognitiveComplexity"})
   private void createFiles() throws IOException {
     Map<String, Map<String, Collection<Object>>> categoryArchives = new HashMap<>();
     Map<String, Map<String, Collection<Object>>> tagArchives = new HashMap<>();
@@ -142,9 +141,6 @@ final class MarkdownSupportImpl {
 
       List<Map<String, Object>> list = (List<Map<String, Object>>) siteObject.get(collectionId);
       for (Map<String, Object> l : list) {
-        Map<String, Object> variables = new HashMap<>(commonVariables);
-        variables.put(LiquidVariables.PAGE, l);
-
         String permalink = (String) l.get(LiquidVariables.PAGE_PERMALINK);
         if (permalink == null || permalink.isBlank()) {
           System.err.println("Skipping entry without permalink");
@@ -181,7 +177,7 @@ final class MarkdownSupportImpl {
       permalink += "index.html";
     }
     File permalinkFile = new File(webappWorkDir, permalink);
-    permalinkFile.getParentFile().mkdirs();
+    Files.createDirectories(permalinkFile.getParentFile().toPath());
 
     String layout = (String) pageVariables.get(LiquidVariables.PAGE_LAYOUT);
 
@@ -323,7 +319,7 @@ final class MarkdownSupportImpl {
     }
 
     time = System.currentTimeMillis() - time;
-    LOG.info("Request time: " + time + "ms for " + relativePath);
+    LOG.info("Request time: {} ms for {}", time, relativePath);
   }
 
   private SuccessfulCloseWriter mdReloadWriter(File targetFile, boolean generateHtmlFile)
@@ -343,7 +339,7 @@ final class MarkdownSupportImpl {
     // System.out.println("WD " + app.getWorkDir() + " " + app.getWorkDir().exists());
 
     if (generateHtmlFile || !htmlFile.exists()) {
-      LOG.info("Generating " + htmlFile);
+      LOG.info("Generating {}", htmlFile);
       File mdFileHtmlTmp = File.createTempFile(".md", ".tmp", app.getWorkDir());
 
       return new SuccessfulCloseWriter(new OutputStreamWriter(new FileOutputStream(mdFileHtmlTmp),
@@ -352,9 +348,9 @@ final class MarkdownSupportImpl {
         @Override
         protected void onClosed(boolean success) throws IOException {
           if (success && mdFileHtmlTmp.renameTo(htmlFile)) {
-            LOG.debug("renamed successfully: " + htmlFile);
+            LOG.debug("renamed successfully: {} ", htmlFile);
           } else {
-            LOG.warn("Failed to create " + htmlFile);
+            LOG.warn("Failed to create {}", htmlFile);
             Files.deleteIfExists(mdFileHtmlTmp.toPath());
           }
         }
@@ -364,7 +360,7 @@ final class MarkdownSupportImpl {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "PMD.CognitiveComplexity", "PMD.NPathComplexity"})
   private void createArchives(Map<String, Map<String, Map<String, Collection<Object>>>> archivesMap)
       throws IOException {
     Map<String, Object> archivesConfig = (Map<String, Object>) siteObject.get(
@@ -380,7 +376,7 @@ final class MarkdownSupportImpl {
       if ("all".equals(enabledObj)) {
         enabledObj = List.of("year", "month", "day", "categories", "tags");
       } else {
-        LOG.warn("Illegal string value for liquid-archives enabled: " + enabledObj);
+        LOG.warn("Illegal string value for liquid-archives enabled: {}", enabledObj);
       }
     }
 
@@ -434,7 +430,7 @@ final class MarkdownSupportImpl {
         try {
           permalink = PermalinkParser.parsePermalink(permalinkTemplate, pageVariables);
         } catch (ParseException e) {
-          LOG.warn("Cannot parse permalink: " + permalinkTemplate, e);
+          LOG.warn("Cannot parse permalink: {}", permalinkTemplate, e);
           continue;
         }
         pageVariables.putAll(en.getValue());

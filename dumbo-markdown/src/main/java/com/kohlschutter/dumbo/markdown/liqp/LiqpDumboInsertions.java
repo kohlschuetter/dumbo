@@ -66,6 +66,10 @@ public final class LiqpDumboInsertions {
     registerInsertion(new Unless());
   }
 
+  private LiqpDumboInsertions() {
+    throw new IllegalStateException("No instances");
+  }
+
   /**
    * Registers a new insertion.
    *
@@ -77,9 +81,5 @@ public final class LiqpDumboInsertions {
 
   public static Map<String, Insertion> getInsertions() {
     return INSERTIONS_READONLY;
-  }
-
-  private LiqpDumboInsertions() {
-    throw new IllegalStateException("No instances");
   }
 }

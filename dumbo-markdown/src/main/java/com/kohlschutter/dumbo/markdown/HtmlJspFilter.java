@@ -37,8 +37,8 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class HtmlJspFilter extends HttpFilter {
   private static final long serialVersionUID = 1L;
-  private static final String[] suffixesWithoutHtml = new String[] {".jsp", ".md"};
-  private static final String[] suffixesWithHtml = new String[] {".md", ".html.jsp"};
+  private static final String[] SUFFIXES_WITHOUT_HTML = {".jsp", ".md"};
+  private static final String[] SUFFIXES_WITH_HTML = {".md", ".html.jsp"};
 
   @Override
   protected void doFilter(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
@@ -57,10 +57,10 @@ public class HtmlJspFilter extends HttpFilter {
     String[] suffixes;
     if (pathInContext.endsWith(".html")) {
       pathInContext = pathInContext.substring(0, pathInContext.length() - ".html".length());
-      suffixes = suffixesWithHtml;
+      suffixes = SUFFIXES_WITH_HTML;
     } else {
       // unexpected
-      suffixes = suffixesWithoutHtml;
+      suffixes = SUFFIXES_WITHOUT_HTML;
     }
     for (String suffix : suffixes) {
       String path = pathInContext + suffix;
