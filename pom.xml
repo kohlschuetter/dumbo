@@ -28,7 +28,7 @@
 
         <kohlschutter.java.release>11</kohlschutter.java.release>
 
-        <stringhold.version>1.0.0</stringhold.version>
+        <stringhold.version>1.0.1</stringhold.version>
         <jacline.version>1.0.0</jacline.version>
     </properties>
 
