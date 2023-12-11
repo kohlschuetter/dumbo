@@ -16,26 +16,25 @@
  */
 package com.kohlschutter.dumbo.util;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import java.util.function.Supplier;
 
-public final class NameObfuscator {
-  private static final ThreadLocal<MessageDigest> TL_SHA1 = SuppliedThreadLocal.of(() -> {
-    try {
-      return MessageDigest.getInstance("SHA-1");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
-  });
+import org.eclipse.jdt.annotation.Nullable;
 
-  private NameObfuscator() {
-    throw new IllegalStateException("No instances");
+public final class SuppliedThreadLocal<T> extends ThreadLocal<T> {
+  private final Supplier<T> initialValueSupplier;
+
+  private SuppliedThreadLocal(Supplier<T> initialValueSupplier) {
+    super();
+    this.initialValueSupplier = initialValueSupplier;
   }
 
-  public static String obfuscate(String s) {
-    return Base64.getUrlEncoder().encodeToString(TL_SHA1.get().digest(s.getBytes(
-        StandardCharsets.UTF_8)));
+  @SuppressWarnings("PMD.ShortMethodName")
+  public static <@Nullable T> ThreadLocal<T> of(Supplier<T> initialValueSupplier) {
+    return new SuppliedThreadLocal<>(initialValueSupplier);
+  }
+
+  @Override
+  protected T initialValue() {
+    return initialValueSupplier.get();
   }
 }

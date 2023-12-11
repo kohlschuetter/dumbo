@@ -22,6 +22,7 @@ import java.util.Set;
 
 import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.api.DumboComponent;
+import com.kohlschutter.dumbo.util.SuppliedThreadLocal;
 
 /**
  * The render state of a dumbo page.
@@ -29,13 +30,8 @@ import com.kohlschutter.dumbo.api.DumboComponent;
  * @author Christian Kohlschütter
  */
 public final class RenderState {
-  private static final ThreadLocal<RenderState> THREADLOCAL = new ThreadLocal<>() {
-
-    @Override
-    protected RenderState initialValue() {
-      return new RenderState();
-    }
-  };
+  private static final ThreadLocal<RenderState> THREADLOCAL = SuppliedThreadLocal.of(
+      () -> new RenderState());
 
   private ServerApp app;
   private boolean componentsMarkedUseAll = false;
