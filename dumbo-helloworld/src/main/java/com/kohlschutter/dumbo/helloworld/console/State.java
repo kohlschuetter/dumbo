@@ -21,5 +21,6 @@ package com.kohlschutter.dumbo.helloworld.console;
  */
 final class State {
   boolean enteredCommand = false;
+  @SuppressWarnings("MemberName" /* checkstyle */)
   int n = -1;
 }

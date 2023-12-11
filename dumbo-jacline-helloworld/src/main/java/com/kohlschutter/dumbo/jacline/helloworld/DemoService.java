@@ -1,6 +1,7 @@
 /*
- * Copyright 2022,2023 Christian Kohlschütter
- * Copyright 2014,2015 Evernote Corporation.
+ * dumbo-jacline-helloworld
+ *
+ * Copyright 2023 Christian Kohlschütter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +29,7 @@ public interface DemoService {
    *
    * @param error If true, an exception is thrown; if false, "world" is returned.
    * @return Returns "world", unless error is true.
-   * @throws Exception
+   * @throws Exception on error.
    */
   String hello(boolean error) throws Exception;
 

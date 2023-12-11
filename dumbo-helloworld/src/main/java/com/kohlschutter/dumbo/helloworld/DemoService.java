@@ -28,7 +28,7 @@ public interface DemoService {
    *
    * @param error If true, an exception is thrown; if false, "world" is returned.
    * @return Returns "world", unless error is true.
-   * @throws Exception
+   * @throws Exception on error.
    */
   String hello(boolean error) throws Exception;
 

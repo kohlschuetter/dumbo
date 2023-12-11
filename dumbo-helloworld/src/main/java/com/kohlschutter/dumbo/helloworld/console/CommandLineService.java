@@ -26,5 +26,5 @@ public interface CommandLineService {
   /**
    * Sends a line of text.
    */
-  void sendLine(final String line);
+  void sendLine(String line);
 }

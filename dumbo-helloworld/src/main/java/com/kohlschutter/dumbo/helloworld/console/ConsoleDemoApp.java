@@ -61,7 +61,8 @@ public class ConsoleDemoApp implements DumboApplication, BootstrapSupport, Conso
         synchronized (session) {
           try {
             session.wait(5000);
-          } catch (InterruptedException e) {
+          } catch (InterruptedException ignore) {
+            // ignored
           }
         }
 

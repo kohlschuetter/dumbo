@@ -20,7 +20,7 @@ import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.api.DumboSession;
 
 public class CommandLineServiceImpl implements CommandLineService {
-  final String[] colors = new String[] {"red", "coral", "gold", "green", "blue", "fuchsia"};
+  final String[] colors = {"red", "coral", "gold", "green", "blue", "fuchsia"};
 
   int count = 0; // this is an application-level state (i.e., shared across pages!)
 

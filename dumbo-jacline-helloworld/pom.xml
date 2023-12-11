@@ -13,7 +13,6 @@
     <artifactId>dumbo-jacline-helloworld</artifactId>
 
     <properties>
-        <kohlschutter.project.notice.file>${project.parent.basedir}/NOTICE</kohlschutter.project.notice.file>
         <mainClass>com.kohlschutter.dumbo.jacline.helloworld.HelloWorldApp</mainClass>
     </properties>
 
