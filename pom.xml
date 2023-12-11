@@ -49,6 +49,11 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+    <scm>
+        <url>https://github.com/kohlschuetter/dumbo</url>
+        <connection>scm:git:git@github.com:kohlschuetter/dumbo.git</connection>
+        <developerConnection>scm:git:git@github.com:kohlschuetter/dumbo.git</developerConnection>
+    </scm>
 
     <build>
         <plugins>
