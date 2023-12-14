@@ -29,7 +29,7 @@
         <kohlschutter.java.release>11</kohlschutter.java.release>
 
         <stringhold.version>1.0.1</stringhold.version>
-        <jacline.version>1.0.0</jacline.version>
+        <jacline.version>1.0.1</jacline.version>
     </properties>
 
     <organization>
@@ -72,6 +72,12 @@
             <groupId>com.kohlschutter</groupId>
             <artifactId>compiler-annotations</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.kohlschutter</groupId>
+            <artifactId>kohlschutter-test-util</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
