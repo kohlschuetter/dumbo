@@ -151,7 +151,7 @@ public final class ServerApp implements Closeable {
     }
   }
 
-  synchronized void init(AppHTTPServer server, String path, URL webappBaseURL) throws IOException {
+  synchronized void init(AppHTTPServer server, String path) throws IOException {
     if (appServer != null) {
       throw new IllegalStateException("Already initialized");
     }

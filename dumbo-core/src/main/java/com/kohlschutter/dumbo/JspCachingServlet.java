@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,19 +53,40 @@ final class JspCachingServlet extends JettyJspServlet {
   @SuppressWarnings("PMD.NcssCount")
   private boolean checkCache(String path, String generatedPath, HttpServletRequest req,
       HttpServletResponse resp) throws ServletException, IOException {
+    LOG.debug("Check cache {} -> {}", path, generatedPath);
+
+    String realPath = generatedPath == null ? null : context.getRealPath(generatedPath);
 
     // FIXME use Path / temporary directory instead
     if (generatedPath == null || context.getRealPath(path) == null || path.contains("..")) {
+      if (realPath != null) {
+        // we're probably running in cached mode: the jsp file is not present but the cached file is
+        req.getRequestDispatcher(generatedPath).forward(req, resp);
+        return true;
+      }
+      LOG.warn("Bad path: {}", generatedPath);
       return false;
     }
 
-    String realPath = context.getRealPath(generatedPath);
-    if (realPath == null) {
-      LOG.debug("Cannot get realpath for generatedPath {}", generatedPath);
-      return false;
+    File generatedFile;
+    if (realPath != null) {
+      generatedFile = new File(realPath);
+    } else {
+      Path p = Path.of(generatedPath);
+      Path parent = p.getParent();
+      if (parent == null) {
+        LOG.warn("Cannot get realpath for generatedPath {}", generatedPath);
+        return false;
+      }
+      realPath = context.getRealPath(parent.toString());
+      if (realPath == null) {
+        LOG.warn("Cannot get realpath for generatedPath {}", generatedPath);
+        return false;
+      }
+      generatedFile = new File(realPath + "/" + p.getName(p.getNameCount() - 1));
     }
-    File generatedFile = new File(realPath);
     if ((generatedFile.exists() && !"true".equals(req.getParameter("reload")))) {
+      LOG.info("Generated file exists, and reload is not true: {}", generatedFile);
       return false;
     }
 
@@ -160,9 +182,9 @@ final class JspCachingServlet extends JettyJspServlet {
         }
 
         if (generate.get()) {
-          System.out.println("Generating " + generatedFile);
+          LOG.info("Generating {}", generatedFile);
           if (!tmpFile.renameTo(generatedFile)) {
-            System.out.println("FAILED: " + generatedFile);
+            LOG.error("Generating {} failed", generatedFile);
           } else {
             // System.out.println("took " + (System.currentTimeMillis() - time) + "ms");
           }

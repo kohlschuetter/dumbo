@@ -39,6 +39,7 @@ import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.util.NameObfuscator;
+import com.kohlschutter.dumbo.util.NativeImageUtil;
 import com.kohlschutter.stringhold.StringHolder;
 import com.kohlschutter.stringhold.StringHolderSequence;
 
@@ -134,7 +135,7 @@ final class ExtensionImpl extends ComponentImpl {
     serverContextPath = server.getContextPath().replaceFirst("/$", "");
     contextPath = serverContextPath;
     if (extensionPath != null) {
-      URL webappUrl = initExtensionResourceURL();
+      URL webappUrl = initExtensionResourceURL(server);
       if (webappUrl != null) {
         WebAppContext wac = server.registerContext(this, extensionPath, webappUrl);
         contextPath = wac.getContextPath().replaceFirst("/$", "");
@@ -150,13 +151,15 @@ final class ExtensionImpl extends ComponentImpl {
    *
    * @return The URL (default to the "webapp/" folder relative to the extension's class name)
    */
-  URL initExtensionResourceURL() {
+  URL initExtensionResourceURL(AppHTTPServer server) {
     ResourcePath path = getMostRecentComponentAnnotation(ResourcePath.class);
-    if (path != null) {
-      return getComponentResource(path.value());
-    }
+    String prefix = path == null ? "webapp/" : path.value();
 
-    return getComponentResource("webapp/");
+    if (server.isCachedMode()) {
+      return getComponentResource(prefix);
+    } else {
+      return NativeImageUtil.walkResources(prefix, this::getComponentResource);
+    }
   }
 
   private boolean isLocalPath(String path) {

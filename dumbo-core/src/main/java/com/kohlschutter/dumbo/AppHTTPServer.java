@@ -26,8 +26,18 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +48,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.client.HttpClient;
@@ -76,8 +87,13 @@ import com.kohlschutter.dumbo.annotations.FilterMapping;
 import com.kohlschutter.dumbo.annotations.Filters;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
+import com.kohlschutter.dumbo.api.DumboServiceProvider;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 import com.kohlschutter.dumbo.util.DevTools;
+import com.kohlschutter.dumbo.util.NativeImageUtil;
+import com.kohlschutter.dumborb.client.Client;
+import com.kohlschutter.dumborb.client.URLConnectionSession;
+import com.kohlschutter.dumborb.security.ClassResolver;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
@@ -92,7 +108,7 @@ import jakarta.servlet.http.HttpSession;
  * See {@code HelloWorldApp} for a simple demo.
  */
 @SuppressWarnings("PMD.ExcessiveImports")
-public class AppHTTPServer {
+public class AppHTTPServer implements DumboServiceProvider {
   private static final Logger LOG = LoggerFactory.getLogger(AppHTTPServer.class);
   private static final String JSON_PATH = "/json";
 
@@ -105,14 +121,19 @@ public class AppHTTPServer {
 
   private final ErrorHandler errorHandler;
 
-  private final Map<String, String> pathsToRegenerate = new HashMap<>();
+  private final Map<String, String> urlPathsToRegenerate = new HashMap<>();
 
   private AFUNIXSocketAddress serverUNIXSocketAddress = null;
 
   @SuppressWarnings("PMD.LooseCoupling")
   private final LinkedHashMap<WebAppContext, ContextMetadata> contexts = new LinkedHashMap<>();
 
-  private final Set<URI> scannedFiles = new HashSet<>();
+  private final Set<String> scannedFiles = new HashSet<>();
+
+  private final Path[] cachedPaths;
+
+  private final Semaphore serverStarted = new Semaphore(0);
+  private final Semaphore pathsRegenerated = new Semaphore(0);
 
   /**
    * Creates a new HTTP server for the given {@link ServerApp} on a free port.
@@ -122,61 +143,67 @@ public class AppHTTPServer {
    * @throws ExtensionDependencyException on dependency conflict.
    */
   public AppHTTPServer(final ServerApp app) throws IOException {
-    this(app, getWebappBaseURL(app));
+    this(0, app);
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp} on a free port, using web resources
-   * from the given URL path.
+   * Creates a new HTTP server for the given {@link ServerApp} on the given port.
    *
+   * @param port The port, or 0 for any free.
    * @param app The server app.
-   * @param webappBaseURL The location of the resources that should be served.
-   *
+   * @throws IOException on error
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public AppHTTPServer(final ServerApp app, final URL webappBaseURL) throws IOException {
-    this(app, "", webappBaseURL);
+  public AppHTTPServer(int port, final ServerApp app) throws IOException {
+    this(port, app, "");
   }
 
   /**
-   * Creates a new HTTP server for the given {@link ServerApp}, using web resources from the given
-   * URL path.
+   * Creates a new HTTP server for the given {@link ServerApp}.
    *
    * @param app The app.
    * @param path The base path for the server, {@code ""} for root.
-   * @param webappBaseURL The location of the resources that should be served.
    * @throws IOException on error.
    *
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public AppHTTPServer(final ServerApp app, final String path, final URL webappBaseURL)
-      throws IOException {
-    this(0, app, path, webappBaseURL);
+  public AppHTTPServer(final ServerApp app, final String path) throws IOException {
+    this(0, app, path);
   }
 
-  public AppHTTPServer(int tcpPort, final ServerApp app, final String path, final URL webappBaseURL)
+  public AppHTTPServer(int tcpPort, final ServerApp app, final String path) throws IOException {
+    this(tcpPort, app, path, getWebappBaseURL(app), null);
+  }
+
+  public AppHTTPServer(int tcpPort, final ServerApp app, final String path, Path... paths)
       throws IOException {
-    this(tcpPort, app, path, webappBaseURL, null);
+    this(tcpPort, app, path, null, null, paths);
   }
 
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  public AppHTTPServer(int tcpPort, final ServerApp app, final String path, final URL webappBaseURL,
-      RequestLog requestLog) throws IOException {
+  private AppHTTPServer(int tcpPort, final ServerApp app, final String path,
+      final URL webappBaseURL, RequestLog requestLog, Path... paths) throws IOException {
     final int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081"))
         : tcpPort;
 
-    Objects.requireNonNull(webappBaseURL, "Webapp baseURL not specified or resources not found");
     this.app = app;
+    this.cachedPaths = paths != null && paths.length > 0 ? paths : null;
 
     this.errorHandler = new ErrorHandler();
-    errorHandler.setShowServlet(false);
 
     this.server = new Server(new QueuedThreadPool());
 
     if (requestLog != null) {
       server.setRequestLog(requestLog);
     }
+
+    if (cachedPaths == null) {
+      LOG.info("Starting in dynamic mode, using contents from the resource classpath");
+    } else {
+      LOG.info("Starting in cached mode, using contents from " + Arrays.toString(cachedPaths));
+    }
+
     // server.setDumpAfterStart(true); // for debugging
 
     this.contextPath = "/" + (path.replaceFirst("^/", "").replaceFirst("/$", ""));
@@ -189,44 +216,21 @@ public class AppHTTPServer {
 
     contextHandlers = new ContextHandlerCollection();
 
-    app.init(this, path, webappBaseURL);
+    app.init(this, path);
 
-    URI webappBaseURI;
-    try {
-      webappBaseURI = webappBaseURL.toURI();
-    } catch (URISyntaxException e1) {
-      throw new IllegalStateException(e1);
+    WebAppContext wac;
+    if (webappBaseURL != null) {
+      wac = initMainWebAppContext(webappBaseURL);
+    } else {
+      wac = initMainWebAppContextPreprocessed(paths);
     }
 
-    {
-      Resource res;
-      try {
-        res = ResourceFactory.root().newResource(List.of(app.getWebappWorkDir().toURI(),
-            webappBaseURL.toURI(), AppHTTPServer.class.getResource("jettydir-overlay/").toURI()));
-      } catch (URISyntaxException e) {
-        throw new IllegalStateException(e);
-      }
-      final WebAppContext wac = new WebAppContext(res, contextPath);
-      wac.setBaseResource(res);
+    this.jsonRpc = new JSONRPCBridgeServlet();
+    ServletHolder sh = new ServletHolder(this.jsonRpc);
+    sh.setInitOrder(0); // initialize right upon start
+    wac.addServlet(sh, JSON_PATH);
 
-      wac.setLogger(LOG);
-      wac.addServletContainerInitializer(new JettyJasperInitializer());
-
-      wac.setTempDirectory(new File(app.getWorkDir(), "jetty.tmp"));
-      wac.setTempDirectoryPersistent(true);
-
-      initWebAppContext(app.getApplicationExtensionImpl(), wac);
-
-      ServletHolder sh = new ServletHolder(new JSONRPCBridgeServlet());
-      sh.setInitOrder(0); // initialize right upon start
-      wac.addServlet(sh, JSON_PATH);
-
-      registerContext(wac, webappBaseURI);
-
-      scanWebApp(wac.getContextPath(), null, res);
-
-      wac.setServer(server);
-    }
+    wac.setServer(server);
 
     app.initComponents(this);
 
@@ -234,10 +238,99 @@ public class AppHTTPServer {
     server.setConnectors(initConnectors(port, server));
   }
 
+  public AppHTTPServer(ServerApp serverApp, String path, URL webappBaseURL) throws IOException {
+    this(0, serverApp, path, webappBaseURL, null);
+  }
+
+  private WebAppContext initMainWebAppContext(URL webappBaseURL) throws IOException {
+    URI webappBaseURI;
+    try {
+      webappBaseURI = webappBaseURL.toURI();
+    } catch (URISyntaxException e1) {
+      throw new IllegalStateException(e1);
+    }
+
+    Resource res;
+    try {
+      res = combinedResource(app.getWebappWorkDir().toURI(), webappBaseURL.toURI(), NativeImageUtil
+          .walkResources("jettydir-overlay/", AppHTTPServer.class::getResource).toURI());
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException(e);
+    }
+    final WebAppContext wac = new WebAppContext(res, contextPath);
+    wac.setBaseResource(res);
+
+    initMainWebAppContextCommon(wac);
+
+    initWebAppContext(app.getApplicationExtensionImpl(), wac);
+
+    registerContext(wac, webappBaseURI);
+
+    scanWebApp(wac.getContextPath(), res);
+
+    return wac;
+  }
+
+  private WebAppContext initMainWebAppContextPreprocessed(Path... paths) throws IOException {
+    Resource res = combinedResource(paths);
+    final WebAppContext wac = new WebAppContext(res, contextPath);
+    wac.setBaseResource(res);
+    initMainWebAppContextCommon(wac);
+    initWebAppContext(app.getApplicationExtensionImpl(), wac);
+    registerContext(wac, null);
+    return wac;
+  }
+
+  private void initMainWebAppContextCommon(WebAppContext wac) throws IOException {
+    wac.setLogger(LOG);
+    wac.addServletContainerInitializer(new JettyJasperInitializer());
+    wac.setTempDirectory(new File(app.getWorkDir(), "jetty.tmp"));
+    wac.setTempDirectoryPersistent(true);
+  }
+
+  private Resource combinedResource(URI... uris) throws IOException {
+    ResourceFactory factory = ResourceFactory.root();
+    List<Resource> list = new ArrayList<>(uris.length);
+    for (URI u : uris) {
+      Resource r;
+
+      try {
+        Paths.get(u);
+      } catch (FileSystemNotFoundException e) {
+        String uriPath = u.getSchemeSpecificPart();
+        int sep = uriPath.indexOf("!/");
+        if (sep == -1) {
+          throw e;
+        }
+        FileSystems.newFileSystem(u, Collections.emptyMap());
+      }
+
+      r = factory.newResource(u);
+      list.add(r);
+    }
+    return ResourceFactory.combine(list);
+  }
+
+  private Resource combinedResource(Path... paths) throws IOException {
+    ResourceFactory rf = ResourceFactory.root();
+
+    if (paths.length == 1) {
+      return rf.newResource(paths[0]);
+    }
+
+    Resource[] resources = new Resource[paths.length];
+    for (int i = 0, n = paths.length; i < n; i++) {
+      resources[i] = rf.newResource(paths[i]);
+    }
+
+    return ResourceFactory.combine(resources);
+  }
+
   private static URL getWebappBaseURL(final ServerApp app) {
     URL u;
 
-    u = app.getApplicationExtensionImpl().getComponentResource("webapp/");
+    u = NativeImageUtil.walkResources("webapp/", app
+        .getApplicationExtensionImpl()::getComponentResource);
     if (u != null) {
       return u;
     }
@@ -245,7 +338,7 @@ public class AppHTTPServer {
     // FIXME
     String path = "/" + app.getApplicationClass().getPackage().getName().replace('.', '/')
         + "/webapp/";
-    u = app.getApplicationClass().getResource(path);
+    u = NativeImageUtil.walkResources(path, app.getApplicationClass()::getResource);
     Objects.requireNonNull(u, () -> {
       return "Resource path is missing: " + path;
     });
@@ -253,80 +346,128 @@ public class AppHTTPServer {
     return u;
   }
 
-  private static String normalizeFileSlashes(String uri) {
-    return uri.replace("file:///", "file:/");
-  }
-
   /**
    * Scan the webapp's resources for files that we should request via HTTP (to trigger caching,
    * etc.).
    *
    * @param contextPrefix The context prefix.
-   * @param dirPrefixes Valid directory prefixes.
    * @param dir The directory resource.
    * @throws IOException on error.
    */
   @SuppressWarnings("PMD.CognitiveComplexity")
-  private void scanWebApp(String contextPrefix, String[] dirPrefixes, Resource dir)
-      throws IOException {
-    URI key = dir.getURI();
+  private void scanWebApp(String context, Resource dir) throws IOException {
+    LOG.info("Scanning contents of context {} from {}", context, dir);
+    scanWebApp(context, dir, null);
+  }
+
+  private Path checkValidPath(Resource resource, List<Path> validPaths) {
+    Path match;
+    if (resource instanceof CombinedResource) {
+      CombinedResource cr = (CombinedResource) resource;
+      for (Resource r : cr) {
+        if ((match = checkValidPath(r, validPaths)) != null) {
+          return match;
+        }
+      }
+      return null;
+    } else {
+      return checkValidPath(resource.getPath(), validPaths);
+    }
+  }
+
+  private Path checkValidPath(Path resourcePath, List<Path> validPaths) {
+    for (Path p : validPaths) {
+      if (resourcePath.startsWith(p)) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  private void scanWebApp(String context, Resource dir, List<Path> dirPrefixes) throws IOException {
+    String key = dir.toString();
     if (!scannedFiles.add(key)) {
+      // already scanned
       return;
     }
 
     if (dirPrefixes == null) {
       if (dir instanceof CombinedResource) {
         CombinedResource cr = (CombinedResource) dir;
-        List<String> prefixes = new ArrayList<>();
+        dirPrefixes = new ArrayList<>();
         for (Resource r : cr.getResources()) {
-          prefixes.add(normalizeFileSlashes(r.getURI().toString()));
+          dirPrefixes.add(r.getPath());
         }
-        dirPrefixes = prefixes.toArray(new String[0]);
       } else {
-        dirPrefixes = new String[] {normalizeFileSlashes(dir.getURI().toString())};
+        dirPrefixes = Collections.singletonList(dir.getPath());
       }
     } else {
-      String dirString = dir.getURI().toString();
-      boolean ok = false;
-      for (String prefix : dirPrefixes) {
-        if (dirString.equals(prefix) || dirString.startsWith(prefix)) {
-          ok = true;
-          break;
-        }
-      }
-      if (!ok) {
+      if (checkValidPath(dir, dirPrefixes) == null) {
+        LOG.warn("Invalid directory path: {}", dir);
         return;
       }
     }
 
     for (Resource r : dir.list()) {
       if (r.isDirectory()) {
-        scanWebApp(contextPrefix, dirPrefixes, r);
+        scanWebApp(context, r, dirPrefixes);
+        continue;
+      }
+
+      Path path = r.getPath();
+
+      Path okPrefix = checkValidPath(r, dirPrefixes);
+      if (okPrefix == null) {
+        LOG.warn("Invalid directory path: {}", dir);
+        continue;
+      }
+
+      Path relativePath = okPrefix.relativize(path);
+
+      String name = path.getName(path.getNameCount() - 1).toString();
+
+      String contextPrefix;
+      if (context.endsWith("/")) {
+        contextPrefix = context;
       } else {
-        String name = r.getName();
-        String path = normalizeFileSlashes(r.getURI().toString());
+        contextPrefix = context + "/";
+      }
 
-        String okPrefix = null;
-        for (String prefix : dirPrefixes) {
-          if (path.startsWith(prefix)) {
-            okPrefix = prefix;
-            break;
-          }
-        }
-        if (okPrefix == null) {
-          continue;
-        }
+      String urlPath = contextPrefix + relativePath.toString();
 
-        path = path.substring(okPrefix.length());
-        path = contextPrefix + "/" + path;
+      String cachedFile = processFileName(name);
+      if (cachedFile == null) {
+        // don't include
+        continue;
+      }
 
-        String cachedFile = processFileName(name);
-        if (cachedFile != null && !cachedFile.equals(name)) {
-          cachedFile = contextPrefix + "/" + cachedFile;
-          pathsToRegenerate.put(path, cachedFile);
-        }
+      final String publicUrlPath;
+      final Path resourcePath;
+      if (cachedFile.equals(name)) {
+        publicUrlPath = urlPath;
+        resourcePath = path;
+      } else {
+        Path cachedRelativePath = relativePath.resolveSibling(cachedFile);
+        publicUrlPath = contextPrefix + cachedRelativePath;
+        resourcePath = dirPrefixes.get(0).resolve(cachedRelativePath);
+        cachedFile = contextPrefix + "/" + cachedFile;
+        urlPathsToRegenerate.put(urlPath, publicUrlPath);
+      }
+
+      if (isStaticFileName(cachedFile)) {
+        publicUrlPathsToStaticResource.computeIfAbsent(publicUrlPath, (p) -> resourcePath);
+      } else {
+        publicUrlPathsToDynamicResource.computeIfAbsent(publicUrlPath, (p) -> resourcePath);
       }
     }
+  }
+
+  private final Map<String, Path> publicUrlPathsToStaticResource = new LinkedHashMap<>();
+  private final Map<String, Path> publicUrlPathsToDynamicResource = new LinkedHashMap<>();
+  private final JSONRPCBridgeServlet jsonRpc;
+
+  private static boolean isStaticFileName(String name) {
+    return !name.endsWith(".jsp");
   }
 
   private static String processFileName(String name) {
@@ -362,21 +503,37 @@ public class AppHTTPServer {
     } catch (URISyntaxException e) {
       throw new IllegalStateException(e);
     }
-    Resource res;
-    try {
-      res = ResourceFactory.root().newResource(List.of(resourceBaseUri, AppHTTPServer.class
-          .getResource("jettydir-overlay/").toURI()));
-    } catch (URISyntaxException e) {
-      throw new IllegalStateException(e);
-    }
 
     String prefix = (contextPath + contextPrefix).replaceAll("//+", "/");
+    Resource res;
+    if (cachedPaths != null) {
+      Path[] paths = new Path[cachedPaths.length];
+
+      String relativePrefix = prefix.replaceAll("^/+", "");
+
+      for (int i = 0, n = paths.length; i < n; i++) {
+        paths[i] = cachedPaths[i].resolve(relativePrefix);
+      }
+
+      res = combinedResource(paths);
+    } else {
+      try {
+        res = ResourceFactory.root().newResource(List.of(resourceBaseUri, NativeImageUtil
+            .walkResources("jettydir-overlay/", AppHTTPServer.class::getResource).toURI()));
+      } catch (URISyntaxException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+
     WebAppContext wac = new WebAppContext(res, prefix);
+
     wac.setBaseResource(res);
     wac.setLogger(LOG);
     wac.addServletContainerInitializer(new JettyJasperInitializer());
 
-    scanWebApp(wac.getContextPath(), null, res);
+    if (cachedPaths == null) {
+      scanWebApp(wac.getContextPath(), res);
+    }
     initWebAppContext(comp, wac);
 
     wac.setServer(server);
@@ -502,7 +659,9 @@ public class AppHTTPServer {
   }
 
   WebAppContext registerContext(WebAppContext wac, URI webappBaseURI) {
-    contexts.put(wac, new ContextMetadata(webappBaseURI));
+    if (webappBaseURI != null) {
+      contexts.put(wac, new ContextMetadata(webappBaseURI));
+    }
     contextHandlers.addHandler(wac);
     return wac;
   }
@@ -519,7 +678,7 @@ public class AppHTTPServer {
 
   @SuppressWarnings("PMD.CognitiveComplexity")
   private CompletableFuture<Void> regeneratePaths() throws Exception {
-    if (pathsToRegenerate.isEmpty()) {
+    if (urlPathsToRegenerate.isEmpty()) {
       return CompletableFuture.completedFuture((Void) null);
     }
 
@@ -533,13 +692,13 @@ public class AppHTTPServer {
         client.start();
 
         long time = System.currentTimeMillis();
-        CountDownLatch cdl = new CountDownLatch(pathsToRegenerate.size());
+        CountDownLatch cdl = new CountDownLatch(urlPathsToRegenerate.size());
         client.setMaxConnectionsPerDestination(1);
         try {
           if (LOG.isInfoEnabled()) {
             LOG.info("Regenerating " + cdl.getCount() + " paths...");
           }
-          for (String path : pathsToRegenerate.keySet()) {
+          for (String path : urlPathsToRegenerate.keySet()) {
             LOG.info("Regenerating {}", path);
             String uri = serverURIBase + path + "?reload=true";
             try {
@@ -584,26 +743,99 @@ public class AppHTTPServer {
         throw new IllegalStateException(e);
       }
     });
+  }
 
+  private static void copyResourcesToMappedDir(Map<String, Path> resources, Path outputBaseDir)
+      throws IOException {
+    Files.walkFileTree(outputBaseDir, new FileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+          throws IOException {
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Files.delete(file);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        if (!dir.equals(outputBaseDir)) {
+          Files.delete(dir);
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
+
+    for (Map.Entry<String, Path> en : resources.entrySet()) {
+      String urlPath = en.getKey().replaceAll("^/+", "");
+      Path serverPath = en.getValue();
+
+      Path outputPath = outputBaseDir.resolve(urlPath);
+      Files.createDirectories(outputPath.getParent());
+      Files.copy(serverPath, outputPath, StandardCopyOption.REPLACE_EXISTING);
+
+      LOG.debug("File for path {} is stored at {}", en.getKey(), en.getValue());
+    }
   }
 
   /**
-   * Starts the HTTP Server and runs it in a separate thread.
+   * Starts the HTTP Server to regenerate resources, copies all resources, then stops the server.
+   *
+   * @param staticOut The target path for static content.
+   * @param dynamicOut The target path for dynamic content (jsp files, etc.)
+   * @throws IOException on error.
+   * @throws InterruptedException on interruption.
    */
-  public void start() {
-    if (serverThread != null) {
+  public void generateFiles(Path staticOut, Path dynamicOut) throws IOException,
+      InterruptedException {
+    boolean started = server.isStarted();
+    if (!started) {
+      start();
+    }
+    LOG.info("Generating cached version at (static:) {} and (dynamic:) {}", staticOut, dynamicOut);
+    pathsRegenerated.acquire();
+    try {
+      copyResourcesToMappedDir(publicUrlPathsToStaticResource, staticOut);
+      copyResourcesToMappedDir(publicUrlPathsToDynamicResource, dynamicOut);
+      LOG.info("Generated cached version at (static:) {} and (dynamic:) {}", staticOut, dynamicOut);
+      if (!started) {
+        shutdown();
+      }
+    } finally {
+      pathsRegenerated.release();
+    }
+  }
+
+  private synchronized void start0() {
+    Thread t = serverThread;
+    if (t != null) {
       return;
     }
-    serverThread = new Thread(new Runnable() {
+
+    // forcibly reset counts
+    serverStarted.tryAcquire(serverStarted.availablePermits());
+    pathsRegenerated.tryAcquire(pathsRegenerated.availablePermits());
+
+    serverThread = t = new Thread(new Runnable() {
       @Override
       public void run() {
         try {
           server.start();
-          regeneratePaths();
+
+          regeneratePaths().thenAccept((v) -> pathsRegenerated.release());
 
           DevTools.init();
 
-          onServerStart();
+          serverStarted.release();
+          CompletableFuture.runAsync(AppHTTPServer.this::onServerStart);
           server.join();
           LOG.info("Shutting down ...");
           onServerStop();
@@ -612,7 +844,17 @@ public class AppHTTPServer {
         }
       }
     });
-    serverThread.start();
+    t.setName("ServerThread");
+    t.start();
+  }
+
+  public synchronized AppHTTPServer start() throws InterruptedException {
+    if (server.isStarted()) {
+      return this;
+    }
+    startDontWait();
+    serverStarted.acquire();
+    return this;
   }
 
   /**
@@ -620,12 +862,19 @@ public class AppHTTPServer {
    * has been shut down.
    */
   public void startAndWait() {
-    start();
     try {
+      start();
       serverThread.join();
     } catch (InterruptedException e) {
       onServerException(e);
     }
+  }
+
+  /**
+   * Starts the HTTP Server, returning as soon as possible, continuing the start a separate thread.
+   */
+  public synchronized void startDontWait() {
+    start0();
   }
 
   /**
@@ -827,5 +1076,34 @@ public class AppHTTPServer {
     URI getWebappURI() {
       return webappURI;
     }
+  }
+
+  boolean isCachedMode() {
+    return cachedPaths != null;
+  }
+
+  @Override
+  public <T> T getDumboService(Class<T> clazz) {
+    return jsonRpc.getRPCService(clazz);
+  }
+
+  /**
+   * Returns a new JSON-RPC client that is connected to this server's json-rpc service.
+   *
+   * @return The new client.
+   */
+  public Client newJsonRpcClient() {
+    if (!server.isStarted()) {
+      throw new IllegalStateException("Server is not (yet) started");
+    }
+    URL jsonRpcUrl;
+    try {
+      jsonRpcUrl = getURI().resolve(JSON_PATH).toURL();
+    } catch (MalformedURLException e) {
+      throw new IllegalStateException(e);
+    }
+
+    ClassResolver classResolver = ClassResolver.withDefaults();
+    return new Client(new URLConnectionSession(jsonRpcUrl), classResolver);
   }
 }

@@ -79,7 +79,11 @@ class JSONRPCBridgeServlet extends HttpServlet {
         @Override
         public Object transform(Throwable t) {
           if (LOG.isWarnEnabled()) {
-            LOG.warn("Error during JSON method call: " + tlMethod.get(), t);
+            if (LOG.isInfoEnabled()) {
+              LOG.warn("Error in JSON method {}: {}", tlMethod.get(), t);
+            } else {
+              LOG.warn("Error in JSON method {}: {}", tlMethod.get(), t.toString());
+            }
           }
           if (t instanceof PermanentRPCException) {
             throw (PermanentRPCException) t;
@@ -102,6 +106,10 @@ class JSONRPCBridgeServlet extends HttpServlet {
       LOG.error("Failure on init", e);
       throw e;
     }
+  }
+
+  public <T> T getRPCService(Class<T> serviceInterface) {
+    return registry.getRPCService(serviceInterface);
   }
 
   private static final class JSONRPCRegistryImpl implements RPCRegistry {
@@ -163,7 +171,7 @@ class JSONRPCBridgeServlet extends HttpServlet {
       // connection terminated; ignore
       return;
     } catch (ServletException | IOException | RuntimeException | Error e) {
-      e.printStackTrace();
+      LOG.info("Exception in service", e);
       throw e;
     }
   }
