@@ -30,14 +30,8 @@ import com.kohlschutter.dumbo.util.DevTools;
  */
 @Services({DemoServiceImpl.class})
 public class HelloWorldApp implements DumboApplication, AppDefaultsSupport {
-  public static void main(String[] args) throws IOException {
-    new AppHTTPServer(new ServerApp(HelloWorldApp.class)) {
-
-      @Override
-      protected void onServerStart() {
-        DevTools.openURL(this, "/");
-      }
-
-    }.start();
+  public static void main(String[] args) throws IOException, InterruptedException {
+    AppHTTPServer server = new AppHTTPServer(new ServerApp(HelloWorldApp.class)).start();
+    DevTools.openURL(server, "/");
   }
 }

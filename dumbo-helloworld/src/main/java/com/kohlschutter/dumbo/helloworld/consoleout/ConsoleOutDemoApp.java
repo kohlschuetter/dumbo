@@ -39,16 +39,11 @@ import com.kohlschutter.dumbo.util.DevTools;
 @EventHandlers({ConsoleOutDemoApp.class})
 public class ConsoleOutDemoApp implements DumboApplication, BootstrapSupport, ConsoleSupport,
     EventHandler {
-  public static void main(String[] args) throws IOException {
-    new AppHTTPServer(new ServerApp(ConsoleOutDemoApp.class), "/out/", ConsoleOutDemoApp.class
-        .getResource("/com/kohlschutter/dumbo/helloworld/webapp/")) {
+  public static void main(String[] args) throws IOException, InterruptedException {
+    AppHTTPServer server = new AppHTTPServer(new ServerApp(ConsoleOutDemoApp.class), "/out/",
+        ConsoleOutDemoApp.class.getResource("/com/kohlschutter/dumbo/helloworld/webapp/")).start();
+    DevTools.openURL(server, "/consoleOutDemo.jsp");
 
-      @Override
-      protected void onServerStart() {
-        DevTools.openURL(this, "/consoleOutDemo.jsp");
-      }
-
-    }.startAndWait();
   }
 
   @Override
