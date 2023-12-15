@@ -50,6 +50,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.Response.CompleteListener;
@@ -91,8 +92,6 @@ import com.kohlschutter.dumbo.api.DumboServiceProvider;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 import com.kohlschutter.dumbo.util.DevTools;
 import com.kohlschutter.dumbo.util.NativeImageUtil;
-import com.kohlschutter.dumborb.client.Client;
-import com.kohlschutter.dumborb.client.URLConnectionSession;
 import com.kohlschutter.dumborb.security.ClassResolver;
 
 import jakarta.servlet.DispatcherType;
@@ -111,6 +110,8 @@ import jakarta.servlet.http.HttpSession;
 public class AppHTTPServer implements DumboServiceProvider {
   private static final Logger LOG = LoggerFactory.getLogger(AppHTTPServer.class);
   private static final String JSON_PATH = "/json";
+  private static final Consumer<JsonRpcContext> DEFAULT_JSONRPC_SECRET_CONSUMER = (x) -> {
+  };
 
   private final Server server;
   private final String contextPath;
@@ -138,6 +139,8 @@ public class AppHTTPServer implements DumboServiceProvider {
   private final Map<String, Path> publicUrlPathsToStaticResource = new LinkedHashMap<>();
   private final Map<String, Path> publicUrlPathsToDynamicResource = new LinkedHashMap<>();
   private final JSONRPCBridgeServlet jsonRpc;
+
+  private final Map<String, Consumer<JsonRpcContext>> jsonRpcSecrets = new HashMap<>();
 
   /**
    * Creates a new HTTP server for the given {@link ServerApp} on a free port.
@@ -233,6 +236,7 @@ public class AppHTTPServer implements DumboServiceProvider {
     }
 
     this.jsonRpc = new JSONRPCBridgeServlet();
+    jsonRpc.setServer(this);
     ServletHolder sh = new ServletHolder(this.jsonRpc);
     sh.setInitOrder(0); // initialize right upon start
     wac.addServlet(sh, JSON_PATH);
@@ -1113,7 +1117,7 @@ public class AppHTTPServer implements DumboServiceProvider {
    *
    * @return The new client.
    */
-  public Client newJsonRpcClient() {
+  public JsonRpcClient newJsonRpcClient() {
     if (!server.isStarted()) {
       throw new IllegalStateException("Server is not (yet) started");
     }
@@ -1125,6 +1129,15 @@ public class AppHTTPServer implements DumboServiceProvider {
     }
 
     ClassResolver classResolver = ClassResolver.withDefaults();
-    return new Client(new URLConnectionSession(jsonRpcUrl), classResolver);
+    return new JsonRpcClient(jsonRpcUrl, classResolver);
+  }
+
+  Consumer<JsonRpcContext> getJsonRpcTestSecretConsumer(String secret) {
+    return jsonRpcSecrets.getOrDefault(secret, DEFAULT_JSONRPC_SECRET_CONSUMER);
+  }
+
+  public void setJsonRpcTestSecretConsumer(String secret,
+      Consumer<JsonRpcContext> contextConsumer) {
+    jsonRpcSecrets.put(secret, contextConsumer);
   }
 }

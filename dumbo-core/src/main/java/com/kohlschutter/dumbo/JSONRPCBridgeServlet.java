@@ -63,8 +63,9 @@ class JSONRPCBridgeServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private transient JSONRPCBridge bridge;
   private transient JSONRPCRegistryImpl registry;
-  private final transient ThreadLocal<String> tlMethod = new ThreadLocal<>();
+  private final transient ThreadLocal<JsonRpcContext> tlContext = new ThreadLocal<>();
   private transient ServerApp app;
+  private transient AppHTTPServer server;
 
   @Override
   public void init(ServletConfig config) throws ServletException {
@@ -79,11 +80,13 @@ class JSONRPCBridgeServlet extends HttpServlet {
         @Override
         @SuppressWarnings("PMD.GuardLogStatement")
         public Object transform(Throwable t) {
+          JsonRpcContext context = tlContext.get();
+
           if (LOG.isWarnEnabled()) {
-            if (LOG.isInfoEnabled()) {
-              LOG.warn("Error in JSON method {}: {}", tlMethod.get(), t);
+            if (LOG.isInfoEnabled() && context.isErrorStackTraces()) {
+              LOG.warn("Error in JSON method {}: {}", context.getMethod(), t);
             } else {
-              LOG.warn("Error in JSON method {}: {}", tlMethod.get(), t.toString());
+              LOG.warn("Error in JSON method {}: {}", context.getMethod(), t.toString());
             }
           }
           if (t instanceof PermanentRPCException) {
@@ -238,7 +241,15 @@ class JSONRPCBridgeServlet extends HttpServlet {
       }
 
       String method = jsonRequest.getString("method");
-      tlMethod.set(method);
+
+      JsonRpcContext rpcContext = new JsonRpcContext(method);
+      if (server != null) {
+        String dumboSecret = request.getHeader(DumboURLConnectionSession.KEY);
+        server.getJsonRpcTestSecretConsumer(dumboSecret).accept(rpcContext);
+      }
+
+      tlContext.set(rpcContext);
+
       if (registry.consoleService != null) {
         if (dumboSession != null && !method.startsWith("ConsoleService.") && !method.startsWith(
             "system.")) {
@@ -277,7 +288,7 @@ class JSONRPCBridgeServlet extends HttpServlet {
       result = new FailedResult(FailedResult.CODE_ERR_PARSE, null, FailedResult.MSG_ERR_PARSE);
       triggerOnAppLoaded = false;
     } finally {
-      tlMethod.set(null);
+      tlContext.set(null);
       DumboSessionImpl.removeSession();
     }
 
@@ -296,5 +307,9 @@ class JSONRPCBridgeServlet extends HttpServlet {
         app.onAppLoaded(dumboSession);
       });
     }
+  }
+
+  void setServer(AppHTTPServer server) {
+    this.server = server;
   }
 }

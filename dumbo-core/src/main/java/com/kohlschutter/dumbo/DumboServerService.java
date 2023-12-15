@@ -41,6 +41,10 @@ public class DumboServerService implements DumboServiceProviders {
     this.knownRpcServices = retrieveKnownRpcServices(client);
   }
 
+  protected AppHTTPServer getServer() {
+    return server;
+  }
+
   private static Set<String> retrieveKnownRpcServices(Client client) {
     Set<String> services = new HashSet<>();
     SystemObject system = client.openProxy("system", SystemObject.class);
@@ -54,6 +58,10 @@ public class DumboServerService implements DumboServiceProviders {
     return services;
   }
 
+  protected <T> T decorateRpcClientProxy(T proxy) {
+    return proxy;
+  }
+
   @Override
   public <T> Collection<T> getDumboServices(Class<T> clazz) {
     DumboService ds = clazz.getAnnotation(DumboService.class);
@@ -62,7 +70,8 @@ public class DumboServerService implements DumboServiceProviders {
       rpcName = clazz.getName();
     }
 
-    return Stream.of(server.getDumboService(clazz), knownRpcServices.contains(rpcName) ? client
-        .openProxy(rpcName, clazz) : null).filter((p) -> p != null).toList();
+    return Stream.of(server.getDumboService(clazz), knownRpcServices.contains(rpcName)
+        ? decorateRpcClientProxy(client.openProxy(rpcName, clazz)) : null).filter((p) -> p != null)
+        .toList();
   }
 }
