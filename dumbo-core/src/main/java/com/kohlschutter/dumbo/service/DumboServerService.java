@@ -14,25 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
+package com.kohlschutter.dumbo.service;
 
-import java.net.URL;
-
-import com.kohlschutter.dumborb.client.CustomHeaderURLConnectionSession;
-import com.kohlschutter.dumborb.client.URLConnectionSession;
+import com.kohlschutter.dumbo.api.DumboServer;
+import com.kohlschutter.dumbo.api.DumboServerProvider;
+import com.kohlschutter.dumbo.api.DumboServiceProviders;
 
 /**
- * An {@link URLConnectionSession} that can send a custom "X-Dumbo-Secret" header per each request.
+ * Provides access to a {@link DumboServer}, and (through that server) to its services.
+ *
+ * @author Christian Kohlschütter
  */
-public final class DumboURLConnectionSession extends CustomHeaderURLConnectionSession {
-  static final String KEY = "X-Dumbo-Secret";
-
-  /**
-   * Create a URLConnection transport.
-   *
-   * @param url The URL.
-   */
-  public DumboURLConnectionSession(URL url) {
-    super(url, KEY, null);
-  }
+public interface DumboServerService extends DumboServiceProviders, DumboServerProvider {
 }

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kohlschutter.dumbo;
+package com.kohlschutter.dumbo.service;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -22,27 +22,25 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import com.kohlschutter.dumbo.AppHTTPServer;
+import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.dumbo.api.DumboApplication;
-import com.kohlschutter.dumbo.api.DumboServiceProviders;
+import com.kohlschutter.dumbo.api.DumboServer;
 import com.kohlschutter.dumborb.client.Client;
 import com.kohlschutter.dumborb.client.SystemObject;
 
-public class DumboServerService implements DumboServiceProviders {
+public class DumboServerServiceImpl implements DumboServerService {
   private final AppHTTPServer server;
   private final Client client;
   private final Set<String> knownRpcServices;
 
-  public DumboServerService(Class<? extends DumboApplication> applicationClass) throws IOException,
-      InterruptedException {
+  public DumboServerServiceImpl(Class<? extends DumboApplication> applicationClass)
+      throws IOException, InterruptedException {
     server = new AppHTTPServer(new ServerApp(applicationClass)).start();
 
     this.client = server.newJsonRpcClient();
     this.knownRpcServices = retrieveKnownRpcServices(client);
-  }
-
-  protected AppHTTPServer getServer() {
-    return server;
   }
 
   private static Set<String> retrieveKnownRpcServices(Client client) {
@@ -73,5 +71,14 @@ public class DumboServerService implements DumboServiceProviders {
     return Stream.of(server.getDumboService(clazz), knownRpcServices.contains(rpcName)
         ? decorateRpcClientProxy(client.openProxy(rpcName, clazz)) : null).filter((p) -> p != null)
         .toList();
+  }
+
+  @Override
+  public DumboServer getDumboServer() {
+    return server;
+  }
+
+  protected AppHTTPServer getDumboServerImpl() {
+    return server;
   }
 }

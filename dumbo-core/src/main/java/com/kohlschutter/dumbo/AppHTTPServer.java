@@ -88,6 +88,7 @@ import com.kohlschutter.dumbo.annotations.FilterMapping;
 import com.kohlschutter.dumbo.annotations.Filters;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
+import com.kohlschutter.dumbo.api.DumboServer;
 import com.kohlschutter.dumbo.api.DumboServiceProvider;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 import com.kohlschutter.dumbo.util.DevTools;
@@ -107,7 +108,7 @@ import jakarta.servlet.http.HttpSession;
  * See {@code HelloWorldApp} for a simple demo.
  */
 @SuppressWarnings({"PMD.ExcessiveImports", "PMD.CyclomaticComplexity"})
-public class AppHTTPServer implements DumboServiceProvider {
+public class AppHTTPServer implements DumboServer, DumboServiceProvider {
   private static final Logger LOG = LoggerFactory.getLogger(AppHTTPServer.class);
   private static final String JSON_PATH = "/json";
   private static final Consumer<JsonRpcContext> DEFAULT_JSONRPC_SECRET_CONSUMER = (x) -> {
@@ -873,6 +874,7 @@ public class AppHTTPServer implements DumboServiceProvider {
     t.start();
   }
 
+  @Override
   public synchronized AppHTTPServer start() throws InterruptedException {
     if (server.isStarted()) {
       return this;
@@ -1035,6 +1037,7 @@ public class AppHTTPServer implements DumboServiceProvider {
     return contextPath;
   }
 
+  @Override
   public URI getURI() {
     return server.getURI();
   }
