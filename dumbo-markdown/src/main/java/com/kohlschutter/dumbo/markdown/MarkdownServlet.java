@@ -25,7 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import com.kohlschutter.dumbo.AppHTTPServer;
+import com.kohlschutter.dumbo.DumboServerImpl;
 import com.kohlschutter.dumbo.ServerApp;
 
 import jakarta.servlet.ServletContext;
@@ -44,7 +44,7 @@ public class MarkdownServlet extends HttpServlet {
   @Override
   public void init() throws ServletException {
     this.servletContext = getServletContext();
-    this.app = Objects.requireNonNull(AppHTTPServer.getServerApp(servletContext));
+    this.app = Objects.requireNonNull(DumboServerImpl.getServerApp(servletContext));
 
     try {
       mdConfig = app.getImplementationByIdentity(MarkdownSupportImpl.COMPONENT_IDENTITY,

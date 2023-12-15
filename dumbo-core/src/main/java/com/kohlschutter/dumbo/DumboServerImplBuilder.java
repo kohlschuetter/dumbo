@@ -19,6 +19,7 @@ package com.kohlschutter.dumbo;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboServer;
@@ -28,6 +29,7 @@ import com.kohlschutter.dumbo.api.DumboServerBuilder;
 public class DumboServerImplBuilder implements DumboServerBuilder {
   private int port;
   private Class<? extends DumboApplication> application;
+  private boolean webappSet = false;
   private URL webapp;
   private String prefix = "";
   private Path[] paths;
@@ -37,7 +39,11 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
 
   @Override
   public DumboServer build() throws IOException {
-    return new DumboServerImpl(port, new ServerApp(application), prefix, webapp, null, paths
+    ServerApp app = new ServerApp(application);
+    if (!webappSet) {
+      webapp = DumboServerImpl.getWebappBaseURL(app);
+    }
+    return new DumboServerImpl(port, app, prefix, webapp, null, paths
     // , Locations.getStaticOut(), Locations.getDynamicOut()
     );
   }
@@ -50,25 +56,26 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
 
   @Override
   public DumboServerBuilder withApplication(Class<? extends DumboApplication> application) {
-    this.application = application;
+    this.application = Objects.requireNonNull(application);
     return this;
   }
 
   @Override
   public DumboServerBuilder withWebapp(URL resource) {
+    this.webappSet = true;
     this.webapp = resource;
     return this;
   }
 
   @Override
   public DumboServerBuilder withPrefix(String prefix) {
-    this.prefix = prefix;
+    this.prefix = Objects.requireNonNull(prefix);
     return this;
   }
 
   @Override
   public DumboServerBuilder withContent(Path... paths) {
-    this.paths = paths;
+    this.paths = Objects.requireNonNull(paths);
     return null;
   }
 }

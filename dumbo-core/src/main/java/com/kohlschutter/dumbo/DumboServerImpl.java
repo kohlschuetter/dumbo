@@ -139,7 +139,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   private final Map<String, Path> publicUrlPathsToStaticResource = new LinkedHashMap<>();
   private final Map<String, Path> publicUrlPathsToDynamicResource = new LinkedHashMap<>();
-  private final JSONRPCBridgeServlet jsonRpc;
+  private final JsonRpcServlet jsonRpc;
 
   private final Map<String, Consumer<JsonRpcContext>> jsonRpcSecrets = new HashMap<>();
 
@@ -236,7 +236,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       wac = initMainWebAppContextPreprocessed(paths);
     }
 
-    this.jsonRpc = new JSONRPCBridgeServlet();
+    this.jsonRpc = new JsonRpcServlet();
     jsonRpc.setServer(this);
     ServletHolder sh = new ServletHolder(this.jsonRpc);
     sh.setInitOrder(0); // initialize right upon start
@@ -342,7 +342,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   private Resource combinedResource(Path first, Path... paths) throws IOException {
     ResourceFactory rf = ResourceFactory.root();
 
-    if (paths.length == 0) {
+    if (paths == null || paths.length == 0) {
       return rf.newResource(first);
     }
 
@@ -368,7 +368,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     return ResourceFactory.combine(resources);
   }
 
-  private static URL getWebappBaseURL(final ServerApp app) {
+  static URL getWebappBaseURL(final ServerApp app) {
     URL u;
 
     u = NativeImageUtil.walkResources("webapp/", app

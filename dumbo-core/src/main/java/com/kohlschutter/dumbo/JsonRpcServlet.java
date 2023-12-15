@@ -58,8 +58,8 @@ import jakarta.servlet.http.HttpSession;
 /**
  * A Dumborb-based JSON-RPC Servlet.
  */
-class JSONRPCBridgeServlet extends HttpServlet {
-  private static final Logger LOG = LoggerFactory.getLogger(JSONRPCBridgeServlet.class);
+class JsonRpcServlet extends HttpServlet {
+  private static final Logger LOG = LoggerFactory.getLogger(JsonRpcServlet.class);
   private static final long serialVersionUID = 1L;
   private transient JSONRPCBridge bridge;
   private transient JSONRPCRegistryImpl registry;

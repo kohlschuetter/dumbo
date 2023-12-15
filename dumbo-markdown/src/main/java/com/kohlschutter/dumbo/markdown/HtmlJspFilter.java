@@ -19,7 +19,7 @@ package com.kohlschutter.dumbo.markdown;
 
 import java.io.IOException;
 
-import com.kohlschutter.dumbo.AppHTTPServer;
+import com.kohlschutter.dumbo.DumboServerImpl;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletContext;
@@ -48,7 +48,7 @@ public class HtmlJspFilter extends HttpFilter {
     String requestURI = req.getRequestURI();
     String pathInContext = requestURI.substring(req.getContextPath().length());
 
-    if (AppHTTPServer.checkResourceExists(servletContext, pathInContext)) {
+    if (DumboServerImpl.checkResourceExists(servletContext, pathInContext)) {
       // *.html file exists -> use DefaultServlet
       chain.doFilter(req, resp);
       return;
@@ -64,7 +64,7 @@ public class HtmlJspFilter extends HttpFilter {
     }
     for (String suffix : suffixes) {
       String path = pathInContext + suffix;
-      if (AppHTTPServer.checkResourceExists(servletContext, path)) {
+      if (DumboServerImpl.checkResourceExists(servletContext, path)) {
         req.getRequestDispatcher(path).forward(req, resp);
         return;
       }

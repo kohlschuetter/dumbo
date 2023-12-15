@@ -19,13 +19,13 @@ package com.kohlschutter.dumbo.helloworld.consoleout;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.ConsoleSupport;
-import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.annotations.EventHandlers;
 import com.kohlschutter.dumbo.annotations.Services;
 import com.kohlschutter.dumbo.api.Console;
 import com.kohlschutter.dumbo.api.DumboApplication;
+import com.kohlschutter.dumbo.api.DumboServer;
+import com.kohlschutter.dumbo.api.DumboServerBuilder;
 import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.api.EventHandler;
 import com.kohlschutter.dumbo.bootstrap.BootstrapSupport;
@@ -40,10 +40,11 @@ import com.kohlschutter.dumbo.util.DevTools;
 public class ConsoleOutDemoApp implements DumboApplication, BootstrapSupport, ConsoleSupport,
     EventHandler {
   public static void main(String[] args) throws IOException, InterruptedException {
-    AppHTTPServer server = new AppHTTPServer(new ServerApp(ConsoleOutDemoApp.class), "/out/",
-        ConsoleOutDemoApp.class.getResource("/com/kohlschutter/dumbo/helloworld/webapp/")).start();
+    DumboServer server = DumboServerBuilder.begin() //
+        .withApplication(ConsoleOutDemoApp.class) //
+        .withWebapp(ConsoleOutDemoApp.class.getResource(
+            "/com/kohlschutter/dumbo/helloworld/webapp/")).build().start();
     DevTools.openURL(server, "/consoleOutDemo.jsp");
-
   }
 
   @Override
