@@ -10,7 +10,8 @@ final class Locations {
   private static final Path DYNAMIC_OUT = BASE_DIR.resolve("dynamic");
 
   static {
-    AVAILABLE = Files.isDirectory(BASE_DIR.getParent());
+    Path parentPath = BASE_DIR.getParent();
+    AVAILABLE = parentPath == null || Files.isDirectory(parentPath);
   }
 
   public static boolean isAvailable() {
