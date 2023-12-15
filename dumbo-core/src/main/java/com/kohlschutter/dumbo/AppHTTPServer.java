@@ -284,7 +284,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
   }
 
   private WebAppContext initMainWebAppContextPreprocessed(Path... paths) throws IOException {
-    Resource res = combinedResource(paths);
+    Resource res = combinedResource(app.getWebappWorkDir().toPath(), paths);
     final WebAppContext wac = new WebAppContext(res, contextPath);
     wac.setBaseResource(res);
     initMainWebAppContextCommon(wac);
@@ -323,28 +323,46 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
     return ResourceFactory.combine(list);
   }
 
+  private Resource newResourceCreateIfNecessary(ResourceFactory rf, Path p) throws IOException {
+    Resource r = rf.newResource(p);
+    if (r == null) {
+      if (!Files.exists(p)) {
+        LOG.warn("Creating directory for missing path {}", p);
+        Files.createDirectories(p);
+        r = rf.newResource(p);
+      }
+    }
+    return r;
+  }
+
   private Resource combinedResource(Path... paths) throws IOException {
+    return combinedResource(null, paths);
+  }
+
+  private Resource combinedResource(Path first, Path... paths) throws IOException {
     ResourceFactory rf = ResourceFactory.root();
 
-    if (paths.length == 1) {
+    if (paths.length == 0) {
       return rf.newResource(paths[0]);
     }
 
     List<Resource> resources = new ArrayList<>();
-    for (Path p : paths) {
-      Resource r = rf.newResource(p);
-      if (r == null) {
-        if (!Files.exists(p)) {
-          LOG.warn("Creating directory for missing path {}", p);
-          Files.createDirectories(p);
-          r = rf.newResource(p);
-        }
-        if (r == null) {
-          LOG.warn("Could not create Resource for path {}", p);
-          continue;
-        }
+
+    if (first != null) {
+      Resource firstR = newResourceCreateIfNecessary(rf, first);
+      if (firstR == null) {
+        LOG.warn("Could not create Resource for path {}", first);
+      } else {
+        resources.add(firstR);
       }
-      resources.add(r);
+    }
+    for (Path p : paths) {
+      Resource r = newResourceCreateIfNecessary(rf, p);
+      if (r == null) {
+        LOG.warn("Could not create Resource for path {}", p);
+      } else {
+        resources.add(r);
+      }
     }
 
     return ResourceFactory.combine(resources);
@@ -526,11 +544,10 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
     }
 
     String prefix = (contextPath + contextPrefix).replaceAll("//+", "/");
+    String relativePrefix = prefix.replaceAll("^/+", "");
     Resource res;
     if (cachedPaths != null) {
       Path[] paths = new Path[cachedPaths.length];
-
-      String relativePrefix = prefix.replaceAll("^/+", "");
 
       for (int i = 0, n = paths.length; i < n; i++) {
         paths[i] = cachedPaths[i].resolve(relativePrefix);
@@ -538,9 +555,14 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
 
       res = combinedResource(paths);
     } else {
+
+      final File contextWorkDir = new File(app.getWebappWorkDir(), relativePrefix);
+      Files.createDirectories(contextWorkDir.toPath());
+
       try {
-        res = ResourceFactory.root().newResource(List.of(resourceBaseUri, NativeImageUtil
-            .walkResources("jettydir-overlay/", AppHTTPServer.class::getResource).toURI()));
+        res = ResourceFactory.root().newResource(List.of(contextWorkDir.toURI(), resourceBaseUri,
+            NativeImageUtil.walkResources("jettydir-overlay/", AppHTTPServer.class::getResource)
+                .toURI()));
       } catch (URISyntaxException e) {
         throw new IllegalStateException(e);
       }

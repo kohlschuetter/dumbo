@@ -78,12 +78,17 @@ final class JspCachingServlet extends JettyJspServlet {
         LOG.warn("Cannot get realpath for generatedPath {}", generatedPath);
         return false;
       }
-      realPath = context.getRealPath(parent.toString());
-      if (realPath == null) {
-        LOG.warn("Cannot get realpath for generatedPath {}", generatedPath);
+      String contextRealPath = context.getRealPath("/"); // the context root is guaranteed to point
+      // to a temporary working directory
+      if (contextRealPath == null) {
+        LOG.warn("Cannot get realpath for context path");
         return false;
       }
-      generatedFile = new File(realPath + "/" + p.getName(p.getNameCount() - 1));
+      generatedFile = new File(contextRealPath, p.toString().replaceFirst("^/+", ""));
+      Path parentPath = generatedFile.toPath().getParent();
+      if (parentPath != null) {
+        Files.createDirectories(parentPath);
+      }
     }
     if ((generatedFile.exists() && !"true".equals(req.getParameter("reload")))) {
       LOG.info("Generated file exists, and reload is not true: {}", generatedFile);
