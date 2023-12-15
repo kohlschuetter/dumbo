@@ -21,7 +21,7 @@ import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
 /**
- * Provides a Dumbo service implementation.
+ * Provides access to all implementations registered for a Dumbo service.
  *
  * @author Christian Kohlschütter
  */
