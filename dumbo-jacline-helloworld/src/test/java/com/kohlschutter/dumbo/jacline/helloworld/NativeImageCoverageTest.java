@@ -24,25 +24,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.Path;
+import java.util.ServiceLoader;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-import com.kohlschutter.dumbo.AppHTTPServer;
-import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.dumbo.api.DumboServer;
+import com.kohlschutter.dumbo.api.DumboServerProvider;
 
 public class NativeImageCoverageTest {
   @Test
   public void testCoverage() throws Exception {
     assumeTrue(Locations.isAvailable());
 
-    Path staticPath = Locations.getStaticOut();
-    Path dynamicPath = Locations.getDynamicOut();
-
-    AppHTTPServer server = new AppHTTPServer(0, new ServerApp(HelloWorldApp.class), "" //
-        , staticPath, dynamicPath //
-    ).start();
+    DumboServer server = ServiceLoader.load(DumboServerProvider.class).findFirst().get()
+        .getDumboServer().start();
 
     URI rootUri = server.getURI();
     try {
@@ -55,8 +51,6 @@ public class NativeImageCoverageTest {
     } catch (IOException e) {
       e.printStackTrace();
     }
-
-    server.shutdown();
   }
 
   private static void load(URI uri) throws IOException {

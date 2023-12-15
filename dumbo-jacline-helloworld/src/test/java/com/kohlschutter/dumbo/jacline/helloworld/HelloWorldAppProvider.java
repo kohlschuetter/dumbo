@@ -19,11 +19,11 @@ package com.kohlschutter.dumbo.jacline.helloworld;
 
 import java.io.IOException;
 
-import com.kohlschutter.dumbo.TestingDumboServerService;
+import com.kohlschutter.dumbo.service.SPIDumboServerService;
+import com.kohlschutter.dumbo.service.TestingDumboServerService;
 
-public class HelloWorldAppProvider extends TestingDumboServerService {
-
+public final class HelloWorldAppProvider extends SPIDumboServerService {
   public HelloWorldAppProvider() throws IOException, InterruptedException {
-    super(HelloWorldApp.class);
+    super(HelloWorldApp.class, TestingDumboServerService::new);
   }
 }
