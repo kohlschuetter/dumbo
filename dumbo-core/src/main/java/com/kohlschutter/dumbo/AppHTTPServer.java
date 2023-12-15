@@ -474,7 +474,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
       } else {
         Path cachedRelativePath = relativePath.resolveSibling(cachedFile);
         publicUrlPath = contextPrefix + cachedRelativePath;
-        resourcePath = dirPrefixes.get(0).resolve(cachedRelativePath);
+        resourcePath = dirPrefixes.get(0).resolve(cachedRelativePath.toString());
         cachedFile = contextPrefix + "/" + cachedFile;
         urlPathsToRegenerate.put(urlPath, publicUrlPath);
       }
