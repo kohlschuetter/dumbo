@@ -94,12 +94,13 @@ final class ExtensionImpl extends ComponentImpl {
   }
 
   /**
-   * Called by the app to initialize the {@link ExtensionImpl} for the given {@link AppHTTPServer}.
+   * Called by the app to initialize the {@link ExtensionImpl} for the given
+   * {@link DumboServerImpl}.
    *
    * @throws IOException on error.
    */
   @Override
-  void initComponent(AppHTTPServer app) throws IOException {
+  void initComponent(DumboServerImpl app) throws IOException {
     super.initComponent(app);
     initResources();
     initExtension(app);
@@ -126,12 +127,12 @@ final class ExtensionImpl extends ComponentImpl {
   }
 
   /**
-   * Registers the extension's resources with the {@link AppHTTPServer}.
+   * Registers the extension's resources with the {@link DumboServerImpl}.
    *
    * @param server The server instance to work with.
    * @throws IOException on error.
    */
-  void initExtension(final AppHTTPServer server) throws IOException {
+  void initExtension(final DumboServerImpl server) throws IOException {
     serverContextPath = server.getContextPath().replaceFirst("/$", "");
     contextPath = serverContextPath;
     if (extensionPath != null) {
@@ -151,7 +152,7 @@ final class ExtensionImpl extends ComponentImpl {
    *
    * @return The URL (default to the "webapp/" folder relative to the extension's class name)
    */
-  URL initExtensionResourceURL(AppHTTPServer server) {
+  URL initExtensionResourceURL(DumboServerImpl server) {
     ResourcePath path = getMostRecentComponentAnnotation(ResourcePath.class);
     String prefix = path == null ? "webapp/" : path.value();
 
@@ -177,7 +178,7 @@ final class ExtensionImpl extends ComponentImpl {
   }
 
   @SuppressWarnings({"PMD.CognitiveComplexity", "PMD.CyclomaticComplexity", "PMD.NPathComplexity"})
-  private StringHolderSequence initHtmlHead(AppHTTPServer server) throws IOException {
+  private StringHolderSequence initHtmlHead(DumboServerImpl server) throws IOException {
     StringHolderSequence sb = StringHolder.newSequence();
 
     final Predicate<StringHolder> optionalInclude = (sh) -> {

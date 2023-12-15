@@ -175,8 +175,8 @@ public final class DumboSessionImpl extends DumboSession {
       } else if (map.isEmpty()) {
         context.removeAttribute(SESSION_ATTRIBUTE_PAGEIDS);
 
-        AppHTTPServer server = (AppHTTPServer) context.getServletContext().getAttribute(
-            AppHTTPServer.class.getName());
+        DumboServerImpl server = (DumboServerImpl) context.getServletContext().getAttribute(
+            DumboServerImpl.class.getName());
         if (server != null) {
           server.onSessionShutdown(context.getId(), new WeakReference<>(context));
         }

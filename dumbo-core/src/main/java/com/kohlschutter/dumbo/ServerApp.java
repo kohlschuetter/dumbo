@@ -85,7 +85,7 @@ public final class ServerApp implements Closeable {
   private File workDir;
   private File webappWorkDir;
 
-  private AppHTTPServer appServer = null;
+  private DumboServerImpl appServer = null;
 
   public ServerApp(Class<? extends DumboApplication> applicationClass) {
     this.applicationClass = applicationClass;
@@ -151,7 +151,7 @@ public final class ServerApp implements Closeable {
     }
   }
 
-  synchronized void init(AppHTTPServer server, String path) throws IOException {
+  synchronized void init(DumboServerImpl server, String path) throws IOException {
     if (appServer != null) {
       throw new IllegalStateException("Already initialized");
     }
@@ -194,7 +194,7 @@ public final class ServerApp implements Closeable {
     LOG.info("Workdir: {}", workDir);
   }
 
-  void initComponents(AppHTTPServer server) throws IOException {
+  void initComponents(DumboServerImpl server) throws IOException {
     if (!initDone.compareAndSet(false, true)) {
       throw new IllegalStateException("App is already initialized");
     }

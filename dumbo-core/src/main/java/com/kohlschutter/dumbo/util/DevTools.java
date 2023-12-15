@@ -22,7 +22,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kohlschutter.dumbo.AppHTTPServer;
+import com.kohlschutter.dumbo.api.DumboServer;
 
 /**
  * Helper methods for developing. Currently works on OS X only.
@@ -77,7 +77,7 @@ public final class DevTools {
     Runtime.getRuntime().exec(new String[] {"/usr/bin/open", url});
   }
 
-  public static void openURL(AppHTTPServer server, String page) {
+  public static void openURL(DumboServer server, String page) {
     try {
       String url = server.getURI().toString().replaceFirst("/$", "") + "/" + page.replaceFirst("^/",
           "");

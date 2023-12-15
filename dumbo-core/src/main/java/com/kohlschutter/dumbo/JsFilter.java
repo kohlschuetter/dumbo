@@ -55,14 +55,14 @@ final class JsFilter extends HttpFilter {
     String requestURI = req.getRequestURI();
     String pathInContext = requestURI.substring(req.getContextPath().length());
 
-    if (AppHTTPServer.checkResourceExists(servletContext, pathInContext)) {
+    if (DumboServerImpl.checkResourceExists(servletContext, pathInContext)) {
       chain.doFilter(req, resp);
       return;
-    } else if (AppHTTPServer.checkResourceExists(servletContext, pathInContext + ".jsp")) {
+    } else if (DumboServerImpl.checkResourceExists(servletContext, pathInContext + ".jsp")) {
       req.getRequestDispatcher(pathInContext + ".jsp").forward(req, resp);
     } else {
       String path = PAT_JS.matcher(pathInContext).replaceFirst(".jsp.js");
-      if (AppHTTPServer.checkResourceExists(servletContext, path)) {
+      if (DumboServerImpl.checkResourceExists(servletContext, path)) {
         req.getRequestDispatcher(path).forward(req, resp);
       } else {
         resp.sendError(HttpServletResponse.SC_NOT_FOUND);

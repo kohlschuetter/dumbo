@@ -108,8 +108,8 @@ import jakarta.servlet.http.HttpSession;
  * See {@code HelloWorldApp} for a simple demo.
  */
 @SuppressWarnings({"PMD.ExcessiveImports", "PMD.CyclomaticComplexity"})
-public class AppHTTPServer implements DumboServer, DumboServiceProvider {
-  private static final Logger LOG = LoggerFactory.getLogger(AppHTTPServer.class);
+public class DumboServerImpl implements DumboServer, DumboServiceProvider {
+  private static final Logger LOG = LoggerFactory.getLogger(DumboServerImpl.class);
   private static final String JSON_PATH = "/json";
   private static final Consumer<JsonRpcContext> DEFAULT_JSONRPC_SECRET_CONSUMER = (x) -> {
   };
@@ -150,7 +150,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
    * @throws IOException on error
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public AppHTTPServer(final ServerApp app) throws IOException {
+  public DumboServerImpl(final ServerApp app) throws IOException {
     this(0, app);
   }
 
@@ -162,7 +162,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
    * @throws IOException on error
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public AppHTTPServer(int port, final ServerApp app) throws IOException {
+  public DumboServerImpl(int port, final ServerApp app) throws IOException {
     this(port, app, "");
   }
 
@@ -175,24 +175,24 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
    *
    * @throws ExtensionDependencyException on dependency conflict.
    */
-  public AppHTTPServer(final ServerApp app, final String path) throws IOException {
+  public DumboServerImpl(final ServerApp app, final String path) throws IOException {
     this(0, app, path);
   }
 
-  public AppHTTPServer(int tcpPort, final ServerApp app, final String path) throws IOException {
+  public DumboServerImpl(int tcpPort, final ServerApp app, final String path) throws IOException {
     this(tcpPort, app, path, getWebappBaseURL(app), null);
   }
 
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
-  public AppHTTPServer(int tcpPort, final ServerApp app, final String path, Path... paths)
+  public DumboServerImpl(int tcpPort, final ServerApp app, final String path, Path... paths)
       throws IOException {
     this(tcpPort, app, path, null, null, paths);
   }
 
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  private AppHTTPServer(int tcpPort, final ServerApp app, final String path,
-      final URL webappBaseURL, RequestLog requestLog, Path... paths) throws IOException {
+  DumboServerImpl(int tcpPort, final ServerApp app, final String path, final URL webappBaseURL,
+      RequestLog requestLog, Path... paths) throws IOException {
     final int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081"))
         : tcpPort;
 
@@ -250,7 +250,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
     server.setConnectors(initConnectors(port, server));
   }
 
-  public AppHTTPServer(ServerApp serverApp, String path, URL webappBaseURL) throws IOException {
+  public DumboServerImpl(ServerApp serverApp, String path, URL webappBaseURL) throws IOException {
     this(0, serverApp, path, webappBaseURL, null);
   }
 
@@ -265,7 +265,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
     Resource res;
     try {
       res = combinedResource(app.getWebappWorkDir().toURI(), webappBaseURL.toURI(), NativeImageUtil
-          .walkResources("jettydir-overlay/", AppHTTPServer.class::getResource).toURI());
+          .walkResources("jettydir-overlay/", DumboServerImpl.class::getResource).toURI());
     } catch (URISyntaxException e) {
       throw new IllegalStateException(e);
     }
@@ -343,7 +343,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
     ResourceFactory rf = ResourceFactory.root();
 
     if (paths.length == 0) {
-      return rf.newResource(paths[0]);
+      return rf.newResource(first);
     }
 
     List<Resource> resources = new ArrayList<>();
@@ -561,7 +561,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
 
       try {
         res = ResourceFactory.root().newResource(List.of(contextWorkDir.toURI(), resourceBaseUri,
-            NativeImageUtil.walkResources("jettydir-overlay/", AppHTTPServer.class::getResource)
+            NativeImageUtil.walkResources("jettydir-overlay/", DumboServerImpl.class::getResource)
                 .toURI()));
       } catch (URISyntaxException e) {
         throw new IllegalStateException(e);
@@ -598,7 +598,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
     wac.setWelcomeFiles(new String[] {"index.html", "index.html.jsp", "index.md"});
     wac.setErrorHandler(errorHandler);
 
-    wac.setAttribute(AppHTTPServer.class.getName(), this);
+    wac.setAttribute(DumboServerImpl.class.getName(), this);
 
     wac.setAttribute("jsonPath", (contextPath + "/" + JSON_PATH).replaceAll("//+", "/"));
 
@@ -639,7 +639,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
 
       ServletHolder holder;
 
-      if (mapToClass.getPackage().equals(AppHTTPServer.class.getPackage())) {
+      if (mapToClass.getPackage().equals(DumboServerImpl.class.getPackage())) {
         Servlet servlet;
         try {
           servlet = Objects.requireNonNull(mapToClass.getDeclaredConstructor().newInstance());
@@ -679,7 +679,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
         EnumSet<DispatcherType> types = EnumSet.copyOf(Arrays.asList(m.dispatcherTypes()));
 
         FilterHolder holder;
-        if (mapToClass.getPackage().equals(AppHTTPServer.class.getPackage())) {
+        if (mapToClass.getPackage().equals(DumboServerImpl.class.getPackage())) {
           Filter filter;
           try {
             filter = Objects.requireNonNull(mapToClass.getDeclaredConstructor().newInstance());
@@ -883,7 +883,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
           DevTools.init();
 
           serverStarted.release();
-          CompletableFuture.runAsync(AppHTTPServer.this::onServerStart);
+          CompletableFuture.runAsync(DumboServerImpl.this::onServerStart);
           server.join();
           LOG.info("Shutting down ...");
           onServerStop();
@@ -897,7 +897,7 @@ public class AppHTTPServer implements DumboServer, DumboServiceProvider {
   }
 
   @Override
-  public synchronized AppHTTPServer start() throws InterruptedException {
+  public synchronized DumboServerImpl start() throws InterruptedException {
     if (server.isStarted()) {
       return this;
     }

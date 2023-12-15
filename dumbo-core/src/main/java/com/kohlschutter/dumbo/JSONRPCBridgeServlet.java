@@ -65,7 +65,7 @@ class JSONRPCBridgeServlet extends HttpServlet {
   private transient JSONRPCRegistryImpl registry;
   private final transient ThreadLocal<JsonRpcContext> tlContext = new ThreadLocal<>();
   private transient ServerApp app;
-  private transient AppHTTPServer server;
+  private transient DumboServerImpl server;
 
   @Override
   public void init(ServletConfig config) throws ServletException {
@@ -309,7 +309,7 @@ class JSONRPCBridgeServlet extends HttpServlet {
     }
   }
 
-  void setServer(AppHTTPServer server) {
+  void setServer(DumboServerImpl server) {
     this.server = server;
   }
 }

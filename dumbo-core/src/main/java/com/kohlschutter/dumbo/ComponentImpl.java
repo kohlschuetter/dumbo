@@ -184,11 +184,12 @@ class ComponentImpl implements BaseSupport {
   }
 
   /**
-   * Called by the app to initialize the {@link ExtensionImpl} for the given {@link AppHTTPServer}.
+   * Called by the app to initialize the {@link ExtensionImpl} for the given
+   * {@link DumboServerImpl}.
    *
    * @throws IOException on error.
    */
-  void initComponent(AppHTTPServer app) throws IOException {
+  void initComponent(DumboServerImpl app) throws IOException {
     if (!initialized.compareAndSet(false, true)) {
       throw new IllegalStateException("Already initialized");
     }
