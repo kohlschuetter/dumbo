@@ -325,9 +325,21 @@ public class AppHTTPServer implements DumboServiceProvider {
       return rf.newResource(paths[0]);
     }
 
-    Resource[] resources = new Resource[paths.length];
-    for (int i = 0, n = paths.length; i < n; i++) {
-      resources[i] = rf.newResource(paths[i]);
+    List<Resource> resources = new ArrayList<>();
+    for (Path p : paths) {
+      Resource r = rf.newResource(p);
+      if (r == null) {
+        if (!Files.exists(p)) {
+          LOG.warn("Creating directory for missing path {}", p);
+          Files.createDirectories(p);
+          r = rf.newResource(p);
+        }
+        if (r == null) {
+          LOG.warn("Could not create Resource for path {}", p);
+          continue;
+        }
+      }
+      resources.add(r);
     }
 
     return ResourceFactory.combine(resources);
