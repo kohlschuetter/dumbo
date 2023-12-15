@@ -14,6 +14,8 @@
 
     <properties>
         <mainClass>com.kohlschutter.dumbo.jacline.helloworld.HelloWorldApp</mainClass>
+        <!--<graal.plugin.version>0.9.29-SNAPSHOT</graal.plugin.version>-->
+        <graal.plugin.version>0.9.28</graal.plugin.version>
     </properties>
 
     <build>
@@ -78,7 +80,7 @@
             <plugin>
                 <groupId>org.graalvm.buildtools</groupId>
                 <artifactId>native-maven-plugin</artifactId>
-                <version>0.9.29-SNAPSHOT</version>
+                <version>${graal.plugin.version}</version>
                 <extensions>true</extensions>
                 <configuration>
                     <agent>
@@ -117,7 +119,6 @@
                     <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
-                        <!--<version>0.9.29-SNAPSHOT</version>-->
                         <extensions>true</extensions>
                         <executions>
                             <execution>
