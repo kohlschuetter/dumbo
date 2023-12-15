@@ -50,7 +50,7 @@ final class JspCachingServlet extends JettyJspServlet {
     this.context = getServletContext();
   }
 
-  @SuppressWarnings("PMD.NcssCount")
+  @SuppressWarnings({"PMD.NcssCount", "PMD.CognitiveComplexity", "PMD.NPathComplexity"})
   private boolean checkCache(String path, String generatedPath, HttpServletRequest req,
       HttpServletResponse resp) throws ServletException, IOException {
     LOG.debug("Check cache {} -> {}", path, generatedPath);

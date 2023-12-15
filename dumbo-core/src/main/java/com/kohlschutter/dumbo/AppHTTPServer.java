@@ -107,7 +107,7 @@ import jakarta.servlet.http.HttpSession;
  *
  * See {@code HelloWorldApp} for a simple demo.
  */
-@SuppressWarnings("PMD.ExcessiveImports")
+@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CyclomaticComplexity"})
 public class AppHTTPServer implements DumboServiceProvider {
   private static final Logger LOG = LoggerFactory.getLogger(AppHTTPServer.class);
   private static final String JSON_PATH = "/json";
@@ -134,6 +134,10 @@ public class AppHTTPServer implements DumboServiceProvider {
 
   private final Semaphore serverStarted = new Semaphore(0);
   private final Semaphore pathsRegenerated = new Semaphore(0);
+
+  private final Map<String, Path> publicUrlPathsToStaticResource = new LinkedHashMap<>();
+  private final Map<String, Path> publicUrlPathsToDynamicResource = new LinkedHashMap<>();
+  private final JSONRPCBridgeServlet jsonRpc;
 
   /**
    * Creates a new HTTP server for the given {@link ServerApp} on a free port.
@@ -175,6 +179,7 @@ public class AppHTTPServer implements DumboServiceProvider {
     this(tcpPort, app, path, getWebappBaseURL(app), null);
   }
 
+  @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   public AppHTTPServer(int tcpPort, final ServerApp app, final String path, Path... paths)
       throws IOException {
     this(tcpPort, app, path, null, null, paths);
@@ -201,7 +206,9 @@ public class AppHTTPServer implements DumboServiceProvider {
     if (cachedPaths == null) {
       LOG.info("Starting in dynamic mode, using contents from the resource classpath");
     } else {
-      LOG.info("Starting in cached mode, using contents from " + Arrays.toString(cachedPaths));
+      if (LOG.isInfoEnabled()) {
+        LOG.info("Starting in cached mode, using contents from " + Arrays.toString(cachedPaths));
+      }
     }
 
     // server.setDumpAfterStart(true); // for debugging
@@ -384,6 +391,7 @@ public class AppHTTPServer implements DumboServiceProvider {
     return null;
   }
 
+  @SuppressWarnings("PMD.CognitiveComplexity")
   private void scanWebApp(String context, Resource dir, List<Path> dirPrefixes) throws IOException {
     String key = dir.toString();
     if (!scannedFiles.add(key)) {
@@ -461,10 +469,6 @@ public class AppHTTPServer implements DumboServiceProvider {
       }
     }
   }
-
-  private final Map<String, Path> publicUrlPathsToStaticResource = new LinkedHashMap<>();
-  private final Map<String, Path> publicUrlPathsToDynamicResource = new LinkedHashMap<>();
-  private final JSONRPCBridgeServlet jsonRpc;
 
   private static boolean isStaticFileName(String name) {
     return !name.endsWith(".jsp");
@@ -779,10 +783,15 @@ public class AppHTTPServer implements DumboServiceProvider {
       Path serverPath = en.getValue();
 
       Path outputPath = outputBaseDir.resolve(urlPath);
-      Files.createDirectories(outputPath.getParent());
+      Path parentPath = outputPath.getParent();
+      if (parentPath != null) {
+        Files.createDirectories(parentPath);
+      }
       Files.copy(serverPath, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
-      LOG.debug("File for path {} is stored at {}", en.getKey(), en.getValue());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("File for path {} is stored at {}", en.getKey(), en.getValue());
+      }
     }
   }
 

@@ -53,13 +53,14 @@ public final class NativeImageUtil {
           LOG.debug("Found {}", url);
         });
       } catch (IOException e) {
-        throw new IllegalStateException();
+        throw new IllegalStateException(e);
       }
     }
 
     return u;
   }
 
+  @SuppressWarnings("PMD.PreserveStackTrace")
   private static Path urlToPath(URL url) {
     URI uri;
     try {
@@ -73,7 +74,9 @@ public final class NativeImageUtil {
       try {
         FileSystems.newFileSystem(uri, Collections.emptyMap());
       } catch (IOException e1) {
-        throw new IllegalStateException(e1);
+        IllegalStateException ex = new IllegalStateException(e);
+        ex.addSuppressed(e1);
+        throw ex;
       }
       return Paths.get(uri);
     }

@@ -77,6 +77,7 @@ class JSONRPCBridgeServlet extends HttpServlet {
       bridge = new JSONRPCBridge(ClassResolver.withDefaults()); // FIXME
       bridge.setExceptionTransformer(new ExceptionTransformer() {
         @Override
+        @SuppressWarnings("PMD.GuardLogStatement")
         public Object transform(Throwable t) {
           if (LOG.isWarnEnabled()) {
             if (LOG.isInfoEnabled()) {
