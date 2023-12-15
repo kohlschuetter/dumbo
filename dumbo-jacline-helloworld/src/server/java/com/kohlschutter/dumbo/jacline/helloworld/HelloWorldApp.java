@@ -32,14 +32,12 @@ import com.kohlschutter.dumbo.util.DevTools;
 @Services({DemoServiceImpl.class})
 @JavaScriptResource({"js/jacline-generated.js"}) // see pom.xml
 public class HelloWorldApp implements DumboApplication, AppDefaultsSupport {
-  public static void main(String[] args) throws IOException {
-    new AppHTTPServer(new ServerApp(HelloWorldApp.class)) {
+  public static void main(String[] args) throws IOException, InterruptedException {
+    int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
 
-      @Override
-      protected void onServerStart() {
-        DevTools.openURL(this, "/");
-      }
-
-    }.start();
+    AppHTTPServer server = new AppHTTPServer(port, new ServerApp(HelloWorldApp.class), ""//
+    // , Locations.getStaticOut(), Locations.getDynamicOut()
+    ).start();
+    DevTools.openURL(server, "/");
   }
 }

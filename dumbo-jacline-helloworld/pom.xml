@@ -75,6 +75,23 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>0.9.29-SNAPSHOT</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <agent>
+                        <options>
+                            <enableExperimentalPredefinedClasses>true</enableExperimentalPredefinedClasses>
+                            <enableExperimentalUnsafeAllocationTracing>
+                                true
+                            </enableExperimentalUnsafeAllocationTracing>
+                            <trackReflectionMetadata>true</trackReflectionMetadata>
+                        </options>
+                    </agent>
+                </configuration>
+            </plugin>
         </plugins>
 
         <resources>
@@ -86,6 +103,46 @@
             </resource>
         </resources>
     </build>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <activation>
+                <property>
+                    <name>native</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <!--<version>0.9.29-SNAPSHOT</version>-->
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>
+                                        ${mainClass}</mainClass>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <skip>false</skip>
+                            <useArgFile>false</useArgFile>
+                            <imageName>${project.name}-${project.version}</imageName>
+                            <fallback>false</fallback>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
