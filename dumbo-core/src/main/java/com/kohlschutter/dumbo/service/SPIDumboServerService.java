@@ -34,6 +34,11 @@ public abstract class SPIDumboServerService implements DumboServerService {
   private static final Map<Class<?>, DumboServerService> MAP = new HashMap<>();
   private final DumboServerService service;
 
+  protected SPIDumboServerService(Class<? extends DumboApplication> applicationClass,
+      DumboServerServiceSupplier implSupplier) throws InterruptedException, IOException {
+    service = registerService(applicationClass, implSupplier);
+  }
+
   @FunctionalInterface
   public interface DumboServerServiceSupplier {
     DumboServerService newInstance(Class<? extends DumboApplication> applicationClass)
@@ -50,11 +55,6 @@ public abstract class SPIDumboServerService implements DumboServerService {
     DumboServerService service = implSupplier.newInstance(applicationClass);
     MAP.put(applicationClass, service);
     return service;
-  }
-
-  protected SPIDumboServerService(Class<? extends DumboApplication> applicationClass,
-      DumboServerServiceSupplier implSupplier) throws InterruptedException, IOException {
-    service = registerService(applicationClass, implSupplier);
   }
 
   @Override

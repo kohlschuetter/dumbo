@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.AppHTTPServer;
 import com.kohlschutter.dumbo.ServerApp;
 import com.kohlschutter.dumbo.annotations.DumboService;
@@ -73,6 +74,7 @@ public class DumboServerServiceImpl implements DumboServerService {
         .toList();
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public DumboServer getDumboServer() {
     return server;
