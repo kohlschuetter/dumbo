@@ -55,8 +55,11 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
     if (webappSet) {
       serverBuilder = serverBuilder.withWebapp(webapp);
     }
-    DumboServerImpl server = (DumboServerImpl) serverBuilder.withApplication(application)
-        .withPrefix(prefix).withPort(-1).build();
+    DumboServerImpl server = (DumboServerImpl) serverBuilder //
+        .withApplication(application) //
+        .withPrefix(prefix) //
+        .withPort(-1) // no need to bind on TCP
+        .build();
     try {
       server.generateFiles(staticOutput, dynamicOutput);
     } catch (InterruptedException e) {
