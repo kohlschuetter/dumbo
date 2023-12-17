@@ -36,6 +36,8 @@ public interface DumboContentBuilder {
 
   DumboContentBuilder withOutputPath(Path outputPath);
 
+  DumboContentBuilder withSourceMaps(boolean sourceMaps);
+
   DumboContent openExisting(Path outputPath) throws IOException;
 
   /**

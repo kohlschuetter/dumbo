@@ -34,6 +34,7 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
   private boolean webappSet = false;
   private URL webapp;
   private String prefix = "";
+  private boolean sourceMaps = false;
 
   private Path outputPath;
 
@@ -61,7 +62,7 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
         .withPort(-1) // no need to bind on TCP
         .build();
     try {
-      server.generateFiles(staticOutput, dynamicOutput);
+      server.generateFiles(staticOutput, dynamicOutput, sourceMaps);
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
@@ -99,5 +100,11 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
       throw new FileNotFoundException("Not found: " + outputPath);
     }
     return new DumboContentImpl(outputPath);
+  }
+
+  @Override
+  public DumboContentBuilder withSourceMaps(boolean sourceMaps) {
+    this.sourceMaps = sourceMaps;
+    return this;
   }
 }

@@ -763,8 +763,10 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     });
   }
 
-  private static void copyResourcesToMappedDir(Map<String, Path> resources, Path outputBaseDir)
-      throws IOException {
+  private static void copyResourcesToMappedDir(Map<String, Path> resources, Path outputBaseDir,
+      boolean sourceMaps) throws IOException {
+
+    // delete all existing files
     Files.walkFileTree(outputBaseDir, new FileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
@@ -794,9 +796,17 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     for (Map.Entry<String, Path> en : resources.entrySet()) {
       String urlPath = en.getKey().replaceAll("^/+", "");
+      if (!sourceMaps) {
+        if ("sourcemaps".equals(urlPath) || urlPath.startsWith("sourcemaps/") || urlPath.endsWith(
+            ".js.map")) {
+          continue;
+        }
+      }
+
       Path serverPath = en.getValue();
 
       Path outputPath = outputBaseDir.resolve(urlPath);
+
       Path parentPath = outputPath.getParent();
       if (parentPath != null) {
         Files.createDirectories(parentPath);
@@ -814,10 +824,11 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
    *
    * @param staticOut The target path for static content.
    * @param dynamicOut The target path for dynamic content (jsp files, etc.)
+   * @param sourceMaps Whether {@code /sourcemaps} should be included.
    * @throws IOException on error.
    * @throws InterruptedException on interruption.
    */
-  public void generateFiles(Path staticOut, Path dynamicOut) throws IOException,
+  public void generateFiles(Path staticOut, Path dynamicOut, boolean sourceMaps) throws IOException,
       InterruptedException {
     boolean started = server.isStarted();
     if (!started) {
@@ -826,8 +837,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     LOG.info("Generating cached version at (static:) {} and (dynamic:) {}", staticOut, dynamicOut);
     pathsRegenerated.acquire();
     try {
-      copyResourcesToMappedDir(publicUrlPathsToStaticResource, staticOut);
-      copyResourcesToMappedDir(publicUrlPathsToDynamicResource, dynamicOut);
+      copyResourcesToMappedDir(publicUrlPathsToStaticResource, staticOut, sourceMaps);
+      copyResourcesToMappedDir(publicUrlPathsToDynamicResource, dynamicOut, sourceMaps);
       LOG.info("Generated cached version at (static:) {} and (dynamic:) {}", staticOut, dynamicOut);
       if (!started) {
         shutdown();
