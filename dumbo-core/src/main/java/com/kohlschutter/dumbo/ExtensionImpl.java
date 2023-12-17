@@ -231,7 +231,7 @@ final class ExtensionImpl extends ComponentImpl {
             continue;
           } else {
             if (LOG.isWarnEnabled()) {
-              LOG.warn("JavaScript" + url + " is missing from " + this);
+              LOG.warn("JavaScript resource " + url + " is missing from " + this);
             }
           }
         }
