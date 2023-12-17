@@ -34,6 +34,14 @@ public interface DumboServer {
   DumboServer start() throws IOException, InterruptedException;
 
   /**
+   * Waits until the started server reaches a somewhat idle state.
+   *
+   * @return This instance itself.
+   * @throws InterruptedException on interruption.
+   */
+  DumboServer awaitIdle() throws InterruptedException;
+
+  /**
    * Returns a {@link URI} for this server; the URI may change upon {@link #start()}.
    *
    * @return The URI.

@@ -25,41 +25,26 @@ import java.util.ServiceLoader;
 
 import org.eclipse.jdt.annotation.NonNull;
 
-/**
- * Builds a {@link DumboServer} instance.
- *
- * @author Christian Kohlschütter
- */
-public interface DumboServerBuilder {
-  DumboServer build() throws IOException;
+public interface DumboContentBuilder {
+  DumboContent build() throws IOException;
+
+  DumboContentBuilder withPrefix(String prefix);
+
+  DumboContentBuilder withApplication(Class<? extends DumboApplication> application);
+
+  DumboContentBuilder withWebapp(URL resource);
+
+  DumboContentBuilder withOutputPath(Path outputPath);
+
+  DumboContent openExisting(Path outputPath) throws IOException;
 
   /**
-   * Designated TCP port; 0 for any free, -1 for none (use UNIX domain sockets only).
-   *
-   * @param port The port.
-   * @return This builder.
-   */
-  DumboServerBuilder withPort(int port);
-
-  DumboServerBuilder withPrefix(String prefix);
-
-  DumboServerBuilder withApplication(Class<? extends DumboApplication> application);
-
-  DumboServerBuilder withWebapp(URL resource);
-
-  DumboServerBuilder withContent(Path... paths);
-
-  DumboServerBuilder withContent(DumboContent content);
-
-  DumboServerBuilder initFromEnvironmentVariables();
-
-  /**
-   * Returns a new {@link DumboServerBuilder}.
+   * Returns a new {@link DumboContentBuilder}.
    *
    * @return A new builder instance.
    */
-  static DumboServerBuilder begin() {
-    Optional<@NonNull DumboServerBuilder> first = ServiceLoader.load(DumboServerBuilder.class)
+  static DumboContentBuilder begin() {
+    Optional<@NonNull DumboContentBuilder> first = ServiceLoader.load(DumboContentBuilder.class)
         .findFirst();
     if (first.isPresent()) {
       return Objects.requireNonNull(first.get());
