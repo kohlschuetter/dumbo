@@ -20,11 +20,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboContent;
 import com.kohlschutter.dumbo.api.DumboContentBuilder;
 
 public final class GenerateDumboContent {
+  private static final Logger LOG = LoggerFactory.getLogger(GenerateDumboContent.class);
+
   private GenerateDumboContent() {
 
   }
@@ -48,8 +53,8 @@ public final class GenerateDumboContent {
       if (Files.isDirectory(outputPath) && Files.isDirectory(outputPath.resolve("static")) && Files
           .isDirectory(outputPath.resolve("dynamic"))) {
         // existing output directory
-      } else {
-        throw new IllegalStateException("Output path exists: " + outputPath);
+      } else if (Files.list(outputPath).count() > 0) {
+        LOG.warn("Output directory exists and is not empty: {}", outputPath);
       }
     }
 
