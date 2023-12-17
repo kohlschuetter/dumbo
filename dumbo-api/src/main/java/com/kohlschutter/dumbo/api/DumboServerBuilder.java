@@ -17,6 +17,7 @@
 package com.kohlschutter.dumbo.api;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -32,6 +33,14 @@ import org.eclipse.jdt.annotation.NonNull;
  */
 public interface DumboServerBuilder {
   DumboServer build() throws IOException;
+
+  /**
+   * Designated TCP bind address. Default is loopback only. Set to {@code null} for "any".
+   * 
+   * @param addr The address, or {@code null} for "any".
+   * @return This builder.
+   */
+  DumboServerBuilder withBindAddress(InetAddress addr);
 
   /**
    * Designated TCP port; 0 for any free, -1 for none (use UNIX domain sockets only).

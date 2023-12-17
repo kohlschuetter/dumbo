@@ -24,7 +24,7 @@ final class EnvHelper {
 
   static void checkEnv(String key, Consumer<String> consumer) {
     String v = System.getenv(key);
-    if (v != null && !v.isEmpty()) {
+    if (v != null) {
       consumer.accept(v);
     }
   }

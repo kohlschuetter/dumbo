@@ -29,18 +29,22 @@ import com.kohlschutter.dumbo.api.DumboServer;
  */
 public final class DevTools {
   private static final Logger LOG = LoggerFactory.getLogger(DevTools.class);
+
+  private static final boolean SUPPORTED_OS = "Mac OS X".equals(System.getProperty("os.name"));
+
   private static boolean staticMode;
   private static final String PATH_TO_MODIFIERKEYS;
 
   static {
     String path = null;
-    for (String p : new String[] {"/usr/local/bin/modifierkeys"}) {
-      if (new File(p).canExecute()) {
-        path = p;
-        break;
+    if (SUPPORTED_OS) {
+      for (String p : new String[] {"/usr/local/bin/modifierkeys"}) {
+        if (new File(p).canExecute()) {
+          path = p;
+          break;
+        }
       }
     }
-
     PATH_TO_MODIFIERKEYS = path;
   }
 
@@ -49,6 +53,10 @@ public final class DevTools {
   }
 
   public static boolean isShiftPressed() {
+    if (!SUPPORTED_OS) {
+      return false;
+    }
+
     if (PATH_TO_MODIFIERKEYS == null) {
       // Cannot check
       return false;
@@ -74,7 +82,12 @@ public final class DevTools {
    * @throws IOException on error.
    */
   public static void openURL(String url) throws IOException {
-    Runtime.getRuntime().exec(new String[] {"/usr/bin/open", url});
+    if (SUPPORTED_OS) {
+      LOG.info("Opening page in browser: {}", url);
+      Runtime.getRuntime().exec(new String[] {"/usr/bin/open", url});
+    } else {
+      LOG.warn("Cannot page in browser (unsupported): {}", url);
+    }
   }
 
   public static void openURL(DumboServer server) {
@@ -90,7 +103,6 @@ public final class DevTools {
         url += "?static";
       }
 
-      LOG.info("Opening page in browser: {}", url);
       DevTools.openURL(url);
     } catch (Exception e) {
       LOG.error("Can't open page in browser", e);
@@ -98,6 +110,10 @@ public final class DevTools {
   }
 
   public static void init() {
+    if (!SUPPORTED_OS) {
+      LOG.info("DevTools unsupported in this environment");
+      return;
+    }
     staticMode = DevTools.isShiftPressed();
     if (staticMode) {
       LOG.warn("Shift press detected -- enabling static design mode.");

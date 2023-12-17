@@ -17,10 +17,16 @@
 package com.kohlschutter.dumbo;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboContent;
@@ -29,6 +35,10 @@ import com.kohlschutter.dumbo.api.DumboServerBuilder;
 
 @SuppressWarnings("hiding")
 public class DumboServerImplBuilder implements DumboServerBuilder {
+  private static final Logger LOG = LoggerFactory.getLogger(DumboServerImplBuilder.class);
+
+  private static final InetAddress LOOPBACK = InetAddress.getLoopbackAddress();
+
   private boolean prewarm = false;
   private int port;
   private Class<? extends DumboApplication> application;
@@ -36,6 +46,8 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   private URL webapp;
   private String prefix = "";
   private Path[] paths;
+
+  private InetAddress bindAddress = LOOPBACK;
 
   public DumboServerImplBuilder() {
   }
@@ -46,7 +58,13 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
     if (!webappSet) {
       webapp = DumboServerImpl.getWebappBaseURL(app);
     }
-    return new DumboServerImpl(prewarm, port, app, prefix, webapp, null, paths);
+    return new DumboServerImpl(prewarm, bindAddress, port, app, prefix, webapp, null, paths);
+  }
+
+  @Override
+  public DumboServerBuilder withBindAddress(InetAddress addr) {
+    this.bindAddress = addr;
+    return this;
   }
 
   @Override
@@ -90,6 +108,15 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
 
   @Override
   public DumboServerBuilder initFromEnvironmentVariables() {
+    if (LOG.isInfoEnabled()) {
+      for (Map.Entry<String, String> en : System.getenv().entrySet()) {
+        LOG.info("env: {}: {}", en.getKey(), en.getValue());
+      }
+      for (Map.Entry<Object, Object> en : System.getProperties().entrySet()) {
+        LOG.info("sysprop: {}: {}", en.getKey(), en.getValue());
+      }
+    }
+
     EnvHelper.checkEnv("DUMBO_CONTENT_SOURCE", (v) -> {
       DumboContent content;
       try {
@@ -106,6 +133,19 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
     EnvHelper.checkEnv("DUMBO_SERVER_PORT", (v) -> {
       int port = Integer.parseInt(v);
       withPort(port);
+    });
+    EnvHelper.checkEnv("DUMBO_SERVER_ADDR", (v) -> {
+      try {
+        InetAddress addr;
+        if ("*".equals(v)) {
+          addr = null;
+        } else {
+          addr = InetAddress.getByName(v);
+        }
+        withBindAddress(addr);
+      } catch (UnknownHostException e) {
+        throw new IllegalStateException(e);
+      }
     });
 
     return this;

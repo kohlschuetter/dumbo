@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
-import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -158,8 +158,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  DumboServerImpl(boolean prewarm, int tcpPort, final ServerApp app, final String path,
-      final URL webappBaseURL, RequestLog requestLog, Path... paths) throws IOException {
+  DumboServerImpl(boolean prewarm, InetAddress bindAddr, int tcpPort, final ServerApp app,
+      final String path, final URL webappBaseURL, RequestLog requestLog, Path... paths)
+      throws IOException {
     this.prewarm = prewarm;
     final int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081"))
         : tcpPort;
@@ -215,7 +216,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     app.initComponents(this);
 
     server.setHandler(contextHandlers);
-    server.setConnectors(initConnectors(port, server));
+    server.setConnectors(initConnectors(bindAddr, port, server));
   }
 
   private WebAppContext initMainWebAppContext(URL webappBaseURL) throws IOException {
@@ -1041,18 +1042,21 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   /**
    * Returns an array of {@link Connector}s to be used for the given server.
    *
+   * @param address The bind address
+   * @param tcpPort The bind port.
    * @param targetServer The target server.
    * @return The connector(s).
    * @throws IOException on error.
    */
-  protected Connector[] initConnectors(int tcpPort, Server targetServer) throws IOException {
+  protected Connector[] initConnectors(InetAddress address, int tcpPort, Server targetServer)
+      throws IOException {
     String dumboSocketId;
     ServerConnector tcpConn;
     if (tcpPort == -1) {
       dumboSocketId = UUID.randomUUID().toString();
       tcpConn = null;
     } else {
-      tcpConn = initDefaultTCPConnector(tcpPort, targetServer);
+      tcpConn = initDefaultTCPConnector(address, tcpPort, targetServer);
       dumboSocketId = String.valueOf(tcpConn.getPort());
     }
 
@@ -1083,14 +1087,14 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
    * @return The connector.
    * @throws IOException on error.
    */
-  protected ServerConnector initDefaultTCPConnector(int port, Server targetServer)
+  protected ServerConnector initDefaultTCPConnector(InetAddress addr, int port, Server targetServer)
       throws IOException {
     ServerConnector connector = new ServerConnector(targetServer, newHttpConnectionFactory());
 
     connector.setPort(port <= 0 ? 0 : port);
     connector.setReuseAddress(true);
     connector.setReusePort(true);
-    connector.setHost(Inet4Address.getLoopbackAddress().getHostAddress());
+    connector.setHost(addr == null ? null : addr.getHostAddress());
 
     return connector;
   }
