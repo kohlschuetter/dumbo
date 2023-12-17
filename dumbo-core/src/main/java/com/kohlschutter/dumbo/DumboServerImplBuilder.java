@@ -28,6 +28,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboContent;
 import com.kohlschutter.dumbo.api.DumboServer;
@@ -61,6 +62,7 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
     return new DumboServerImpl(prewarm, bindAddress, port, app, prefix, webapp, null, paths);
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   @Override
   public DumboServerBuilder withBindAddress(InetAddress addr) {
     this.bindAddress = addr;
