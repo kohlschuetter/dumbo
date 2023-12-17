@@ -77,6 +77,9 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   @Override
   public DumboServerBuilder withContent(Path... paths) {
     this.paths = Arrays.copyOf(Objects.requireNonNull(paths), paths.length);
+    if (!webappSet) {
+      withWebapp(null);
+    }
     return this;
   }
 
