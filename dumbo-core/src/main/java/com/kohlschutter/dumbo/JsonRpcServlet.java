@@ -312,4 +312,8 @@ class JsonRpcServlet extends HttpServlet {
   void setServer(DumboServerImpl server) {
     this.server = server;
   }
+
+  JSONRPCBridge getBridge() {
+    return bridge;
+  }
 }

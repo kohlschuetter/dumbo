@@ -20,6 +20,7 @@ import java.net.URL;
 
 import com.kohlschutter.dumborb.client.Client;
 import com.kohlschutter.dumborb.client.CustomHeaderURLConnectionSession;
+import com.kohlschutter.dumborb.client.SystemObject;
 import com.kohlschutter.dumborb.security.ClassResolver;
 
 public final class JsonRpcClient extends Client {
@@ -30,5 +31,9 @@ public final class JsonRpcClient extends Client {
 
   public void setTestSecret(String secret) {
     ((CustomHeaderURLConnectionSession) getDumborbClientSession()).setHeaderValue(secret);
+  }
+
+  public String[] retrieveKnownRpcMethods() {
+    return openProxy("system", SystemObject.class).listMethods();
   }
 }

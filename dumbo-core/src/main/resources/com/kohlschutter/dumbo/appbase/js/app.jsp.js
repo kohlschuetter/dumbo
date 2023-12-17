@@ -213,27 +213,29 @@ var Dumbo;
         }
     };
 
-    window.addEventListener('load', 
-        function() {
-            Dumbo.rpc = new JSONRpcClient(function(_, _) {
-                var cb;
-                if (Dumbo.app._onStaticModeCallbacks.condition()) {
-                    cb = Dumbo.app._onStaticModeCallbacks;
-                } else {
-                    cb = Dumbo.app._onLiveModeCallbacks;
-                }
+    if (location.search != "?static") {
+        Dumbo.rpc = new JSONRpcClient(function(_, _) {
+            var cb;
+            if (Dumbo.app._onStaticModeCallbacks.condition()) {
+                cb = Dumbo.app._onStaticModeCallbacks;
+            } else {
+                cb = Dumbo.app._onLiveModeCallbacks;
+            }
 
-                cb.afterwards = function() {
-                    _runCallbacks(Dumbo.app._onReadyCallbacks);
-                };
+            cb.afterwards = function() {
+                _runCallbacks(Dumbo.app._onReadyCallbacks);
+            };
 
-                Dumbo.app._onLoadedCallbacks.afterwards = function() {
-                    _runCallbacks(cb);
-                };
+            Dumbo.app._onLoadedCallbacks.afterwards = function() {
+                _runCallbacks(cb);
+            };
 
-                _runCallbacks(Dumbo.app._onLoadedCallbacks);
-            }, jsonUrl);
-        });
+            _runCallbacks(Dumbo.app._onLoadedCallbacks);
+        }, jsonUrl);
+
+        var methods = JSON.parse('<%= application.getAttribute("dumborb.json.methods") %>');
+        Dumbo.rpc._fetchMethods(methods);
+    }
 
     if (location.search == "?static") {
         let showOutline = (location.hash == "#outline");

@@ -312,11 +312,7 @@ function toJSON(o) {
  */
 function JSONRpcClient() {
     var arg_shift = 0,
-        req,
-        methods,
-        self,
-        arg0type = (typeof arguments[0]),
-        doListMethods = true;
+        arg0type = (typeof arguments[0]);
 
     //If a call back is being used grab it
     if (arg0type === "function") {
@@ -327,7 +323,6 @@ function JSONRpcClient() {
     else if (arguments[0] && arg0type === "object" && arguments[0].length) {
         this._addMethods(arguments[0]); // go ahead and add the methods directly
         arg_shift++;
-        doListMethods = false;
     }
 
     //The next 3 args are passed to the http request
@@ -336,31 +331,38 @@ function JSONRpcClient() {
     this.pass = arguments[arg_shift + 2];
     this.objectID = 0;
     this.dontQueueCalls = false;
+}
 
-    if (doListMethods) {
-        //Add the listMethods system methods
-        this._addMethods(["system.listMethods"]);
-        //Make the call to list the methods
-        req = JSONRpcClient._makeRequest(this, "system.listMethods", []);
-        //If a callback was added to the constructor, call it
+JSONRpcClient.prototype._fetchMethods = function(cached = null) {
+    JSONRpcClient.prototype._fetchMethods = function(_ = null) {};
+    var req, methods;
+
+    if (cached) {
+        this._addMethods(cached);
         if (this.readyCB) {
-            self = this;
-            req.cb = function(result, e) {
-                if (!e) {
-                    self._addMethods(result);
-                }
-                self.readyCB(result, e);
-            };
+            setTimeout(this.readyCB, 0, cached);
         }
+        return;
+    }
 
-        if (!this.readyCB) {
-            methods = JSONRpcClient._sendRequest(this, req);
-            this._addMethods(methods);
-        }
-        else {
-            JSONRpcClient.async_requests.push(req);
-            JSONRpcClient.kick_async();
-        }
+    // Add the listMethods system methods
+    this._addMethods(["system.listMethods"]);
+    // Make the call to list the methods
+    req = JSONRpcClient._makeRequest(this, "system.listMethods", []);
+    // If a callback was added to the constructor, call it
+    if (this.readyCB) {
+        var self = this;
+        req.cb = function(result, e) {
+            if (!e) {
+                self._addMethods(result);
+            }
+            self.readyCB(result, e);
+        };
+        JSONRpcClient.async_requests.push(req);
+        JSONRpcClient.kick_async();
+    } else {
+        methods = JSONRpcClient._sendRequest(this, req);
+        this._addMethods(methods);
     }
 }
 

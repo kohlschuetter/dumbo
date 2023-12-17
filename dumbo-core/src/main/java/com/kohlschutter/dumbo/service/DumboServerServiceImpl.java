@@ -25,15 +25,14 @@ import java.util.stream.Stream;
 import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.DumboServerImpl;
 import com.kohlschutter.dumbo.DumboServerImplBuilder;
+import com.kohlschutter.dumbo.JsonRpcClient;
 import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboServer;
-import com.kohlschutter.dumborb.client.Client;
-import com.kohlschutter.dumborb.client.SystemObject;
 
 public class DumboServerServiceImpl implements DumboServerService {
   private final DumboServerImpl server;
-  private final Client client;
+  private final JsonRpcClient client;
   private final Set<String> knownRpcServices;
 
   public DumboServerServiceImpl(Class<? extends DumboApplication> applicationClass)
@@ -41,13 +40,12 @@ public class DumboServerServiceImpl implements DumboServerService {
     server = newServerImpl(applicationClass).start();
 
     this.client = server.newJsonRpcClient();
-    this.knownRpcServices = retrieveKnownRpcServices(client);
+    this.knownRpcServices = retrieveKnownRpcServices();
   }
 
-  private static Set<String> retrieveKnownRpcServices(Client client) {
+  private Set<String> retrieveKnownRpcServices() {
     Set<String> services = new HashSet<>();
-    SystemObject system = client.openProxy("system", SystemObject.class);
-    for (String m : system.listMethods()) {
+    for (String m : client.retrieveKnownRpcMethods()) {
       int lastDot = m.lastIndexOf('.');
       if (lastDot == -1) {
         continue;

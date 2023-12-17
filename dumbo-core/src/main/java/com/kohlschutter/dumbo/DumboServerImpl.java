@@ -83,6 +83,7 @@ import org.eclipse.jetty.util.resource.CombinedResource;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.json.JSONArray;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.newsclub.net.unix.jetty.AFSocketClientConnector;
 import org.newsclub.net.unix.jetty.AFSocketServerConnector;
@@ -696,6 +697,11 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     return CompletableFuture.runAsync(() -> {
       try {
         URI serverURI = getURI();
+
+        JSONArray jsonMethods = jsonRpc.getBridge().getSystemMethods();
+        for (WebAppContext wac : contexts.keySet()) {
+          wac.setAttribute("dumborb.json.methods", jsonMethods.toString());
+        }
 
         String serverURIBase = new URI(serverURI.getScheme(), serverURI.getUserInfo(), serverURI
             .getHost(), serverURI.getPort(), null, null, null).toString();
