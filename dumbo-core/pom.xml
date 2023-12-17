@@ -13,7 +13,7 @@
         <dumbo.project.basedir>${project.basedir}/..</dumbo.project.basedir>
         <junixsocket.version>2.8.1</junixsocket.version>
         <slf4j.version>2.0.9</slf4j.version>
-        <jetty.version>12.0.5-SNAPSHOT</jetty.version>
+        <jetty.version>12.0.4</jetty.version>
     </properties>
     <artifactId>dumbo-core</artifactId>
     <dependencies>
