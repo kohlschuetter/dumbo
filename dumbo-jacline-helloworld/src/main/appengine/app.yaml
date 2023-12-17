@@ -1,7 +1,8 @@
 # deploy with
 # gcloud app deploy --stop-previous-version
+env: standard
 runtime: java21
-entrypoint: java ${JAVA_OPTS} -jar dumbo-jacline-helloworld-1.0.0-main.jar
+entrypoint: java $JAVA_OPTS -jar ${project.name}-${project.version}-main.jar
 handlers:
 - url: /hello
   static_dir: static/hello
