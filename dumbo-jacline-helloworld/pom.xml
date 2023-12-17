@@ -198,12 +198,6 @@
                                     <overwrite>true</overwrite>
                                 </configuration>
                             </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
                             <execution>
                                 <id>copy-docker-files</id>
                                 <phase>generate-resources</phase>
