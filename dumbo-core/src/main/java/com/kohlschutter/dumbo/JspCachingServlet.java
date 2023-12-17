@@ -213,11 +213,13 @@ final class JspCachingServlet extends JettyJspServlet {
       IOException {
     String path = req.getServletPath();
 
-    String generatedPath = null;
+    final String generatedPath;
     if (path.endsWith(".html.jsp")) {
       generatedPath = path.substring(0, path.length() - ".jsp".length());
     } else if (path.endsWith(".jsp.js")) {
       generatedPath = path.substring(0, path.length() - ".jsp.js".length()) + ".js";
+    } else {
+      generatedPath = null;
     }
 
     if (generatedPath == null || !checkCache(path, generatedPath, req, resp)) {
