@@ -19,15 +19,17 @@ package com.kohlschutter.dumbo.jacline.helloworld;
 
 import java.io.IOException;
 
+import com.kohlschutter.dumbo.DumboServerImplBuilder;
 import com.kohlschutter.dumbo.api.DumboContent;
-import com.kohlschutter.dumbo.api.DumboContentBuilder;
+import com.kohlschutter.dumbo.api.DumboServer;
+import com.kohlschutter.dumbo.api.DumboServerBuilder;
+import com.kohlschutter.dumbo.util.DevTools;
 
-public class CreateStatic {
+public class OpenStatic {
   public static void main(String[] args) throws IOException, InterruptedException {
-    DumboContent content = DumboContentBuilder.begin() //
-        .withApplication(HelloWorldApp.class) //
-        .withOutputPath(Locations.getOutputPath()) //
-        .build();
-    System.out.println(content.getBasePath());
+    DumboServer server = ((DumboServerImplBuilder) DumboServerBuilder.begin()) //
+        .enablePrewarm().withApplication(HelloWorldApp.class) //
+        .withContent(DumboContent.openExisting(Locations.getOutputPath())).build().start();
+    DevTools.openURL(server);
   }
 }

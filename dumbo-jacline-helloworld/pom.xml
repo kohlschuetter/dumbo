@@ -76,24 +76,6 @@
                     <mainClass>${mainClass}</mainClass>
                 </configuration>
             </plugin>
-
-            <plugin>
-                <groupId>org.graalvm.buildtools</groupId>
-                <artifactId>native-maven-plugin</artifactId>
-                <version>${graal.plugin.version}</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <agent>
-                        <options>
-                            <enableExperimentalPredefinedClasses>true</enableExperimentalPredefinedClasses>
-                            <enableExperimentalUnsafeAllocationTracing>
-                                true
-                            </enableExperimentalUnsafeAllocationTracing>
-                            <trackReflectionMetadata>true</trackReflectionMetadata>
-                        </options>
-                    </agent>
-                </configuration>
-            </plugin>
         </plugins>
 
         <resources>
@@ -119,6 +101,7 @@
                     <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
+                        <version>${graal.plugin.version}</version>
                         <extensions>true</extensions>
                         <executions>
                             <execution>
@@ -138,6 +121,20 @@
                             <useArgFile>false</useArgFile>
                             <imageName>${project.name}-${project.version}</imageName>
                             <fallback>false</fallback>
+                            <agent>
+                                <enabled>true</enabled>
+                                <options>
+                                    <enableExperimentalPredefinedClasses>true</enableExperimentalPredefinedClasses>
+                                    <enableExperimentalUnsafeAllocationTracing>
+                                        true
+                                    </enableExperimentalUnsafeAllocationTracing>
+                                    <trackReflectionMetadata>true</trackReflectionMetadata>
+                                </options>
+                            </agent>
+                            <buildArgs>
+                                <arg>
+                                    -H:ConfigurationFileDirectories=${project.build.directory}/native/agent-output/test</arg>
+                            </buildArgs>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -153,6 +150,39 @@
             </activation>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>generate-dumbo-content</id>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>
+                                        com.kohlschutter.dumbo.tool.GenerateDumboContent</mainClass>
+                                    <arguments>
+                                        <argument>${mainClass}</argument>
+                                        <argument>
+                                            ${project.build.directory}/app</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <environmentVariables>
+                                <DUMBO_CONTENT_SOURCE>
+                                    ${project.build.directory}/app</DUMBO_CONTENT_SOURCE>
+                            </environmentVariables>
+                        </configuration>
+                    </plugin>
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
@@ -173,7 +203,7 @@
                                     </archive>
                                     <outputDirectory>
                                         ${project.build.directory}/app</outputDirectory>
-                                        <classifier>main</classifier>
+                                    <classifier>main</classifier>
                                 </configuration>
                             </execution>
                         </executions>

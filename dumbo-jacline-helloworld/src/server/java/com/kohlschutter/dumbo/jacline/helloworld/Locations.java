@@ -5,9 +5,7 @@ import java.nio.file.Path;
 
 final class Locations {
   private static final boolean AVAILABLE;
-  private static final Path BASE_DIR = Path.of("/Volumes/RAM-Disk/dumbo.tmp");
-  private static final Path STATIC_OUT = BASE_DIR.resolve("static");
-  private static final Path DYNAMIC_OUT = BASE_DIR.resolve("dynamic");
+  private static final Path BASE_DIR = Path.of("dumbo-out");
 
   static {
     Path parentPath = BASE_DIR.getParent();
@@ -18,11 +16,7 @@ final class Locations {
     return AVAILABLE;
   }
 
-  public static Path getStaticOut() {
-    return STATIC_OUT;
-  }
-
-  public static Path getDynamicOut() {
-    return DYNAMIC_OUT;
+  public static Path getOutputPath() {
+    return BASE_DIR;
   }
 }

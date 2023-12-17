@@ -34,8 +34,8 @@ import com.kohlschutter.dumbo.util.DevTools;
 public class HelloWorldApp implements DumboApplication, AppDefaultsSupport {
   public static void main(String[] args) throws IOException, InterruptedException {
     DumboServer server = DumboServerBuilder.begin() //
+        .initFromEnvironmentVariables() //
         .withApplication(HelloWorldApp.class) //
-        .withPort(Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"))) //
         .build().start();
 
     DevTools.openURL(server, "/");
