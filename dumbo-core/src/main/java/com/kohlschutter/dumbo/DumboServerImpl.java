@@ -316,7 +316,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     }
 
     for (Path p : paths) {
-      p = p.toRealPath(LinkOption.NOFOLLOW_LINKS);
+      p = p.toRealPath(LinkOption.NOFOLLOW_LINKS); // NOPMD.AvoidReassigningLoopVariables
       Resource r = newResourceCreateIfNecessary(rf, p);
       if (r == null) {
         LOG.warn("Could not create Resource for path {}", p);
