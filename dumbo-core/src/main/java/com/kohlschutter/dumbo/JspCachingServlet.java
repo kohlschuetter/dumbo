@@ -57,7 +57,6 @@ final class JspCachingServlet extends JettyJspServlet {
 
     String realPath = generatedPath == null ? null : context.getRealPath(generatedPath);
 
-    // FIXME use Path / temporary directory instead
     if (generatedPath == null || context.getRealPath(path) == null || path.contains("..")) {
       if (realPath != null) {
         // we're probably running in cached mode: the jsp file is not present but the cached file is
@@ -68,10 +67,17 @@ final class JspCachingServlet extends JettyJspServlet {
       return false;
     }
 
+    boolean isReload = "true".equals(req.getParameter("reload"));
+
     File generatedFile;
     if (realPath != null) {
       generatedFile = new File(realPath);
     } else {
+      if (DumboServerImpl.checkResourceExists(context, path) && !isReload) {
+        LOG.debug("Generated file exists, and reload is not true for path {}", path);
+        return false;
+      }
+
       Path p = Path.of(generatedPath);
       Path parent = p.getParent();
       if (parent == null) {
@@ -90,8 +96,9 @@ final class JspCachingServlet extends JettyJspServlet {
         Files.createDirectories(parentPath);
       }
     }
-    if ((generatedFile.exists() && !"true".equals(req.getParameter("reload")))) {
-      LOG.info("Generated file exists, and reload is not true: {}", generatedFile);
+
+    if (generatedFile.exists() && !isReload) {
+      LOG.debug("Generated file exists, and reload is not true: {}", generatedFile);
       return false;
     }
 

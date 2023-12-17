@@ -19,6 +19,8 @@ package com.kohlschutter.dumbo.service;
 import java.io.IOException;
 import java.util.UUID;
 
+import com.kohlschutter.dumbo.DumboServerImpl;
+import com.kohlschutter.dumbo.DumboServerImplBuilder;
 import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumborb.client.CustomHeaderURLConnectionSession;
 import com.kohlschutter.dumborb.client.Session;
@@ -38,9 +40,12 @@ public class TestingDumboServerService extends DumboServerServiceImpl {
       throws IOException, InterruptedException {
     super(applicationClass);
 
-    getDumboServerImpl().setJsonRpcTestSecretConsumer(randomKey, (c) -> {
+    DumboServerImpl server = getDumboServerImpl();
+    server.setJsonRpcTestSecretConsumer(randomKey, (c) -> {
       c.setErrorStackTraces(false);
     });
+
+    server.awaitIdle();
   }
 
   @Override
@@ -53,5 +58,11 @@ public class TestingDumboServerService extends DumboServerServiceImpl {
     }
 
     return super.decorateRpcClientProxy(proxy);
+  }
+
+  @Override
+  protected void configureNewServerImpl(DumboServerImplBuilder builder) {
+    builder.initFromEnvironmentVariables();
+    builder.enablePrewarm();
   }
 }

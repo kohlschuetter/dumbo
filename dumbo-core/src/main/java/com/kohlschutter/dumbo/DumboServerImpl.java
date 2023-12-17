@@ -33,6 +33,7 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.ProviderMismatchException;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -46,11 +47,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.Response.CompleteListener;
@@ -90,7 +95,6 @@ import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
 import com.kohlschutter.dumbo.api.DumboServer;
 import com.kohlschutter.dumbo.api.DumboServiceProvider;
-import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 import com.kohlschutter.dumbo.util.DevTools;
 import com.kohlschutter.dumbo.util.NativeImageUtil;
 import com.kohlschutter.dumborb.security.ClassResolver;
@@ -109,12 +113,18 @@ import jakarta.servlet.http.HttpSession;
  */
 @SuppressWarnings({"PMD.ExcessiveImports", "PMD.CyclomaticComplexity"})
 public class DumboServerImpl implements DumboServer, DumboServiceProvider {
+  private static final boolean TERMINATE_VM = Boolean.parseBoolean(System.getProperty(
+      "dumbo.terminate-vm", "false"));
+
   private static final Logger LOG = LoggerFactory.getLogger(DumboServerImpl.class);
   private static final String JSON_PATH = "/json";
   private static final Consumer<JsonRpcContext> DEFAULT_JSONRPC_SECRET_CONSUMER = (x) -> {
   };
+  private static final URI FALLBACK_URI = URI.create("http://127.0.0.0");
+  private static final AtomicInteger RUNNING_SERVERS = new AtomicInteger(0);
 
   private final Server server;
+  private final AtomicBoolean shutdownRequested = new AtomicBoolean(false);
   private final String contextPath;
   private Thread serverThread;
 
@@ -143,56 +153,13 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   private final Map<String, Consumer<JsonRpcContext>> jsonRpcSecrets = new HashMap<>();
 
-  /**
-   * Creates a new HTTP server for the given {@link ServerApp} on a free port.
-   *
-   * @param app The server app.
-   * @throws IOException on error
-   * @throws ExtensionDependencyException on dependency conflict.
-   */
-  public DumboServerImpl(final ServerApp app) throws IOException {
-    this(0, app);
-  }
-
-  /**
-   * Creates a new HTTP server for the given {@link ServerApp} on the given port.
-   *
-   * @param port The port, or 0 for any free.
-   * @param app The server app.
-   * @throws IOException on error
-   * @throws ExtensionDependencyException on dependency conflict.
-   */
-  public DumboServerImpl(int port, final ServerApp app) throws IOException {
-    this(port, app, "");
-  }
-
-  /**
-   * Creates a new HTTP server for the given {@link ServerApp}.
-   *
-   * @param app The app.
-   * @param path The base path for the server, {@code ""} for root.
-   * @throws IOException on error.
-   *
-   * @throws ExtensionDependencyException on dependency conflict.
-   */
-  public DumboServerImpl(final ServerApp app, final String path) throws IOException {
-    this(0, app, path);
-  }
-
-  public DumboServerImpl(int tcpPort, final ServerApp app, final String path) throws IOException {
-    this(tcpPort, app, path, getWebappBaseURL(app), null);
-  }
-
-  @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
-  public DumboServerImpl(int tcpPort, final ServerApp app, final String path, Path... paths)
-      throws IOException {
-    this(tcpPort, app, path, null, null, paths);
-  }
+  private final boolean prewarm;
 
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  DumboServerImpl(int tcpPort, final ServerApp app, final String path, final URL webappBaseURL,
-      RequestLog requestLog, Path... paths) throws IOException {
+  DumboServerImpl(boolean prewarm, int tcpPort, final ServerApp app, final String path,
+      final URL webappBaseURL, RequestLog requestLog, Path... paths) throws IOException {
+    this.prewarm = prewarm;
     final int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081"))
         : tcpPort;
 
@@ -250,10 +217,6 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     server.setConnectors(initConnectors(port, server));
   }
 
-  public DumboServerImpl(ServerApp serverApp, String path, URL webappBaseURL) throws IOException {
-    this(0, serverApp, path, webappBaseURL, null);
-  }
-
   private WebAppContext initMainWebAppContext(URL webappBaseURL) throws IOException {
     URI webappBaseURI;
     try {
@@ -278,7 +241,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     registerContext(wac, webappBaseURI);
 
-    scanWebApp(wac.getContextPath(), res);
+    if (cachedPaths == null) {
+      scanWebApp(wac.getContextPath(), res);
+    }
 
     return wac;
   }
@@ -335,10 +300,6 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     return r;
   }
 
-  private Resource combinedResource(Path... paths) throws IOException {
-    return combinedResource(null, paths);
-  }
-
   private Resource combinedResource(Path first, Path... paths) throws IOException {
     ResourceFactory rf = ResourceFactory.root();
 
@@ -388,20 +349,6 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     return u;
   }
 
-  /**
-   * Scan the webapp's resources for files that we should request via HTTP (to trigger caching,
-   * etc.).
-   *
-   * @param contextPrefix The context prefix.
-   * @param dir The directory resource.
-   * @throws IOException on error.
-   */
-  @SuppressWarnings("PMD.CognitiveComplexity")
-  private void scanWebApp(String context, Resource dir) throws IOException {
-    LOG.info("Scanning contents of context {} from {}", context, dir);
-    scanWebApp(context, dir, null);
-  }
-
   private Path checkValidPath(Resource resource, List<Path> validPaths) {
     Path match;
     if (resource instanceof CombinedResource) {
@@ -419,11 +366,31 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   private Path checkValidPath(Path resourcePath, List<Path> validPaths) {
     for (Path p : validPaths) {
-      if (resourcePath.startsWith(p)) {
-        return p;
+      try {
+        if (resourcePath.startsWith(p)) {
+          return p;
+        }
+      } catch (ProviderMismatchException e) {
+        System.err.println("ERROR: " + e + " checking " + resourcePath + " startsWith " + p);
+        e.printStackTrace();
+        return null;
       }
     }
     return null;
+  }
+
+  /**
+   * Scan the webapp's resources for files that we should request via HTTP (to trigger caching,
+   * etc.).
+   *
+   * @param contextPrefix The context prefix.
+   * @param dir The directory resource.
+   * @throws IOException on error.
+   */
+  @SuppressWarnings("PMD.CognitiveComplexity")
+  private void scanWebApp(String context, Resource dir) throws IOException {
+    LOG.info("Scanning contents of context {} from {}", context, dir);
+    scanWebApp(context, dir, null);
   }
 
   @SuppressWarnings("PMD.CognitiveComplexity")
@@ -506,7 +473,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   }
 
   private static boolean isStaticFileName(String name) {
-    return !name.endsWith(".jsp");
+    return !name.endsWith(".jsp") || name.endsWith(".html.jsp");
   }
 
   private static String processFileName(String name) {
@@ -545,6 +512,10 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     String prefix = (contextPath + contextPrefix).replaceAll("//+", "/");
     String relativePrefix = prefix.replaceAll("^/+", "");
+
+    final File contextWorkDir = new File(app.getWebappWorkDir(), relativePrefix);
+    Files.createDirectories(contextWorkDir.toPath());
+
     Resource res;
     if (cachedPaths != null) {
       Path[] paths = new Path[cachedPaths.length];
@@ -553,11 +524,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
         paths[i] = cachedPaths[i].resolve(relativePrefix);
       }
 
-      res = combinedResource(paths);
+      res = combinedResource(contextWorkDir.toPath(), paths);
     } else {
-
-      final File contextWorkDir = new File(app.getWebappWorkDir(), relativePrefix);
-      Files.createDirectories(contextWorkDir.toPath());
 
       try {
         res = ResourceFactory.root().newResource(List.of(contextWorkDir.toURI(), resourceBaseUri,
@@ -727,7 +695,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     return CompletableFuture.runAsync(() -> {
       try {
-        URI serverURI = server.getURI();
+        URI serverURI = getURI();
+
         String serverURIBase = new URI(serverURI.getScheme(), serverURI.getUserInfo(), serverURI
             .getHost(), serverURI.getPort(), null, null, null).toString();
         // ClientConnector clientConnector = new ClientConnector();
@@ -876,17 +845,31 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       @Override
       public void run() {
         try {
-          server.start();
+          RUNNING_SERVERS.incrementAndGet();
+          try {
+            server.start();
 
-          regeneratePaths().thenAccept((v) -> pathsRegenerated.release());
+            regeneratePaths().thenRun(() -> prewarmContent()).thenAccept((v) -> pathsRegenerated
+                .release());
 
-          DevTools.init();
+            DevTools.init();
 
-          serverStarted.release();
-          CompletableFuture.runAsync(DumboServerImpl.this::onServerStart);
-          server.join();
-          LOG.info("Shutting down ...");
-          onServerStop();
+            serverStarted.release();
+            CompletableFuture.runAsync(DumboServerImpl.this::onServerStart);
+            try {
+              server.join();
+            } catch (InterruptedException e) {
+              if (shutdownRequested.get()) {
+                // all good
+              } else {
+                throw e;
+              }
+            }
+          } finally {
+            LOG.info("Shutting down ...");
+            RUNNING_SERVERS.decrementAndGet();
+            onServerStop();
+          }
         } catch (Exception e) {
           onServerException(e);
         }
@@ -894,6 +877,65 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     });
     t.setName("ServerThread");
     t.start();
+  }
+
+  private void prewarmContent() {
+    if (!prewarm) {
+      LOG.info("Prewarm disabled");
+      return;
+    }
+    if (cachedPaths == null) {
+      LOG.info("Prewarm enabled, but no cached paths");
+      return;
+    }
+    try {
+      for (Path p : cachedPaths) {
+        LOG.info("Prewarming content from {}", p);
+        visitStaticContent(p);
+      }
+    } catch (Exception e) {
+      LOG.warn("Error while visiting static context", e);
+    }
+  }
+
+  private void visitStaticContent(Path p) throws Exception {
+    HttpClient client = newServerHttpClient();
+    client.start();
+
+    URI baseURI = getURI();
+
+    List<Path> list = Files.walk(p).filter(Files::isRegularFile).collect(Collectors.toList());
+    CountDownLatch cdl = new CountDownLatch(list.size());
+
+    list.forEach((f) -> {
+      String relativeUrl = p.relativize(f).toString();
+      LOG.debug("Request prewarm: {}", relativeUrl);
+      client.newRequest(baseURI.resolve(relativeUrl)).method(HttpMethod.GET).send(
+          new CompleteListener() {
+
+            @Override
+            public void onComplete(Result result) {
+              if (result.isSucceeded()) {
+                LOG.debug("Prewarm OK: {}", relativeUrl);
+              } else {
+                if (LOG.isWarnEnabled()) {
+                  LOG.warn("Prewarm failed with status {} for {} ", result.getResponse()
+                      .getStatus(), relativeUrl);
+                }
+              }
+              cdl.countDown();
+            }
+          });
+    });
+
+    cdl.await();
+  }
+
+  @Override
+  public DumboServer awaitIdle() throws InterruptedException {
+    pathsRegenerated.acquire();
+    pathsRegenerated.release();
+    return this;
   }
 
   @Override
@@ -936,23 +978,30 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
    * This method is called upon server stop.
    */
   protected void onServerStop() {
-    // Make sure the JVM exits -- Maven's exec:java may spawn extra threads...
-    new Thread() {
-      {
-        setDaemon(true);
-      }
-
-      @Override
-      @SuppressFBWarnings("DM_EXIT")
-      public void run() {
-        try {
-          Thread.sleep(5000);
-        } catch (InterruptedException ignore) {
-          // ignored
+    if (!TERMINATE_VM) {
+      return;
+    }
+    if (RUNNING_SERVERS.get() <= 0) {
+      // Make sure the JVM exits -- Maven's exec:java may spawn extra threads...
+      new Thread() {
+        {
+          setDaemon(true);
         }
-        System.exit(0); // NOPMD.DoNotTerminateVM
-      }
-    }.start();
+
+        @Override
+        @SuppressFBWarnings("DM_EXIT")
+        public void run() {
+          try {
+            Thread.sleep(5000);
+          } catch (InterruptedException ignore) {
+            // ignored
+          }
+          if (RUNNING_SERVERS.get() <= 0) {
+            System.exit(0); // NOPMD.DoNotTerminateVM
+          }
+        }
+      }.start();
+    }
   }
 
   /**
@@ -972,6 +1021,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   }
 
   private void stop(final boolean join) {
+    shutdownRequested.set(true);
     if (serverThread == null) {
       return;
     }
@@ -997,13 +1047,26 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
    * @throws IOException on error.
    */
   protected Connector[] initConnectors(int tcpPort, Server targetServer) throws IOException {
-    ServerConnector tcpConn = initDefaultTCPConnector(tcpPort, targetServer);
+    String dumboSocketId;
+    ServerConnector tcpConn;
+    if (tcpPort == -1) {
+      dumboSocketId = UUID.randomUUID().toString();
+      tcpConn = null;
+    } else {
+      tcpConn = initDefaultTCPConnector(tcpPort, targetServer);
+      dumboSocketId = String.valueOf(tcpConn.getPort());
+    }
 
-    // FIXME directory
-    serverUNIXSocketAddress = AFUNIXSocketAddress.of(new File("/tmp/dumbo-" + tcpConn.getPort()
+    serverUNIXSocketAddress = AFUNIXSocketAddress.of(new File("/tmp/dumbo-" + dumboSocketId
         + ".sock"));
 
-    return new Connector[] {tcpConn, initUnixConnector(targetServer, serverUNIXSocketAddress)};
+    Connector unixConnector = initUnixConnector(targetServer, serverUNIXSocketAddress);
+
+    if (tcpConn == null) {
+      return new Connector[] {unixConnector};
+    } else {
+      return new Connector[] {tcpConn, unixConnector};
+    }
   }
 
   protected HttpConnectionFactory newHttpConnectionFactory() {
@@ -1061,7 +1124,12 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   @Override
   public URI getURI() {
-    return server.getURI();
+    URI uri = server.getURI();
+    if (uri == null) {
+      return FALLBACK_URI;
+    } else {
+      return uri;
+    }
   }
 
   void onSessionShutdown(String sessionId, WeakReference<HttpSession> weakSession) {
@@ -1164,5 +1232,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   public void setJsonRpcTestSecretConsumer(String secret,
       Consumer<JsonRpcContext> contextConsumer) {
     jsonRpcSecrets.put(secret, contextConsumer);
+  }
+
+  static DumboServerImpl getInstance(ServletContext context) {
+    return (DumboServerImpl) context.getAttribute(DumboServerImpl.class.getName());
   }
 }

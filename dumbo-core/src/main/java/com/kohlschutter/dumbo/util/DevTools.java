@@ -77,6 +77,10 @@ public final class DevTools {
     Runtime.getRuntime().exec(new String[] {"/usr/bin/open", url});
   }
 
+  public static void openURL(DumboServer server) {
+    openURL(server, "/");
+  }
+
   public static void openURL(DumboServer server, String page) {
     try {
       String url = server.getURI().toString().replaceFirst("/$", "") + "/" + page.replaceFirst("^/",

@@ -19,14 +19,17 @@ package com.kohlschutter.dumbo;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Objects;
 
 import com.kohlschutter.dumbo.api.DumboApplication;
+import com.kohlschutter.dumbo.api.DumboContent;
 import com.kohlschutter.dumbo.api.DumboServer;
 import com.kohlschutter.dumbo.api.DumboServerBuilder;
 
 @SuppressWarnings("hiding")
 public class DumboServerImplBuilder implements DumboServerBuilder {
+  private boolean prewarm = false;
   private int port;
   private Class<? extends DumboApplication> application;
   private boolean webappSet = false;
@@ -43,9 +46,7 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
     if (!webappSet) {
       webapp = DumboServerImpl.getWebappBaseURL(app);
     }
-    return new DumboServerImpl(port, app, prefix, webapp, null, paths
-    // , Locations.getStaticOut(), Locations.getDynamicOut()
-    );
+    return new DumboServerImpl(prewarm, port, app, prefix, webapp, null, paths);
   }
 
   @Override
@@ -75,7 +76,40 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
 
   @Override
   public DumboServerBuilder withContent(Path... paths) {
-    this.paths = Objects.requireNonNull(paths);
-    return null;
+    this.paths = Arrays.copyOf(Objects.requireNonNull(paths), paths.length);
+    return this;
+  }
+
+  @Override
+  public DumboServerBuilder withContent(DumboContent content) {
+    return withContent(content.toContentPaths());
+  }
+
+  @Override
+  public DumboServerBuilder initFromEnvironmentVariables() {
+    EnvHelper.checkEnv("DUMBO_CONTENT_SOURCE", (v) -> {
+      DumboContent content;
+      try {
+        content = DumboContent.openExisting(Path.of(v));
+      } catch (IOException e) {
+        throw new IllegalArgumentException("Not a content directory: DUMBO_CONTENT_SOURCE=" + v, e);
+      }
+      withContent(content);
+    });
+    EnvHelper.checkEnv("PORT", (v) -> { // for Google AppEngine, etc.
+      int port = Integer.parseInt(v);
+      withPort(port);
+    });
+    EnvHelper.checkEnv("DUMBO_SERVER_PORT", (v) -> {
+      int port = Integer.parseInt(v);
+      withPort(port);
+    });
+
+    return this;
+  }
+
+  public DumboServerBuilder enablePrewarm() {
+    this.prewarm = true;
+    return this;
   }
 }

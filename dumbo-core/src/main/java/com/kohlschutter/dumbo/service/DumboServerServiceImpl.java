@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.DumboServerImpl;
-import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.dumbo.DumboServerImplBuilder;
 import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboServer;
@@ -38,7 +38,7 @@ public class DumboServerServiceImpl implements DumboServerService {
 
   public DumboServerServiceImpl(Class<? extends DumboApplication> applicationClass)
       throws IOException, InterruptedException {
-    server = new DumboServerImpl(new ServerApp(applicationClass)).start();
+    server = newServerImpl(applicationClass).start();
 
     this.client = server.newJsonRpcClient();
     this.knownRpcServices = retrieveKnownRpcServices(client);
@@ -82,5 +82,16 @@ public class DumboServerServiceImpl implements DumboServerService {
 
   protected DumboServerImpl getDumboServerImpl() {
     return server;
+  }
+
+  private DumboServerImpl newServerImpl(Class<? extends DumboApplication> applicationClass)
+      throws IOException {
+    DumboServerImplBuilder builder = new DumboServerImplBuilder();
+    configureNewServerImpl(builder);
+    builder.withApplication(applicationClass);
+    return (DumboServerImpl) builder.build();
+  }
+
+  protected void configureNewServerImpl(DumboServerImplBuilder builder) {
   }
 }
