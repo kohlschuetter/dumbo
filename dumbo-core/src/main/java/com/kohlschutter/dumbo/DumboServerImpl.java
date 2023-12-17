@@ -1145,6 +1145,16 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   @SuppressWarnings("PMD.CognitiveComplexity")
   public boolean checkResourceExists(String path) {
+    if (cachedPaths != null) {
+      String relativePath = path.replaceFirst("^/+", "");
+      for (Path p : cachedPaths) {
+        if (Files.exists(p.resolve(relativePath))) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     for (WebAppContext wac : contexts.keySet()) {
       String cp = wac.getContextPath();
       if (!path.startsWith(cp)) {
