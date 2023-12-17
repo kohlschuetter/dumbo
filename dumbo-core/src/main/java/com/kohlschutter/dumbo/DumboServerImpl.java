@@ -31,6 +31,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.ProviderMismatchException;
@@ -302,14 +303,10 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   private Resource combinedResource(Path first, Path... paths) throws IOException {
     ResourceFactory rf = ResourceFactory.root();
-
-    if (paths == null || paths.length == 0) {
-      return rf.newResource(first);
-    }
-
     List<Resource> resources = new ArrayList<>();
 
     if (first != null) {
+      first = first.toRealPath(LinkOption.NOFOLLOW_LINKS);
       Resource firstR = newResourceCreateIfNecessary(rf, first);
       if (firstR == null) {
         LOG.warn("Could not create Resource for path {}", first);
@@ -317,7 +314,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
         resources.add(firstR);
       }
     }
+
     for (Path p : paths) {
+      p = p.toRealPath(LinkOption.NOFOLLOW_LINKS);
       Resource r = newResourceCreateIfNecessary(rf, p);
       if (r == null) {
         LOG.warn("Could not create Resource for path {}", p);
