@@ -1,19 +1,31 @@
-runtime: java17
-entrypoint: java -jar dumbo-jacline-helloworld-1.0.0-main.jar
+# deploy with
+# gcloud app deploy --stop-previous-version
+runtime: java21
+entrypoint: java ${JAVA_OPTS} -jar dumbo-jacline-helloworld-1.0.0-main.jar
 handlers:
 - url: /hello
   static_dir: static/hello
+  secure: always
+  redirect_http_response_code: 301
 - url: /(.*\.(txt|html|css|js|map|gif|png|jpg))$
   static_files: static/\1
   upload: static/.*\.(txt|html|css|js|map|gif|png|jpg)$
+  secure: always
+  redirect_http_response_code: 301
 - url: /.*
   secure: always
   redirect_http_response_code: 301
   script: auto
 
-basic_scaling:
-  max_instances: 1
-  idle_timeout: 5m
+automatic_scaling:
+  min_instances: 0
+  max_concurrent_requests: 1000
+  target_cpu_utilization: 0.85
+
+# In the free tier, you have 9 hours per day of "B" instances, which are needed for basic scaling
+#basic_scaling:
+#  max_instances: 1
+#  idle_timeout: 5m
 
 env_variables:
   DUMBO_CONTENT_SOURCE: "."
