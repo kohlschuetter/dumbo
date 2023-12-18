@@ -33,6 +33,7 @@ import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboContent;
 import com.kohlschutter.dumbo.api.DumboServer;
 import com.kohlschutter.dumbo.api.DumboServerBuilder;
+import com.kohlschutter.dumbo.api.DumboTargetEnvironment;
 
 @SuppressWarnings("hiding")
 public class DumboServerImplBuilder implements DumboServerBuilder {
@@ -117,6 +118,14 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   }
 
   @Override
+  public DumboServerBuilder withTargetEnvironment(DumboTargetEnvironment env) {
+    if (env != null) {
+      return env.configureBuilder(this);
+    }
+    return this;
+  }
+
+  @Override
   public DumboServerBuilder initFromEnvironmentVariables() {
     if (LOG.isInfoEnabled()) {
       for (Map.Entry<String, String> en : System.getenv().entrySet()) {
@@ -126,6 +135,12 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
         LOG.info("sysprop: {}: {}", en.getKey(), en.getValue());
       }
     }
+    EnvHelper.checkEnv("DUMBO_TARGET_ENV", (v) -> {
+      if (v.isEmpty()) {
+        return;
+      }
+      withTargetEnvironment(DumboTargetEnvironment.fromIdentifier(v));
+    });
 
     EnvHelper.checkEnv("DUMBO_CONTENT_SOURCE", (v) -> {
       DumboContent content;

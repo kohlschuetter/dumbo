@@ -62,6 +62,8 @@ public interface DumboServerBuilder {
 
   DumboServerBuilder withSocketPath(String socketPath);
 
+  DumboServerBuilder withTargetEnvironment(DumboTargetEnvironment env) throws IOException;
+
   DumboServerBuilder initFromEnvironmentVariables();
 
   /**
