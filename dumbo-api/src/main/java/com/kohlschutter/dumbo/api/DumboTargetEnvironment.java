@@ -2,6 +2,7 @@ package com.kohlschutter.dumbo.api;
 
 public enum DumboTargetEnvironment {
   DEVELOPMENT(DumboServerBuilderConfigurator::noop), //
+  PRODUCTION(DumboServerBuilderConfigurator::noop), //
   CONTAINER(DumboTargetEnvironment::configureForContainer), //
   APPENGINE(DumboTargetEnvironment::configureForContainer); //
 
