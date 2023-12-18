@@ -1061,7 +1061,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
    *
    * @param address The bind address
    * @param tcpPort The bind port.
-   * @param socketPath
+   * @param socketPath The Unix domain socket path, or "auto"/"*"
    * @param targetServer The target server.
    * @return The connector(s).
    * @throws IOException on error.
