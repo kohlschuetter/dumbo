@@ -28,9 +28,10 @@ import com.kohlschutter.dumbo.util.DevTools;
 public class OpenStatic {
   public static void main(String[] args) throws IOException, InterruptedException {
     DumboServer server = ((DumboServerImplBuilder) DumboServerBuilder.begin()) //
-        .initFromEnvironmentVariables()
+        .initFromEnvironmentVariables() //
         .withApplication(HelloWorldApp.class) //
-        .withContent(DumboContent.openExisting(Locations.getOutputPath())).build().start();
+        .withContent(DumboContent.openExisting(Locations.getOutputPath())) //
+        .build().start();
     DevTools.openURL(server);
   }
 }
