@@ -1,5 +1,5 @@
 # deploy with
-# gcloud app deploy --stop-previous-version
+# gcloud app deploy --stop-previous-version --appyaml app.yaml
 env: standard
 runtime: java21
 entrypoint: java $JAVA_OPTS -jar ${project.name}-${project.version}-main.jar
@@ -30,3 +30,4 @@ automatic_scaling:
 
 env_variables:
   DUMBO_CONTENT_SOURCE: "."
+  DUMBO_SERVER_SOCKET_PATH: ""
