@@ -36,7 +36,7 @@ public interface DumboServerBuilder {
 
   /**
    * Designated TCP bind address. Default is loopback only. Set to {@code null} for "any".
-   * 
+   *
    * @param addr The address, or {@code null} for "any".
    * @return This builder.
    */
@@ -59,6 +59,8 @@ public interface DumboServerBuilder {
   DumboServerBuilder withContent(Path... paths);
 
   DumboServerBuilder withContent(DumboContent content);
+
+  DumboServerBuilder withSocketPath(String socketPath);
 
   DumboServerBuilder initFromEnvironmentVariables();
 

@@ -159,9 +159,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  DumboServerImpl(boolean prewarm, InetAddress bindAddr, int tcpPort, final ServerApp app,
-      final String path, final URL webappBaseURL, RequestLog requestLog, Path... paths)
-      throws IOException {
+  DumboServerImpl(boolean prewarm, InetAddress bindAddr, int tcpPort, String socketPath,
+      final ServerApp app, final String path, final URL webappBaseURL, RequestLog requestLog,
+      Path... paths) throws IOException {
     this.prewarm = prewarm;
     final int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081"))
         : tcpPort;
@@ -217,7 +217,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     app.initComponents(this);
 
     server.setHandler(contextHandlers);
-    server.setConnectors(initConnectors(bindAddr, port, server));
+    server.setConnectors(initConnectors(bindAddr, port, socketPath, server));
   }
 
   private WebAppContext initMainWebAppContext(URL webappBaseURL) throws IOException {
@@ -1061,12 +1061,13 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
    *
    * @param address The bind address
    * @param tcpPort The bind port.
+   * @param socketPath
    * @param targetServer The target server.
    * @return The connector(s).
    * @throws IOException on error.
    */
-  protected Connector[] initConnectors(InetAddress address, int tcpPort, Server targetServer)
-      throws IOException {
+  protected Connector[] initConnectors(InetAddress address, int tcpPort, String socketPath,
+      Server targetServer) throws IOException {
     String dumboSocketId;
     ServerConnector tcpConn;
     if (tcpPort == -1) {
@@ -1077,13 +1078,22 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       dumboSocketId = String.valueOf(tcpConn.getPort());
     }
 
-    serverUNIXSocketAddress = AFUNIXSocketAddress.of(new File("/tmp/dumbo-" + dumboSocketId
-        + ".sock"));
-
-    Connector unixConnector = initUnixConnector(targetServer, serverUNIXSocketAddress);
+    Connector unixConnector;
+    if (socketPath == null || socketPath.isEmpty()) {
+      serverUNIXSocketAddress = null;
+      unixConnector = null;
+    } else {
+      if ("auto".equals(socketPath) || "*".equals(socketPath)) {
+        socketPath = "/tmp/dumbo-" + dumboSocketId + ".sock";
+      }
+      serverUNIXSocketAddress = AFUNIXSocketAddress.of(new File(socketPath));
+      unixConnector = initUnixConnector(targetServer, serverUNIXSocketAddress);
+    }
 
     if (tcpConn == null) {
       return new Connector[] {unixConnector};
+    } else if (unixConnector == null) {
+      return new Connector[] {tcpConn};
     } else {
       return new Connector[] {tcpConn, unixConnector};
     }

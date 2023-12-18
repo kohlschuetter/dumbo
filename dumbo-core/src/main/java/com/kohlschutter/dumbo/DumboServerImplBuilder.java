@@ -47,6 +47,7 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   private URL webapp;
   private String prefix = "";
   private Path[] paths;
+  private String socketPath = "auto";
 
   private InetAddress bindAddress = LOOPBACK;
 
@@ -59,7 +60,8 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
     if (!webappSet) {
       webapp = DumboServerImpl.getWebappBaseURL(app);
     }
-    return new DumboServerImpl(prewarm, bindAddress, port, app, prefix, webapp, null, paths);
+    return new DumboServerImpl(prewarm, bindAddress, port, socketPath, app, prefix, webapp, null,
+        paths);
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
@@ -109,6 +111,12 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   }
 
   @Override
+  public DumboServerBuilder withSocketPath(String socketPath) {
+    this.socketPath = socketPath;
+    return this;
+  }
+
+  @Override
   public DumboServerBuilder initFromEnvironmentVariables() {
     if (LOG.isInfoEnabled()) {
       for (Map.Entry<String, String> en : System.getenv().entrySet()) {
@@ -148,6 +156,9 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
       } catch (UnknownHostException e) {
         throw new IllegalStateException(e);
       }
+    });
+    EnvHelper.checkEnv("DUMBO_SERVER_SOCKET_PATH", (v) -> {
+      withSocketPath(v);
     });
 
     return this;
