@@ -11,7 +11,6 @@ FROM openjdk:21
 
 WORKDIR /app
 COPY . .
-ENV DUMBO_SERVER_ADDR=*
+ENV DUMBO_TARGET_ENV=container
 ENV DUMBO_CONTENT_SOURCE=.
-ENV DUMBO_SERVER_SOCKET_PATH=
 CMD ["java", "-jar", "${project.name}-${project.version}-main.jar"]

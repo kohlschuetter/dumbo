@@ -30,4 +30,4 @@ automatic_scaling:
 
 env_variables:
   DUMBO_CONTENT_SOURCE: "."
-  DUMBO_SERVER_SOCKET_PATH: ""
+  DUMBO_TARGET_ENV: "appengine"
