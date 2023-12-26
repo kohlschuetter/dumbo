@@ -11,7 +11,7 @@
     <properties>
         <kohlschutter.project.base.directory>${project.basedir}/..</kohlschutter.project.base.directory>
         <dumbo.project.basedir>${project.basedir}/..</dumbo.project.basedir>
-        <junixsocket.version>2.8.1</junixsocket.version>
+        <junixsocket.version>2.8.3</junixsocket.version>
         <slf4j.version>2.0.9</slf4j.version>
     </properties>
     <artifactId>dumbo-core</artifactId>
