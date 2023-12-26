@@ -27,6 +27,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
+
 public class ReflectionSupplierMap<V> extends SupplierMap<String, V> {
 
   @Retention(RetentionPolicy.RUNTIME)
@@ -36,6 +38,7 @@ public class ReflectionSupplierMap<V> extends SupplierMap<String, V> {
   }
 
   @SuppressWarnings({"unchecked", "PMD.CognitiveComplexity", "PMD.CyclomaticComplexity"})
+  @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
   public ReflectionSupplierMap(Class<? extends V> valueType, String... partialOrder) {
     super();
 

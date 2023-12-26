@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboServer;
 
@@ -34,6 +35,7 @@ public abstract class SPIDumboServerService implements DumboServerService {
   private static final Map<Class<?>, DumboServerService> MAP = new HashMap<>();
   private final DumboServerService service;
 
+  @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
   protected SPIDumboServerService(Class<? extends DumboApplication> applicationClass,
       DumboServerServiceSupplier implSupplier) throws InterruptedException, IOException {
     service = registerService(applicationClass, implSupplier);

@@ -158,7 +158,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   private final boolean prewarm;
 
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
+  @SuppressFBWarnings({"EI_EXPOSE_REP2", "CT_CONSTRUCTOR_THROW"})
   DumboServerImpl(boolean prewarm, InetAddress bindAddr, int tcpPort, String socketPath,
       final ServerApp app, final String path, final URL webappBaseURL, RequestLog requestLog,
       Path... paths) throws IOException {

@@ -19,6 +19,7 @@ package com.kohlschutter.dumbo.service;
 import java.io.IOException;
 import java.util.UUID;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.DumboServerImpl;
 import com.kohlschutter.dumbo.DumboServerImplBuilder;
 import com.kohlschutter.dumbo.api.DumboApplication;
@@ -36,6 +37,7 @@ import com.kohlschutter.dumborb.client.SessionAccess;
 public class TestingDumboServerService extends DumboServerServiceImpl {
   private final String randomKey = "testing-" + UUID.randomUUID().toString();
 
+  @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
   public TestingDumboServerService(Class<? extends DumboApplication> applicationClass)
       throws IOException, InterruptedException {
     super(applicationClass);

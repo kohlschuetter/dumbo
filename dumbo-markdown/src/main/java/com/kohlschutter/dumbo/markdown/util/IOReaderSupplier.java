@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.kohlschutter.annotations.compiletime.ExcludeFromCodeCoverageGeneratedReport;
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.stringhold.HasLength;
 import com.kohlschutter.stringhold.HasMinimumLength;
 import com.kohlschutter.stringhold.IOSupplier;
@@ -188,7 +189,8 @@ final class IOReaderSupplier {
    *
    * @author Christian Kohlschütter
    */
-  static class MinimumLengthAwareInputStreamReader extends InputStreamReader implements
+  @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
+  private static class MinimumLengthAwareInputStreamReader extends InputStreamReader implements
       HasMinimumLength {
     private final int minLen;
 
