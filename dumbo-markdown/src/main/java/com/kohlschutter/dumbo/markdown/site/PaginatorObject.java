@@ -27,8 +27,6 @@ import com.kohlschutter.dumbo.markdown.LiquidVariables;
  * Provides a Jekyll-compatible paginator object.
  *
  * @author Christian Kohlschütter
- *
- *
  */
 // FIXME not fully implemented yet
 public class PaginatorObject extends FilterMap.ReadOnlyFilterMap<String, Object> {

@@ -133,6 +133,5 @@ public abstract class FilterMap<K, V> implements Map<K, V> {
     public Set<Entry<K, V>> entrySet() {
       return Collections.unmodifiableSet(super.entrySet());
     }
-
   }
 }

@@ -213,7 +213,8 @@ public class LiquidHelper {
 
       Template template = liqpParser.parse(in);
       for (Exception exc : template.errors()) {
-        exc.printStackTrace();
+        LOG.warn("Template error: {}", exc.toString());
+        // exc.printStackTrace();
       }
 
       if (justParseFrontMatter) {
@@ -360,7 +361,7 @@ public class LiquidHelper {
 
           for (Exception exc : template.errors()) {
             // FIXME handle errors
-            LOG.warn("Template error", exc);
+            LOG.warn("Template error: {}", exc.toString());
           }
         } catch (RuntimeException e) {
           throw new IllegalStateException("Error in layout " + layoutId, e);
