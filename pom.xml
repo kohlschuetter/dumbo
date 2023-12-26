@@ -11,7 +11,7 @@
     <parent>
         <groupId>com.kohlschutter</groupId>
         <artifactId>kohlschutter-parent</artifactId>
-        <version>1.6.4</version>
+        <version>1.6.6</version>
         <relativePath>../kohlschutter-parent/pom.xml</relativePath>
     </parent>
 
