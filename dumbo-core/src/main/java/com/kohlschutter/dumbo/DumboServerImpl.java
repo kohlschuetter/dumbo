@@ -56,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.eclipse.jetty.client.HttpClient;
@@ -763,11 +764,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     });
   }
 
-  private static void copyResourcesToMappedDir(Map<String, Path> resources, Path outputBaseDir,
-      boolean sourceMaps) throws IOException {
-
-    // delete all existing files
-    Files.walkFileTree(outputBaseDir, new FileVisitor<Path>() {
+  private static void deleteExistingFilesBelowDirectory(Path p) throws IOException {
+    Files.walkFileTree(p, new FileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
           throws IOException {
@@ -787,15 +785,60 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
       @Override
       public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-        if (!dir.equals(outputBaseDir)) {
+        if (!dir.equals(p)) {
           Files.delete(dir);
         }
         return FileVisitResult.CONTINUE;
       }
     });
+  }
 
+  private static void copyFiles(Path sourceDir, Path outputDir, Predicate<Path> filter)
+      throws IOException {
+    Files.walkFileTree(sourceDir, new FileVisitor<Path>() {
+
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+          throws IOException {
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Path relativePath = sourceDir.relativize(file);
+        if (filter.test(relativePath)) {
+          Path targetPath = outputDir.resolve(relativePath);
+          Path targetParent = targetPath.getParent();
+          if (!Files.isDirectory(targetParent)) {
+            Files.createDirectories(targetParent);
+          }
+          Files.copy(file, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        return FileVisitResult.CONTINUE;
+      }
+
+    });
+  }
+
+  private void copyResourcesToMappedDir(Map<String, Path> resources, Path outputBaseDir,
+      boolean sourceMaps) throws IOException {
     for (Map.Entry<String, Path> en : resources.entrySet()) {
-      String urlPath = en.getKey().replaceAll("^/+", "");
+      String urlPath = en.getKey();
+      if (!urlPath.startsWith(this.contextPath)) {
+        throw new IllegalStateException("Unexpected URL: " + urlPath);
+      }
+      urlPath = urlPath.substring(this.contextPath.length()).replaceAll("^/+", "");
+
       if (!sourceMaps) {
         if ("sourcemaps".equals(urlPath) || urlPath.startsWith("sourcemaps/") || urlPath.endsWith(
             ".js.map")) {
@@ -811,6 +854,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       if (parentPath != null) {
         Files.createDirectories(parentPath);
       }
+
       Files.copy(serverPath, outputPath, StandardCopyOption.REPLACE_EXISTING);
 
       if (LOG.isDebugEnabled()) {
@@ -837,6 +881,13 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     LOG.info("Generating cached version at (static:) {} and (dynamic:) {}", staticOut, dynamicOut);
     pathsRegenerated.acquire();
     try {
+      deleteExistingFilesBelowDirectory(staticOut);
+      deleteExistingFilesBelowDirectory(dynamicOut);
+
+      Path webappWorkDir = app.getWebappWorkDir().toPath();
+      copyFiles(webappWorkDir, staticOut, (p) -> isStaticFileName(p.getFileName().toString()));
+      copyFiles(webappWorkDir, dynamicOut, (p) -> !isStaticFileName(p.getFileName().toString()));
+
       copyResourcesToMappedDir(publicUrlPathsToStaticResource, staticOut, sourceMaps);
       copyResourcesToMappedDir(publicUrlPathsToDynamicResource, dynamicOut, sourceMaps);
       LOG.info("Generated cached version at (static:) {} and (dynamic:) {}", staticOut, dynamicOut);
