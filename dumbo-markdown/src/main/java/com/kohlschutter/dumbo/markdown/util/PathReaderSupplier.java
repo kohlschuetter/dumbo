@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -31,37 +32,42 @@ public final class PathReaderSupplier implements IOSupplier<Reader> {
   private final IOSupplier<Reader> supplier;
   private final String relativePath;
   private final String type;
+  private final long lastModified;
 
-  private PathReaderSupplier(IOSupplier<Reader> supplier, String relativePath, String type) {
+  private PathReaderSupplier(IOSupplier<Reader> supplier, String relativePath, String type,
+      long lastModified) {
     this.supplier = supplier;
     this.relativePath = relativePath;
     this.type = type;
+    this.lastModified = lastModified;
   }
 
   public static PathReaderSupplier withContentsOf(String relativePath, File f, Charset cs) {
     return withContentsOf(null, relativePath, f, cs);
   }
 
-  public static PathReaderSupplier withContentsOf(String relativePath, URL url, Charset cs) {
+  public static PathReaderSupplier withContentsOf(String relativePath, URL url, Charset cs)
+      throws IOException {
     return withContentsOf(null, relativePath, url, cs);
   }
 
   public static PathReaderSupplier withContentsOf(String type, String relativePath, File f,
       Charset cs) {
     return new PathReaderSupplier(IOReaderSupplier.withContentsOf(f, StandardCharsets.UTF_8),
-        relativePath, type);
+        relativePath, type, f.lastModified());
   }
 
   public static PathReaderSupplier withContentsOf(String type, String relativePath, Path p,
       Charset cs) {
     return new PathReaderSupplier(IOReaderSupplier.withContentsOf(p, StandardCharsets.UTF_8),
-        relativePath, type);
+        relativePath, type, p == null ? 0 : p.toFile().lastModified());
   }
 
   public static PathReaderSupplier withContentsOf(String type, String relativePath, URL u,
-      Charset cs) {
-    return new PathReaderSupplier(IOReaderSupplier.withContentsOf(u, StandardCharsets.UTF_8),
-        relativePath, type);
+      Charset cs) throws IOException {
+    URLConnection conn = u.openConnection();
+    return new PathReaderSupplier(IOReaderSupplier.withContentsOf(conn, StandardCharsets.UTF_8),
+        relativePath, type, conn.getLastModified());
   }
 
   @Override
@@ -80,5 +86,9 @@ public final class PathReaderSupplier implements IOSupplier<Reader> {
   @Override
   public String toString() {
     return super.toString() + "[relativePath=" + relativePath + ";type=" + type + "]";
+  }
+
+  public long getLastModified() {
+    return lastModified;
   }
 }

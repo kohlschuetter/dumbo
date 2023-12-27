@@ -205,6 +205,9 @@ public class LiquidHelper {
         pageVariables.put(LiquidVariables.PAGE_CATEGORIES, categories);
       }
 
+      // pageVariables.put(LiquidVariables.PAGE_LAST_MODIFIED_AT, "1970-12-12 23:34:45 CET");
+      pageVariables.put(LiquidVariables.PAGE_LAST_MODIFIED_AT, null);
+
       String url;
       try {
         CustomSiteVariables.storePathAndFilename(inSup.getRelativePath(), pageVariables);

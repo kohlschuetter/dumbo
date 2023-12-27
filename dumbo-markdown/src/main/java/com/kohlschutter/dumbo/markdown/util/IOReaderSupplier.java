@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -153,12 +152,11 @@ final class IOReaderSupplier {
    * @param cs The {@link Charset} to use.
    * @return The supplier.
    */
-  static IOSupplier<Reader> withContentsOf(URL url, Charset cs) {
+  static IOSupplier<Reader> withContentsOf(URLConnection conn, Charset cs) {
     return new IOSupplier<Reader>() {
       @Override
       public Reader get() throws IOException {
-        URLConnection conn = url.openConnection();
-        InputStream in = url.openStream();
+        InputStream in = conn.getInputStream();
         int len = conn.getContentLength(); // in bytes
         if (len < 0) {
           return new InputStreamReader(in, cs);
@@ -178,9 +176,8 @@ final class IOReaderSupplier {
 
       @Override
       public String toString() {
-        return super.toString() + "[url=" + url + ";charset=" + cs + "]";
+        return super.toString() + "[url=" + conn.getURL() + ";charset=" + cs + "]";
       }
-
     };
   }
 
