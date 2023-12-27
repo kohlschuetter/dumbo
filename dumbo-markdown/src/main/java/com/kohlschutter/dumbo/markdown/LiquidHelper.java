@@ -67,6 +67,7 @@ import com.vladsch.flexmark.util.sequence.LineAppendable;
 import liqp.Template;
 import liqp.TemplateParser;
 import liqp.TemplateParser.ErrorMode;
+import liqp.TemplateParser.StrictVariablesMode;
 import liqp.parser.Flavor;
 
 public class LiquidHelper {
@@ -399,7 +400,7 @@ public class LiquidHelper {
         .withInsertion(new Conditionally()) //
         //
         // .withRenderTransformer(RenderTransformer.DEFAULT) //
-        .withStrictVariables(true) //
+        .withStrictVariables(StrictVariablesMode.SANE) //
         .withRenderTransformer(StringHolderRenderTransformer.getSharedCacheInstance()) //
         // .withRenderTransformer(StringsOnlyRenderTransformer.getInstance()) //
         .withShowExceptionsFromInclude(true) //
