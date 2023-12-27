@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
 import com.kohlschutter.stringhold.StringHolder;
 import com.kohlschutter.stringhold.StringHolderSequence;
@@ -43,7 +44,7 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
         render(doc, seq);
         return seq;
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new IllegalStateException(e);
       }
     });
   }
@@ -118,6 +119,7 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
     return parseMarkdown(liquid);
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public LiquidHelper getLiquidHelper() {
     return liquidHelper;
   }

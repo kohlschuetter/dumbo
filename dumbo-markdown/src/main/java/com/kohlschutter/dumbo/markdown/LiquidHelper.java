@@ -71,6 +71,7 @@ import liqp.TemplateParser.ErrorMode;
 import liqp.TemplateParser.StrictVariablesMode;
 import liqp.parser.Flavor;
 
+@SuppressWarnings("PMD.ExcessiveImports")
 public class LiquidHelper {
   private static final Logger LOG = LoggerFactory.getLogger(LiquidHelper.class);
 
@@ -224,7 +225,9 @@ public class LiquidHelper {
 
       Template template = liqpParser.parse(in);
       for (Exception exc : template.errors()) {
-        LOG.warn("Template error: {}", exc.toString());
+        if (LOG.isWarnEnabled()) {
+          LOG.warn("Template error: {}", exc.toString());
+        }
         // exc.printStackTrace();
       }
 
@@ -373,8 +376,9 @@ public class LiquidHelper {
           contentSupply = template.renderToObjectUnguarded(variables);
 
           for (Exception exc : template.errors()) {
-            // FIXME handle errors
-            LOG.warn("Template error: {}", exc.toString());
+            if (LOG.isWarnEnabled()) {
+              LOG.warn("Template error: {}", exc.toString());
+            }
           }
         } catch (RuntimeException e) {
           throw new IllegalStateException("Error in layout " + layoutId, e);
