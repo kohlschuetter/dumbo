@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -86,6 +87,8 @@ public class LiquidHelper {
 
   private final Map<String, Object> commonVariables;
 
+  private Function<Object, Object> contentTransformer = (o) -> o;
+
   // FIXME revisit this
   static final class GraalVMStub {
     static final MarkdownServlet OBJ1 = new MarkdownServlet();
@@ -102,6 +105,10 @@ public class LiquidHelper {
 
   public TemplateParser getLiqpParser() {
     return liqpParser;
+  }
+
+  void setContentTransformer(Function<Object, Object> transformer) {
+    this.contentTransformer = transformer;
   }
 
   private boolean hasFrontMatter(Reader in) throws IOException {
@@ -222,6 +229,8 @@ public class LiquidHelper {
         return pageVariables;
       } else {
         Object obj = template.renderToObject(variables);
+        pageVariables.put(LiquidVariables.PAGE_CONTENT, StringHolder.withSupplier(
+            () -> contentTransformer.apply(obj)));
 
         return obj;
       }

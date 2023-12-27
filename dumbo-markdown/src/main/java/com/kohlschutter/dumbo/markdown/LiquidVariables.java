@@ -33,6 +33,7 @@ public final class LiquidVariables {
   public static final String JEKYLL = "jekyll";
 
   public static final String PAGE = "page";
+  public static final String PAGE_CONTENT = "content";
   public static final String PAGE_LAYOUT = "layout";
   public static final String PAGE_TAGS = "tags";
   public static final String PAGE_CATEGORIES = "categories";

@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
+import com.kohlschutter.stringhold.StringHolder;
+import com.kohlschutter.stringhold.StringHolderSequence;
 import com.vladsch.flexmark.util.ast.Document;
 
 public final class LiquidMarkdownHelper extends MarkdownHelper {
@@ -34,6 +36,16 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
   LiquidMarkdownHelper(LiquidHelper liquidHelper) {
     super();
     this.liquidHelper = liquidHelper;
+    liquidHelper.setContentTransformer((o) -> {
+      try {
+        Document doc = parseMarkdown(o);
+        StringHolderSequence seq = StringHolder.newSequence();
+        render(doc, seq);
+        return seq;
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   /**
