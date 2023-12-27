@@ -12,6 +12,7 @@
         <mainClass>com.kohlschutter.dumbo.helloworld.HelloWorldApp</mainClass>
         <dumbo.project.basedir>${project.basedir}/..</dumbo.project.basedir>
         <kohlschutter.project.notice.file>${project.basedir}/NOTICE</kohlschutter.project.notice.file>
+        <liqp.version>0.8.5.4.1-SNAPSHOT</liqp.version>
     </properties>
     <dependencies>
         <dependency>
@@ -36,6 +37,12 @@
             <artifactId>stringhold-liqp</artifactId>
             <version>${stringhold.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.kohlschutter</groupId>
+            <artifactId>liqp</artifactId>
+            <version>${liqp.version}</version>
+        </dependency>
+
         <!-- YAML parser -->
         <dependency>
             <groupId>org.snakeyaml</groupId>
