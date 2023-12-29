@@ -18,6 +18,7 @@ package com.kohlschutter.dumbo;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +38,8 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
   private boolean sourceMaps = false;
 
   private Path outputPath;
+  private String primaryHostname;
+  private boolean createCNAMEFile;
 
   public DumboContentBuilderImpl() {
   }
@@ -66,6 +69,17 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
+
+    if (createCNAMEFile) {
+      if (primaryHostname == null || primaryHostname.isEmpty()) {
+        throw new IllegalArgumentException("Primary hostname not set (required for CNAME file)");
+      }
+    }
+
+    try (Writer out = Files.newBufferedWriter(staticOutput.resolve("CNAME"))) {
+      out.write(primaryHostname.trim() + "\n");
+    }
+
     return new DumboContentImpl(outputPath);
   }
 
@@ -105,6 +119,18 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
   @Override
   public DumboContentBuilder withSourceMaps(boolean sourceMaps) {
     this.sourceMaps = sourceMaps;
+    return this;
+  }
+
+  @Override
+  public DumboContentBuilder withPrimaryHostname(String hostname) {
+    this.primaryHostname = hostname;
+    return this;
+  }
+
+  @Override
+  public DumboContentBuilder withCreateCNAMEFile(boolean cnameFile) {
+    this.createCNAMEFile = cnameFile;
     return this;
   }
 }

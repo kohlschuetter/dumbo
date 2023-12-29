@@ -38,6 +38,17 @@ public interface DumboContentBuilder {
 
   DumboContentBuilder withSourceMaps(boolean sourceMaps);
 
+  DumboContentBuilder withPrimaryHostname(String hostname);
+
+  /**
+   * If set, a file named "CNAME" is created in the static folder, containing the hostname specified
+   * with {@link #withPrimaryHostname(String)}.
+   *
+   * @param enabled Enabled if true.
+   * @return This builder.
+   */
+  DumboContentBuilder withCreateCNAMEFile(boolean enabled);
+
   DumboContent openExisting(Path outputPath) throws IOException;
 
   /**
