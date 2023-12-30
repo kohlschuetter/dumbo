@@ -210,7 +210,7 @@ final class MarkdownSupportImpl {
   }
 
   @SuppressWarnings({"PMD.NcssCount", "PMD.CognitiveComplexity", "PMD.NPathComplexity"})
-  public void render(boolean markdown, String relativePath, Path mdPath, File targetFile,
+  public void render(boolean markdown, @Nullable String relativePath, Path mdPath, File targetFile,
       boolean generateHtmlFile, @Nullable HttpServletResponse resp, @Nullable String defaultLayout,
       @Nullable String collectionId, Map<String, Object> variablesOverride) throws IOException {
 
@@ -342,7 +342,10 @@ final class MarkdownSupportImpl {
     }
 
     time = System.currentTimeMillis() - time;
-    LOG.info("Request time: {} ms for {}", time, relativePath);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Request time: {} ms for {}", time, relativePath != null ? relativePath : app
+          .getWorkDir().toPath().relativize(targetFile.toPath()));
+    }
   }
 
   private SuccessfulCloseWriter reloadWriter(File targetFile, boolean generateHtmlFile)
@@ -358,7 +361,7 @@ final class MarkdownSupportImpl {
     // System.out.println("WD " + app.getWorkDir() + " " + app.getWorkDir().exists());
 
     if (generateHtmlFile || !targetFile.exists()) {
-      LOG.info("Generating {}", targetFile);
+      LOG.debug("Generating {}", targetFile);
       File targetFileTmp = File.createTempFile(".dumbo", ".tmp", app.getWorkDir());
 
       return new SuccessfulCloseWriter(new OutputStreamWriter(new FileOutputStream(targetFileTmp),

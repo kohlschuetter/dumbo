@@ -194,7 +194,7 @@ final class JspCachingServlet extends JettyJspServlet {
         }
 
         if (generate.get()) {
-          LOG.info("Generating {}", generatedFile);
+          LOG.debug("Generating {}", generatedFile);
           if (!tmpFile.renameTo(generatedFile)) {
             LOG.error("Generating {} failed", generatedFile);
           } else {
