@@ -25,25 +25,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.kohlschutter.dumbo.DumboServerImpl;
 import com.kohlschutter.dumbo.ServerApp;
 
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public final class MarkdownServlet extends HttpServlet {
-  private static final Logger LOG = LoggerFactory.getLogger(MarkdownServlet.class);
+/**
+ * Add support for liquid template files.
+ *
+ * @author Christian Kohlschütter
+ */
+public final class LiquidFilter extends HttpFilter {
   private static final long serialVersionUID = 1L;
-  private transient ServletContext servletContext;
 
-  private transient ServerApp app;
   private transient MarkdownSupportImpl mdSupport;
+  private ServletContext servletContext;
+  private ServerApp app;
 
   @Override
   public void init() throws ServletException {
@@ -59,49 +61,62 @@ public final class MarkdownServlet extends HttpServlet {
   }
 
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-      IOException {
-    try {
-      doGet0(req, resp);
-    } catch (ServletException | IOException | RuntimeException e) {
-      LOG.warn("Error in doGet", e);
-      throw e;
+  protected void doFilter(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
+      throws ServletException, IOException {
+    if (!checkLiquid(req, resp, chain)) {
+      chain.doFilter(req, resp);
+      return;
     }
   }
 
-  private void doGet0(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-      IOException {
+  private boolean checkLiquid(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
+      throws IOException {
+
+    String pathInContext = req.getRequestURI().substring(req.getContextPath().length());
+
+    URL resource = servletContext.getResource(pathInContext);
+    if (resource == null) {
+      return false;
+    }
+
+    Path path;
+    try {
+      path = Path.of(resource.toURI());
+    } catch (URISyntaxException e) {
+      return false;
+    }
+
+    if (path.startsWith(app.getWebappWorkDir().toPath())) {
+      // already transformed
+      return false;
+    }
+
     String servletPath = req.getServletPath();
     if (servletPath == null) {
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-      return;
+      return false;
     }
 
     URL url = servletContext.getResource(servletPath);
     if (url == null) {
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-      return;
+      return false;
     }
 
     Path mdPath;
     try {
       mdPath = Path.of(url.toURI());
     } catch (URISyntaxException e) {
-      LOG.warn("Unexpected URI", e);
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-      return;
+      return false;
     }
 
     if (!Files.exists(mdPath) || Files.isDirectory(mdPath)) {
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-      return;
+      return false;
     }
 
     long mdFileLength = Files.size(mdPath);
     if (mdFileLength > Integer.MAX_VALUE) {
       // FIXME: use a lower bound
       resp.sendError(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
-      return;
+      return true;
     }
 
     String relativePath = servletPath;
@@ -111,6 +126,11 @@ public final class MarkdownServlet extends HttpServlet {
     File mdFile = new File(app.getWebappWorkDir(), relativePath);
 
     boolean reload = "true".equals(req.getParameter("reload"));
-    mdSupport.render(true, relativePath, mdPath, mdFile, reload, resp, null, null, null);
+
+    String mimeType = servletContext.getMimeType(servletPath);
+    resp.setContentType(mimeType);
+
+    mdSupport.render(false, relativePath, mdPath, mdFile, reload, resp, null, null, null);
+    return true;
   }
 }

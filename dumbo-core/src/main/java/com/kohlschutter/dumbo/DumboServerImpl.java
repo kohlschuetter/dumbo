@@ -139,7 +139,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   /**
    * All resource paths to regenerate
-   * 
+   *
    * e.g,<br>
    * key: /prefix/app_/base/js/app.jsp.js<br>
    * value: /prefix/app_/base/js/app.js

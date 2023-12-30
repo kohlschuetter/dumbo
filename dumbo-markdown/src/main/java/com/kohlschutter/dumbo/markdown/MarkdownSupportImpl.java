@@ -51,6 +51,7 @@ import com.kohlschutter.dumbo.markdown.site.PaginatorObject;
 import com.kohlschutter.dumbo.markdown.site.PermalinkParser;
 import com.kohlschutter.dumbo.markdown.site.SiteCollection;
 import com.kohlschutter.dumbo.markdown.site.SiteObject;
+import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
 import com.kohlschutter.dumbo.util.MultiplexedAppendable.SuppressErrorsAppendable;
 import com.kohlschutter.dumbo.util.SuccessfulCloseWriter;
 import com.kohlschutter.stringhold.IOExceptionHandler;
@@ -188,7 +189,7 @@ final class MarkdownSupportImpl {
       throw new IllegalStateException(e);
     }
 
-    renderMarkdown(relativePath, path, permalinkFile, true, null, layout, collectionId, Collections
+    render(true, relativePath, path, permalinkFile, true, null, layout, collectionId, Collections
         .singletonMap(LiquidVariables.PAGE, pageVariables));
   }
 
@@ -208,14 +209,7 @@ final class MarkdownSupportImpl {
     }
   }
 
-  public void renderMarkdown(String relativePath, Path mdPath, File targetFile,
-      boolean generateHtmlFile, @Nullable HttpServletResponse resp, @Nullable String defaultLayout,
-      @Nullable String collectionId) throws IOException {
-    renderMarkdown(relativePath, mdPath, targetFile, generateHtmlFile, resp, defaultLayout,
-        collectionId, null);
-  }
-
-  public void renderMarkdown(String relativePath, Path mdPath, File targetFile,
+  public void render(boolean markdown, String relativePath, Path mdPath, File targetFile,
       boolean generateHtmlFile, @Nullable HttpServletResponse resp, @Nullable String defaultLayout,
       @Nullable String collectionId, Map<String, Object> variablesOverride) throws IOException {
 
@@ -244,25 +238,48 @@ final class MarkdownSupportImpl {
         LiquidVariables.PAGE, (k) -> {
           return new HashMap<String, Object>();
         });
-    if (defaultLayout == null) {
-      defaultLayout = "default";
-    }
-    if (defaultLayout != null && !pageObj.containsKey(LiquidVariables.PAGE_LAYOUT)) {
-      pageObj.put(LiquidVariables.PAGE_LAYOUT, defaultLayout);
+    if (markdown) {
+      if (defaultLayout == null) {
+        defaultLayout = "default";
+      }
+      if (defaultLayout != null && !pageObj.containsKey(LiquidVariables.PAGE_LAYOUT)) {
+        pageObj.put(LiquidVariables.PAGE_LAYOUT, defaultLayout);
+      }
     }
     pageObj.put(LiquidVariables.PAGE_COLLECTION, collectionId);
 
-    Document document = liquidMarkdown.parseLiquidMarkdown(relativePath, mdPath, variables,
-        collectionId);
+    liquidMarkdown.setMarkdownEnabledState(markdown);
+
+    Object liquidObj = liquidMarkdown.getLiquidHelper().prerenderLiquid(PathReaderSupplier
+        .withContentsOf(collectionId, relativePath, mdPath, StandardCharsets.UTF_8), mdPath == null
+            ? 0 : (int) Files.size(mdPath), variables);
+
+    Document markdownDocument;
+    if (markdown) {
+      markdownDocument = liquidMarkdown.parseMarkdown(liquidObj);
+
+      String filename = targetFile.getName();
+      int suffix = filename.indexOf('.');
+      if (suffix == -1) {
+        filename += ".html";
+      } else {
+        filename = filename.substring(0, suffix) + ".html";
+      }
+      targetFile = new File(targetFile.getParentFile(), filename);
+    } else {
+      markdownDocument = null;
+    }
 
     long time = System.currentTimeMillis();
 
-    try (SuccessfulCloseWriter mdReloadOut = mdReloadWriter(targetFile, generateHtmlFile)) {
+    try (SuccessfulCloseWriter mdReloadOut = reloadWriter(targetFile, generateHtmlFile)) {
       final Appendable out;
       PrintWriter servletOut;
       if (resp != null) {
-        resp.setContentType("text/html;charset=UTF-8");
-        resp.setCharacterEncoding("UTF-8");
+        if (markdown && resp.getContentType() == null) {
+          resp.setContentType("text/html;charset=UTF-8");
+          resp.setCharacterEncoding("UTF-8");
+        }
         // do not add to try-catch block, otherwise we won't see error messages
         servletOut = resp.getWriter();
 
@@ -275,7 +292,7 @@ final class MarkdownSupportImpl {
 
       String layoutId0 = YAMLSupport.getVariableAsString(variables, LiquidVariables.PAGE,
           LiquidVariables.PAGE_LAYOUT);
-      if (layoutId0 == null) {
+      if (layoutId0 == null && markdown) {
         layoutId0 = defaultLayout;
       }
       String layoutId = layoutId0;
@@ -283,8 +300,13 @@ final class MarkdownSupportImpl {
       try (BufferedReader layoutIn = liquid.layoutReader(layoutId)) {
         // render the main content first
         StringHolderSequence seq = StringHolder.newSequence();
-        seq.setExpectedLength(document.getTextLength());
-        liquidMarkdown.render(document, seq);
+
+        if (markdownDocument != null) {
+          seq.setExpectedLength(markdownDocument.getTextLength());
+          liquidMarkdown.render(markdownDocument, seq);
+        } else {
+          seq.append(liquidObj);
+        }
 
         // // ALTERNATIVE: defer rendering (this causes the outermost layout to be rendered first)
         // StringHolder contentSupply =
@@ -322,36 +344,32 @@ final class MarkdownSupportImpl {
     LOG.info("Request time: {} ms for {}", time, relativePath);
   }
 
-  private SuccessfulCloseWriter mdReloadWriter(File targetFile, boolean generateHtmlFile)
+  private SuccessfulCloseWriter reloadWriter(File targetFile, boolean generateHtmlFile)
       throws IOException {
     if (targetFile == null) {
       return null;
     }
-    String filename = targetFile.getName();
-    int suffix = filename.indexOf('.');
-    if (suffix == -1) {
-      filename += ".html";
-    } else {
-      filename = filename.substring(0, suffix) + ".html";
-    }
 
-    File htmlFile = new File(targetFile.getParentFile(), filename);
+    Path parentDir = targetFile.getParentFile().toPath();
+    if (!Files.exists(parentDir)) {
+      Files.createDirectories(parentDir);
+    }
     // System.out.println("WD " + app.getWorkDir() + " " + app.getWorkDir().exists());
 
-    if (generateHtmlFile || !htmlFile.exists()) {
-      LOG.info("Generating {}", htmlFile);
-      File mdFileHtmlTmp = File.createTempFile(".md", ".tmp", app.getWorkDir());
+    if (generateHtmlFile || !targetFile.exists()) {
+      LOG.info("Generating {}", targetFile);
+      File targetFileTmp = File.createTempFile(".dumbo", ".tmp", app.getWorkDir());
 
-      return new SuccessfulCloseWriter(new OutputStreamWriter(new FileOutputStream(mdFileHtmlTmp),
+      return new SuccessfulCloseWriter(new OutputStreamWriter(new FileOutputStream(targetFileTmp),
           StandardCharsets.UTF_8)) {
 
         @Override
         protected void onClosed(boolean success) throws IOException {
-          if (success && mdFileHtmlTmp.renameTo(htmlFile)) {
-            LOG.debug("renamed successfully: {} ", htmlFile);
+          if (success && targetFileTmp.renameTo(targetFile)) {
+            LOG.debug("renamed successfully: {} ", targetFile);
           } else {
-            LOG.warn("Failed to create {}", htmlFile);
-            Files.deleteIfExists(mdFileHtmlTmp.toPath());
+            LOG.warn("Failed to create {}", targetFile);
+            Files.deleteIfExists(targetFileTmp.toPath());
           }
         }
       };

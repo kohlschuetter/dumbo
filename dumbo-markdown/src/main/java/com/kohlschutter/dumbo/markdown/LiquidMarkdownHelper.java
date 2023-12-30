@@ -27,17 +27,23 @@ import java.util.Map;
 
 import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.markdown.util.PathReaderSupplier;
+import com.kohlschutter.dumbo.util.SuppliedThreadLocal;
 import com.kohlschutter.stringhold.StringHolder;
 import com.kohlschutter.stringhold.StringHolderSequence;
 import com.vladsch.flexmark.util.ast.Document;
 
 public final class LiquidMarkdownHelper extends MarkdownHelper {
+  private final ThreadLocal<Boolean> TL_IS_MARKDOWN_ENABLED = SuppliedThreadLocal.of(() -> false);
+
   private final LiquidHelper liquidHelper;
 
   LiquidMarkdownHelper(LiquidHelper liquidHelper) {
     super();
     this.liquidHelper = liquidHelper;
     liquidHelper.setContentTransformer((o) -> {
+      if (!isMarkdownEnabled()) {
+        return o;
+      }
       try {
         Document doc = parseMarkdown(o);
         StringHolderSequence seq = StringHolder.newSequence();
@@ -122,5 +128,13 @@ public final class LiquidMarkdownHelper extends MarkdownHelper {
   @SuppressFBWarnings("EI_EXPOSE_REP")
   public LiquidHelper getLiquidHelper() {
     return liquidHelper;
+  }
+
+  boolean isMarkdownEnabled() {
+    return TL_IS_MARKDOWN_ENABLED.get();
+  }
+
+  void setMarkdownEnabledState(boolean markdown) {
+    TL_IS_MARKDOWN_ENABLED.set(markdown);
   }
 }

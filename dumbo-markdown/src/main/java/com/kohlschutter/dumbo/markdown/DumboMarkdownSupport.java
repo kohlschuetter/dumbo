@@ -36,6 +36,8 @@ import jakarta.servlet.DispatcherType;
 @Filters({ //
     @FilterMapping(map = "*.html", to = HtmlJspFilter.class, initOrder = 1, //
         dispatcherTypes = {DispatcherType.REQUEST}), //
+    @FilterMapping(map = {"*.txt", "*.json", "*.xml"}, to = LiquidFilter.class, initOrder = 2, //
+        dispatcherTypes = {DispatcherType.REQUEST}), //
 })
 public interface DumboMarkdownSupport extends DumboComponent, AppDefaultsSupport, BootstrapSupport,
     ConsoleSupport, PrismSupport {
