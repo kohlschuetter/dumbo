@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -158,8 +159,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   private final Semaphore serverStarted = new Semaphore(0);
   private final Semaphore pathsRegenerated = new Semaphore(0);
 
-  private final Map<String, Path> publicUrlPathsToStaticResource = new LinkedHashMap<>();
-  private final Map<String, Path> publicUrlPathsToDynamicResource = new LinkedHashMap<>();
+  private final Map<String, Supplier<Path>> publicUrlPathsToStaticResource = new LinkedHashMap<>();
+  private final Map<String, Supplier<Path>> publicUrlPathsToDynamicResource = new LinkedHashMap<>();
   private final JsonRpcServlet jsonRpc;
 
   private final Map<String, Consumer<JsonRpcContext>> jsonRpcSecrets = new HashMap<>();
@@ -447,7 +448,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
       Path relativePath = okPrefix.relativize(path);
 
-      String name = path.getName(path.getNameCount() - 1).toString();
+      final String name = path.getFileName().toString();
 
       String contextPrefix;
       if (context.endsWith("/")) {
@@ -458,29 +459,40 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
       String urlPath = contextPrefix + relativePath.toString();
 
-      String cachedFile = processFileName(name);
-      if (cachedFile == null) {
+      String targetFileName = processFileName(name);
+      if (targetFileName == null) {
         // don't include
         continue;
       }
 
       final String publicUrlPath;
       final Path resourcePath;
-      if (cachedFile.equals(name) && !filteredPathsPredicate.test(urlPath)) {
+
+      boolean sameName = targetFileName.equals(name);
+      boolean mayUseSourcePathIfTargetIsMissing = sameName;
+
+      if (sameName && !filteredPathsPredicate.test(urlPath)) {
         publicUrlPath = urlPath;
         resourcePath = path;
       } else {
-        Path cachedRelativePath = relativePath.resolveSibling(cachedFile);
+        Path cachedRelativePath = relativePath.resolveSibling(targetFileName);
         publicUrlPath = contextPrefix + cachedRelativePath;
         resourcePath = dirPrefixes.get(0).resolve(cachedRelativePath.toString());
-        cachedFile = contextPrefix + "/" + cachedFile;
         urlPathsToRegenerate.put(urlPath, publicUrlPath);
       }
 
-      if (isStaticFileName(cachedFile)) {
-        publicUrlPathsToStaticResource.computeIfAbsent(publicUrlPath, (p) -> resourcePath);
+      Supplier<Path> pathSupplier = () -> {
+        if (mayUseSourcePathIfTargetIsMissing && !Files.exists(resourcePath)) {
+          return path;
+        } else {
+          return resourcePath;
+        }
+      };
+
+      if (isStaticFileName(targetFileName)) {
+        publicUrlPathsToStaticResource.computeIfAbsent(publicUrlPath, (p) -> pathSupplier);
       } else {
-        publicUrlPathsToDynamicResource.computeIfAbsent(publicUrlPath, (p) -> resourcePath);
+        publicUrlPathsToDynamicResource.computeIfAbsent(publicUrlPath, (p) -> pathSupplier);
       }
     }
   }
@@ -537,7 +549,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     }
 
     String prefix = (contextPath + contextPrefix).replaceAll("//+", "/");
-    String relativePrefix = prefix.replaceAll("^/+", "");
+    String relativePrefixWithContext = prefix.replaceAll("^/+", "");
+    String relativePrefix = contextPrefix.replaceAll("^/+", "");
 
     final File contextWorkDir = new File(app.getWebappWorkDir(), relativePrefix);
     Files.createDirectories(contextWorkDir.toPath());
@@ -547,7 +560,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       Path[] paths = new Path[cachedPaths.length];
 
       for (int i = 0, n = paths.length; i < n; i++) {
-        paths[i] = cachedPaths[i].resolve(relativePrefix);
+        paths[i] = cachedPaths[i].resolve(relativePrefixWithContext);
       }
 
       res = combinedResource(contextWorkDir.toPath(), paths);
@@ -847,6 +860,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
           if (!Files.isDirectory(targetParent)) {
             Files.createDirectories(targetParent);
           }
+
           Files.copy(file, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }
         return FileVisitResult.CONTINUE;
@@ -865,9 +879,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     });
   }
 
-  private void copyResourcesToMappedDir(Map<String, Path> resources, Path outputBaseDir,
+  private void copyResourcesToMappedDir(Map<String, Supplier<Path>> resources, Path outputBaseDir,
       boolean sourceMaps) throws IOException {
-    for (Map.Entry<String, Path> en : resources.entrySet()) {
+    for (Map.Entry<String, Supplier<Path>> en : resources.entrySet()) {
       String urlPath = en.getKey();
       if (!urlPath.startsWith(this.contextPath)) {
         throw new IllegalStateException("Unexpected URL: " + urlPath);
@@ -881,8 +895,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
         }
       }
 
-      Path serverPath = en.getValue();
+      Path serverPath = en.getValue().get();
       if (!Files.exists(serverPath)) {
+        LOG.warn("Missing file: {}", serverPath);
         continue;
       }
 
