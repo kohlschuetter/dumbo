@@ -34,7 +34,7 @@ public class DateToXmlschemaFilter extends Filter {
       new SimpleDateFormat("yyyy-MM-dd hh:mm:ss zzz", Locale.ENGLISH), new SimpleDateFormat(
           "yyyy-MM-dd hh:mm zzz", Locale.ENGLISH)};
   private static final ThreadLocal<SimpleDateFormat> TL_ISO_8601 = SuppliedThreadLocal.of(
-      () -> new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.ENGLISH));
+      () -> new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.ENGLISH));
 
   public DateToXmlschemaFilter() {
     super("date_to_xmlschema");
@@ -42,6 +42,9 @@ public class DateToXmlschemaFilter extends Filter {
 
   @Override
   public Object apply(Object value, TemplateContext context, Object... params) {
+    if (value == null) {
+      return null;
+    }
     String date = LIQP_DATE_FILTER.apply(value, context, new Object[0]).toString();
 
     Date d = null;
