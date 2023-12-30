@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.eclipse.jetty.client.HttpClient;
@@ -136,6 +137,13 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   private final ErrorHandler errorHandler;
 
+  /**
+   * All resource paths to regenerate
+   * 
+   * e.g,<br>
+   * key: /prefix/app_/base/js/app.jsp.js<br>
+   * value: /prefix/app_/base/js/app.js
+   */
   private final Map<String, String> urlPathsToRegenerate = new HashMap<>();
 
   private AFUNIXSocketAddress serverUNIXSocketAddress = null;
@@ -241,12 +249,13 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     initMainWebAppContextCommon(wac);
 
-    initWebAppContext(app.getApplicationExtensionImpl(), wac);
+    Predicate<String> filteredPathsPredicate = initWebAppContext(app.getApplicationExtensionImpl(),
+        wac);
 
     registerContext(wac, webappBaseURI);
 
     if (cachedPaths == null) {
-      scanWebApp(wac.getContextPath(), res);
+      scanWebApp(wac.getContextPath(), res, filteredPathsPredicate);
     }
 
     return wac;
@@ -390,13 +399,15 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
    * @throws IOException on error.
    */
   @SuppressWarnings("PMD.CognitiveComplexity")
-  private void scanWebApp(String context, Resource dir) throws IOException {
+  private void scanWebApp(String context, Resource dir, Predicate<String> filteredPathsPredicate)
+      throws IOException {
     LOG.info("Scanning contents of context {} from {}", context, dir);
-    scanWebApp(context, dir, null);
+    scanWebApp(context, dir, filteredPathsPredicate, null);
   }
 
   @SuppressWarnings("PMD.CognitiveComplexity")
-  private void scanWebApp(String context, Resource dir, List<Path> dirPrefixes) throws IOException {
+  private void scanWebApp(String context, Resource dir, Predicate<String> filteredPathsPredicate,
+      List<Path> dirPrefixes) throws IOException {
     String key = dir.toString();
     if (!scannedFiles.add(key)) {
       // already scanned
@@ -422,7 +433,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     for (Resource r : dir.list()) {
       if (r.isDirectory()) {
-        scanWebApp(context, r, dirPrefixes);
+        scanWebApp(context, r, filteredPathsPredicate, dirPrefixes);
         continue;
       }
 
@@ -455,7 +466,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
       final String publicUrlPath;
       final Path resourcePath;
-      if (cachedFile.equals(name)) {
+      if (cachedFile.equals(name) && !filteredPathsPredicate.test(urlPath)) {
         publicUrlPath = urlPath;
         resourcePath = path;
       } else {
@@ -472,6 +483,19 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
         publicUrlPathsToDynamicResource.computeIfAbsent(publicUrlPath, (p) -> resourcePath);
       }
     }
+  }
+
+  private static Predicate<String> constructFilteredPathsPredicate(Set<String> pathFilters) {
+    StringBuilder sb = new StringBuilder();
+    for (String f : pathFilters) {
+      sb.append('|');
+      sb.append(Pattern.quote(f).replace("*", "\\E.*\\Q").replace("\\Q\\E", ""));
+    }
+    sb.setCharAt(0, '(');
+    sb.append(")");
+    Pattern pattern = Pattern.compile(sb.toString());
+
+    return (p) -> pattern.matcher(p).matches();
   }
 
   private static boolean isStaticFileName(String name) {
@@ -544,17 +568,18 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     wac.setLogger(LOG);
     wac.addServletContainerInitializer(new JettyJasperInitializer());
 
+    Predicate<String> filteredPathsPredicate = initWebAppContext(comp, wac);
     if (cachedPaths == null) {
-      scanWebApp(wac.getContextPath(), res);
+      scanWebApp(wac.getContextPath(), res, filteredPathsPredicate);
     }
-    initWebAppContext(comp, wac);
 
     wac.setServer(server);
 
     return registerContext(wac, resourceBaseUri);
   }
 
-  private void initWebAppContext(ComponentImpl comp, WebAppContext wac) throws IOException {
+  private Predicate<String> initWebAppContext(ComponentImpl comp, WebAppContext wac)
+      throws IOException {
     wac.setDefaultRequestCharacterEncoding("UTF-8");
     wac.setDefaultResponseCharacterEncoding("UTF-8");
 
@@ -577,19 +602,26 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     ServletHandler sh = wac.getServletHandler();
 
-    mapServlets(comp, sh);
-    mapFilters(comp, sh);
+    Set<String> pathFilters = new HashSet<>();
+    mapServlets(comp, sh, pathFilters);
+    mapFilters(comp, sh, pathFilters);
+
+    Predicate<String> filteredPathsPredicate = constructFilteredPathsPredicate(pathFilters);
+    return filteredPathsPredicate;
   }
 
-  private void mapServlets(ComponentImpl comp, ServletHandler sh) {
+  private void mapServlets(ComponentImpl comp, ServletHandler sh, Set<String> pathFilters) {
     Map<String, ServletMapping> mappings = new HashMap<>();
     for (Servlets s : comp.getAnnotatedMappingsFromAllReachableComponents(Servlets.class)) {
       for (ServletMapping mapping : s.value()) {
-        String mapPath = mapping.map();
-        ServletMapping effectiveMapping = mappings.computeIfAbsent(mapPath, (k) -> mapping);
-        if (!effectiveMapping.equals(mapping)) {
-          throw new IllegalStateException("Conflicting servlet mapping: " + mapPath + " to "
-              + effectiveMapping + " vs. " + mapping);
+        String[] mapPaths = mapping.map();
+        for (String mapPath : mapPaths) {
+          pathFilters.add(mapPath);
+          ServletMapping effectiveMapping = mappings.computeIfAbsent(mapPath, (k) -> mapping);
+          if (!effectiveMapping.equals(mapping)) {
+            throw new IllegalStateException("Conflicting servlet mapping: " + mapPath + " to "
+                + effectiveMapping + " vs. " + mapping);
+          }
         }
       }
     }
@@ -629,14 +661,17 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     }
   }
 
-  private void mapFilters(ComponentImpl comp, ServletHandler sh) {
+  private void mapFilters(ComponentImpl comp, ServletHandler sh, Set<String> pathFilters) {
     Map<String, List<FilterMapping>> mappings = new HashMap<>();
     for (Filters f : comp.getAnnotatedMappingsFromAllReachableComponents(Filters.class)) {
       for (FilterMapping mapping : f.value()) {
-        String mapPath = mapping.map();
-        mappings.computeIfAbsent(mapPath, (k) -> {
-          return new ArrayList<>();
-        }).add(mapping);
+        String[] mapPaths = mapping.map();
+        for (String mapPath : mapPaths) {
+          pathFilters.add(mapPath);
+          mappings.computeIfAbsent(mapPath, (k) -> {
+            return new ArrayList<>();
+          }).add(mapping);
+        }
       }
     }
 
@@ -847,6 +882,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       }
 
       Path serverPath = en.getValue();
+      if (!Files.exists(serverPath)) {
+        continue;
+      }
 
       Path outputPath = outputBaseDir.resolve(urlPath);
 
