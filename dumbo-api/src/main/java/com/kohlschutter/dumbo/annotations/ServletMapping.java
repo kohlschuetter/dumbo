@@ -31,7 +31,7 @@ import jakarta.servlet.Servlet;
 public @interface ServletMapping {
   Class<? extends Servlet> to();
 
-  String map();
+  String[] map();
 
   int initOrder() default -1;
 }

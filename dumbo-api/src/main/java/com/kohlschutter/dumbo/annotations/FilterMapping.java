@@ -32,7 +32,7 @@ import jakarta.servlet.Filter;
 public @interface FilterMapping {
   Class<? extends Filter> to();
 
-  String map();
+  String[] map();
 
   int initOrder() default -1;
 
