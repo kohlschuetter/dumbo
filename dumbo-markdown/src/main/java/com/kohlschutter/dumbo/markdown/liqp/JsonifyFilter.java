@@ -43,6 +43,9 @@ public class JsonifyFilter extends Filter {
 
   @Override
   public Object apply(Object value, TemplateContext context, Object... params) {
+    if (value instanceof CharSequence) {
+      value = value.toString();
+    }
     try {
       return ow.writeValueAsString(value);
     } catch (JsonProcessingException e) {
