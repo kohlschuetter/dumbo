@@ -116,7 +116,8 @@ import jakarta.servlet.http.HttpSession;
  *
  * See {@code HelloWorldApp} for a simple demo.
  */
-@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CyclomaticComplexity"})
+@SuppressWarnings({
+    "PMD.ExcessiveImports", "PMD.CyclomaticComplexity", "PMD.CouplingBetweenObjects"})
 public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   private static final boolean TERMINATE_VM = Boolean.parseBoolean(System.getProperty(
       "dumbo.terminate-vm", "false"));
@@ -406,7 +407,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     scanWebApp(context, dir, filteredPathsPredicate, null);
   }
 
-  @SuppressWarnings("PMD.CognitiveComplexity")
+  @SuppressWarnings({"PMD.CognitiveComplexity", "PMD.NPathComplexity", "PMD.NcssCount"})
   private void scanWebApp(String context, Resource dir, Predicate<String> filteredPathsPredicate,
       List<Path> dirPrefixes) throws IOException {
     String key = dir.toString();
@@ -448,7 +449,13 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
       Path relativePath = okPrefix.relativize(path);
 
-      final String name = path.getFileName().toString();
+      Path fileName = path.getFileName();
+      if (fileName == null) {
+        LOG.warn("No filename for path: {}", path);
+        continue;
+      }
+
+      final String name = fileName.toString();
 
       String contextPrefix;
       if (context.endsWith("/")) {
@@ -504,7 +511,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       sb.append(Pattern.quote(f).replace("*", "\\E.*\\Q").replace("\\Q\\E", ""));
     }
     sb.setCharAt(0, '(');
-    sb.append(")");
+    sb.append(')');
     Pattern pattern = Pattern.compile(sb.toString());
 
     return (p) -> pattern.matcher(p).matches();
@@ -857,7 +864,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
         if (filter.test(relativePath)) {
           Path targetPath = outputDir.resolve(relativePath);
           Path targetParent = targetPath.getParent();
-          if (!Files.isDirectory(targetParent)) {
+          if (targetParent != null && !Files.isDirectory(targetParent)) {
             Files.createDirectories(targetParent);
           }
 

@@ -209,6 +209,7 @@ final class MarkdownSupportImpl {
     }
   }
 
+  @SuppressWarnings({"PMD.NcssCount", "PMD.CognitiveComplexity", "PMD.NPathComplexity"})
   public void render(boolean markdown, String relativePath, Path mdPath, File targetFile,
       boolean generateHtmlFile, @Nullable HttpServletResponse resp, @Nullable String defaultLayout,
       @Nullable String collectionId, Map<String, Object> variablesOverride) throws IOException {

@@ -44,8 +44,8 @@ public final class LiquidFilter extends HttpFilter {
   private static final long serialVersionUID = 1L;
 
   private transient MarkdownSupportImpl mdSupport;
-  private ServletContext servletContext;
-  private ServerApp app;
+  private transient ServletContext servletContext;
+  private transient ServerApp app;
 
   @Override
   public void init() throws ServletException {
@@ -63,14 +63,13 @@ public final class LiquidFilter extends HttpFilter {
   @Override
   protected void doFilter(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
       throws ServletException, IOException {
-    if (!checkLiquid(req, resp, chain)) {
+    if (!checkLiquid(req, resp)) {
       chain.doFilter(req, resp);
       return;
     }
   }
 
-  private boolean checkLiquid(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
-      throws IOException {
+  private boolean checkLiquid(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
     String pathInContext = req.getRequestURI().substring(req.getContextPath().length());
 

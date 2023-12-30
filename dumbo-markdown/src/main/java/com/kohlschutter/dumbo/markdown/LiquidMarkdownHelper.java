@@ -33,7 +33,8 @@ import com.kohlschutter.stringhold.StringHolderSequence;
 import com.vladsch.flexmark.util.ast.Document;
 
 public final class LiquidMarkdownHelper extends MarkdownHelper {
-  private final ThreadLocal<Boolean> TL_IS_MARKDOWN_ENABLED = SuppliedThreadLocal.of(() -> false);
+  private static final ThreadLocal<Boolean> TL_IS_MARKDOWN_ENABLED = SuppliedThreadLocal.of(
+      () -> false);
 
   private final LiquidHelper liquidHelper;
 
