@@ -38,7 +38,7 @@ public final class PermalinkParser {
   private static final Pattern PAT_ALPHANUM_LOWER = Pattern.compile("[^a-z0-9]+");
 
   private static final ThreadLocal<SimpleDateFormat> SDF_YMD = SuppliedThreadLocal.of(
-      () -> new SimpleDateFormat("YYYY-MM-dd", Locale.ENGLISH));
+      () -> new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH));
 
   private static final Map<String, String> STYLES = new HashMap<>();
 
