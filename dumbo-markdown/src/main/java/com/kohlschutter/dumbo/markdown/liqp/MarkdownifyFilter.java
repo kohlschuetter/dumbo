@@ -27,7 +27,7 @@ import liqp.TemplateContext;
 import liqp.filters.Filter;
 
 public class MarkdownifyFilter extends Filter {
-  //  private static final Logger LOG = LoggerFactory.getLogger(MarkdownifyFilter.class);
+  // private static final Logger LOG = LoggerFactory.getLogger(MarkdownifyFilter.class);
 
   private final MarkdownHelper mh;
 
