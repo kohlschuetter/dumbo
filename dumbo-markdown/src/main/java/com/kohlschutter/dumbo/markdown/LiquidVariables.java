@@ -43,6 +43,7 @@ public final class LiquidVariables {
   public static final String PAGE_TYPE = "type";
   public static final String PAGE_NAME = "name";
   public static final String PAGE_TITLE = "title";
+  public static final String PAGE_EXCERPT = "excerpt";
   public static final String PAGE_LAST_MODIFIED_AT = "last_modified_at";
 
   public static final String PAGINATOR = "paginator";

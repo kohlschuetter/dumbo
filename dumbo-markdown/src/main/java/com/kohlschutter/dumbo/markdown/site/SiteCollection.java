@@ -192,6 +192,9 @@ public final class SiteCollection implements List<Object> {
 
     map.put("content", StringHolder.withSupplier(() -> liquid.prerenderLiquid(supp, variables,
         LiquidVariables.PAGE, () -> map), (e) -> ExceptionResponse.ILLEGAL_STATE));
+    map.put("excerpt", StringHolder.withSupplier(() -> {
+      return getExcerpt(StringHolder.withContent(map.get("content")));
+    }));
 
     if (index > 0) {
       itemVariables.put("next", new Callable<Object>() {
@@ -213,6 +216,16 @@ public final class SiteCollection implements List<Object> {
     }
 
     return itemVariables;
+  }
+
+  private StringHolder getExcerpt(StringHolder content) {
+    // FIXME implement excerpt_separator
+    int endLastParagraph = content.indexOf("</p>");
+    if (endLastParagraph != -1) {
+      return StringHolder.withContent(content.subSequence(0, endLastParagraph + "</p>".length()));
+    } else {
+      return content;
+    }
   }
 
   private Object updateObject(PathReaderSupplier supp, int index) {

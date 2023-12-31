@@ -27,6 +27,8 @@ import liqp.TemplateContext;
 import liqp.filters.Filter;
 
 public class MarkdownifyFilter extends Filter {
+  //  private static final Logger LOG = LoggerFactory.getLogger(MarkdownifyFilter.class);
+
   private final MarkdownHelper mh;
 
   public MarkdownifyFilter(MarkdownHelper mh) {
@@ -37,10 +39,11 @@ public class MarkdownifyFilter extends Filter {
   @Override
   public Object apply(Object value, TemplateContext context, Object... params) {
     if (value == null) {
-      // FIXME this is probably a bug
-      // throw new NullPointerException("refusing to markdownify null");
-      System.err.println("markdownify got null value");
-      value = "";
+      // LOG.warn("markdownify got null value");
+      // value = "";
+
+      // this is probably a bug
+      throw new NullPointerException("refusing to markdownify null");
     }
 
     value = value instanceof StringHolder ? ((StringHolder) value).asContent() : super.asString(
