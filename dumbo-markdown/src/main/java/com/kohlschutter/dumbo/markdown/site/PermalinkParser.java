@@ -170,6 +170,10 @@ public final class PermalinkParser {
     matcher.appendTail(sb);
 
     String s = sb.toString().replaceAll("//+", "/");
+
+    // see https://github.com/jekyll/jekyll/issues/842
+    s = s.toLowerCase(Locale.ENGLISH);
+
     pageVariables.put("permalink", s);
 
     return s;
