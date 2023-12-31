@@ -104,10 +104,6 @@ public class LiquidHelper {
     this.liqpParser = newLiqpParser(app);
   }
 
-  public TemplateParser getLiqpParser() {
-    return liqpParser;
-  }
-
   void setContentTransformer(Function<Object, Object> transformer) {
     this.contentTransformer = transformer;
   }
