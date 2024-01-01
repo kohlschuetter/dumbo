@@ -100,10 +100,10 @@ final class ExtensionImpl extends ComponentImpl {
    * @throws IOException on error.
    */
   @Override
-  void initComponent(DumboServerImpl app) throws IOException {
-    super.initComponent(app);
+  void initComponent(ServerApp app, DumboServerImpl server) throws IOException {
+    super.initComponent(app, server);
     initResources();
-    initExtension(app);
+    initExtension(app, server);
   }
 
   /**
@@ -132,7 +132,7 @@ final class ExtensionImpl extends ComponentImpl {
    * @param server The server instance to work with.
    * @throws IOException on error.
    */
-  void initExtension(final DumboServerImpl server) throws IOException {
+  void initExtension(ServerApp app, final DumboServerImpl server) throws IOException {
     serverContextPath = server.getContextPath().replaceFirst("/$", "");
     contextPath = serverContextPath;
     if (extensionPath != null) {

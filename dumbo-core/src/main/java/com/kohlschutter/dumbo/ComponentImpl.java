@@ -189,7 +189,7 @@ class ComponentImpl implements BaseSupport {
    *
    * @throws IOException on error.
    */
-  void initComponent(DumboServerImpl app) throws IOException {
+  void initComponent(ServerApp app, DumboServerImpl server) throws IOException {
     if (!initialized.compareAndSet(false, true)) {
       throw new IllegalStateException("Already initialized");
     }

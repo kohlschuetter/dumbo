@@ -199,7 +199,7 @@ public final class ServerApp implements Closeable {
       throw new IllegalStateException("App is already initialized");
     }
     for (ExtensionImpl ext : extensions.values()) {
-      ext.initComponent(server);
+      ext.initComponent(this, server);
 
       ext.getComponentToSubComponentsMap().forEach((k, v) -> {
         getComponentToSubComponentMap().computeIfAbsent(k, (e) -> {
