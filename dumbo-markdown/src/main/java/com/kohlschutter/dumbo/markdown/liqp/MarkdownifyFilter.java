@@ -43,7 +43,7 @@ public class MarkdownifyFilter extends Filter {
       // value = "";
 
       // this is probably a bug
-      throw new NullPointerException("refusing to markdownify null");
+      throw new IllegalStateException("refusing to markdownify null");
     }
 
     value = value instanceof StringHolder ? ((StringHolder) value).asContent() : super.asString(
