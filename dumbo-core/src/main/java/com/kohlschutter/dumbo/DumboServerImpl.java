@@ -524,6 +524,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   private static String processFileName(String name) {
     if (name.endsWith(".md")) {
       return name.substring(0, name.length() - ".md".length()) + ".html";
+    } else if (name.endsWith(".scss")) {
+      return name.substring(0, name.length() - ".scss".length()) + ".css";
     } else if (name.endsWith(".html.jsp")) {
       return name.substring(0, name.length() - ".jsp".length());
     } else if (name.endsWith(".jsp.js")) {
