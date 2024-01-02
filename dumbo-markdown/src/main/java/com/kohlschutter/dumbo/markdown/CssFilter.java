@@ -17,13 +17,16 @@
  */
 package com.kohlschutter.dumbo.markdown;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.DumboServerImpl;
 import com.kohlschutter.dumbo.ServerApp;
@@ -36,100 +39,95 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Add support for liquid template files.
+ * Checks if the css file needs to be generated from a .scss file.
  *
  * @author Christian Kohlschütter
  */
-public final class LiquidFilter extends HttpFilter {
+public final class CssFilter extends HttpFilter {
   private static final long serialVersionUID = 1L;
+  private static final Logger LOG = LoggerFactory.getLogger(CssFilter.class);
 
-  private transient MarkdownSupportImpl mdSupport;
   private transient ServletContext servletContext;
   private transient ServerApp app;
+  private transient ScssCompiler sassCompiler;
 
   @Override
   public void init() throws ServletException {
     this.servletContext = getServletContext();
     this.app = Objects.requireNonNull(DumboServerImpl.getServerApp(servletContext));
-
     try {
-      mdSupport = app.getImplementationByIdentity(MarkdownSupportImpl.COMPONENT_IDENTITY,
-          () -> new MarkdownSupportImpl(app));
+      this.sassCompiler = new ScssCompiler(app);
     } catch (IOException e) {
       throw new ServletException(e);
     }
   }
 
   @Override
+  public void destroy() {
+    try {
+      sassCompiler.close();
+    } catch (IOException e) {
+      LOG.error("Error upon destroy", e);
+    }
+  }
+
+  @Override
   protected void doFilter(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
       throws ServletException, IOException {
-    if (!checkLiquid(req, resp)) {
+    if (!checkSass(req, resp)) {
       chain.doFilter(req, resp);
       return;
     }
   }
 
-  private boolean checkLiquid(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+  private boolean checkSass(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
-    String pathInContext = req.getRequestURI().substring(req.getContextPath().length());
+    String pathInContext = req.getServletPath();
+    if (pathInContext == null) {
+      return false;
+    }
+    // String path = req.getRequestURI();
+
+    String mimeType = servletContext.getMimeType(pathInContext);
+    resp.setCharacterEncoding("UTF-8");
+    resp.setContentType(mimeType);
+
+    boolean reload = "true".equals(req.getParameter("reload"));
 
     URL resource = servletContext.getResource(pathInContext);
-    if (resource == null) {
+    if (resource != null && !reload) {
+      // already transformed or existing resource
       return false;
     }
 
-    Path path;
+    String scssPathStr = pathInContext.replaceFirst("\\.css$", "\\.scss");
+    URL scss = servletContext.getResource(scssPathStr);
+    if (scss == null) {
+      return false;
+    }
+
+    Path scssPath;
     try {
-      path = Path.of(resource.toURI());
+      scssPath = Path.of(scss.toURI());
     } catch (URISyntaxException e) {
-      return false;
+      throw new IOException(e);
     }
 
-    if (path.startsWith(app.getWebappWorkDir().toPath())) {
-      // already transformed
-      return false;
-    }
-
-    String servletPath = req.getServletPath();
-    if (servletPath == null) {
-      return false;
-    }
-
-    URL url = servletContext.getResource(servletPath);
-    if (url == null) {
-      return false;
-    }
-
-    Path mdPath;
-    try {
-      mdPath = Path.of(url.toURI());
-    } catch (URISyntaxException e) {
-      return false;
-    }
-
-    if (!Files.exists(mdPath) || Files.isDirectory(mdPath)) {
-      return false;
-    }
-
-    long mdFileLength = Files.size(mdPath);
+    long mdFileLength = Files.size(scssPath);
     if (mdFileLength > Integer.MAX_VALUE) {
       // FIXME: use a lower bound
       resp.sendError(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
       return true;
     }
 
-    String relativePath = servletPath;
-    if (relativePath.startsWith("/")) {
-      relativePath = relativePath.substring(1);
+    Path generatedCssPath = app.getWebappWorkDir().toPath().resolve(pathInContext.replaceFirst("^/",
+        ""));
+
+    sassCompiler.compile(pathInContext, scssPath, generatedCssPath);
+
+    try (BufferedReader br = Files.newBufferedReader(generatedCssPath)) {
+      br.transferTo(resp.getWriter());
     }
-    File targetFile = new File(app.getWebappWorkDir(), relativePath);
-
-    boolean reload = "true".equals(req.getParameter("reload"));
-
-    String mimeType = servletContext.getMimeType(servletPath);
-    resp.setContentType(mimeType);
-
-    mdSupport.renderLiquid(relativePath, mdPath, targetFile, reload, resp);
     return true;
   }
 }

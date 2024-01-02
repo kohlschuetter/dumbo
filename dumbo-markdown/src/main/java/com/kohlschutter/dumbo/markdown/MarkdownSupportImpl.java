@@ -209,7 +209,14 @@ final class MarkdownSupportImpl {
     }
   }
 
-  @SuppressWarnings({"PMD.NcssCount", "PMD.CognitiveComplexity", "PMD.NPathComplexity"})
+  public void renderLiquid(@Nullable String relativePath, Path mdPath, File targetFile,
+      boolean generateFile, @Nullable HttpServletResponse resp) throws IOException {
+    render(false, relativePath, mdPath, targetFile, generateFile, resp, null, null, null);
+  }
+
+  @SuppressWarnings({
+      "PMD.NcssCount", "PMD.CognitiveComplexity", "PMD.NPathComplexity",
+      "PMD.CyclomaticComplexity"})
   public void render(boolean markdown, @Nullable String relativePath, Path mdPath, File targetFile,
       boolean generateHtmlFile, @Nullable HttpServletResponse resp, @Nullable String defaultLayout,
       @Nullable String collectionId, Map<String, Object> variablesOverride) throws IOException {

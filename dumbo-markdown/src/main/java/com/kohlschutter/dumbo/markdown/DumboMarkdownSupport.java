@@ -38,6 +38,10 @@ import jakarta.servlet.DispatcherType;
         dispatcherTypes = {DispatcherType.REQUEST}), //
     @FilterMapping(map = {"*.txt", "*.json", "*.xml"}, to = LiquidFilter.class, initOrder = 2, //
         dispatcherTypes = {DispatcherType.REQUEST}), //
+    @FilterMapping(map = {"*.css"}, to = CssFilter.class, initOrder = 3, //
+        dispatcherTypes = {DispatcherType.REQUEST}), //
+    @FilterMapping(map = {"*.scss"}, to = ScssFilter.class, initOrder = 4, //
+        dispatcherTypes = {DispatcherType.REQUEST}), //
 })
 public interface DumboMarkdownSupport extends DumboComponent, AppDefaultsSupport, BootstrapSupport,
     ConsoleSupport, PrismSupport {
