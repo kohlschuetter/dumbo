@@ -23,13 +23,18 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.DumboServerImpl;
 import com.kohlschutter.dumbo.ServerApp;
+import com.kohlschutter.efesnitch.PathRegistration;
+import com.kohlschutter.efesnitch.PathWatcher;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletContext;
@@ -46,10 +51,13 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class CssFilter extends HttpFilter {
   private static final long serialVersionUID = 1L;
   private static final Logger LOG = LoggerFactory.getLogger(CssFilter.class);
+  private static final AtomicLong FORCE_RELOAD = new AtomicLong(0);
+  private static final Map<String, AtomicLong> LAST_FORCED_RELOADS = new HashMap<>();
 
   private transient ServletContext servletContext;
   private transient ServerApp app;
   private transient ScssCompiler sassCompiler;
+  private transient PathWatcher pathWatcher;
 
   @Override
   public void init() throws ServletException {
@@ -60,6 +68,7 @@ public final class CssFilter extends HttpFilter {
     } catch (IOException e) {
       throw new ServletException(e);
     }
+    this.pathWatcher = app.getPathWatcher();
   }
 
   @Override
@@ -80,8 +89,12 @@ public final class CssFilter extends HttpFilter {
     }
   }
 
-  private boolean checkSass(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+  public static void markForceReloadNextTime() {
+    LOG.info("Modifications detected; CSS resources will be regenerated next time");
+    FORCE_RELOAD.set(System.currentTimeMillis());
+  }
 
+  private boolean checkSass(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     String pathInContext = req.getServletPath();
     if (pathInContext == null) {
       return false;
@@ -92,25 +105,49 @@ public final class CssFilter extends HttpFilter {
     resp.setCharacterEncoding("UTF-8");
     resp.setContentType(mimeType);
 
-    boolean reload = "true".equals(req.getParameter("reload"));
-
-    URL resource = servletContext.getResource(pathInContext);
-    if (resource != null && !reload) {
-      // already transformed or existing resource
-      return false;
-    }
-
     String scssPathStr = pathInContext.replaceFirst("\\.css$", "\\.scss");
     URL scss = servletContext.getResource(scssPathStr);
     if (scss == null) {
+      // cannot transform anyways
       return false;
     }
-
     Path scssPath;
     try {
       scssPath = Path.of(scss.toURI());
     } catch (URISyntaxException e) {
       throw new IOException(e);
+    }
+
+    boolean reload = "true".equals(req.getParameter("reload"));
+
+    long forceReloadTime = FORCE_RELOAD.get();
+    if (forceReloadTime != 0) {
+      AtomicLong time = LAST_FORCED_RELOADS.computeIfAbsent(req.getRequestURI(), (
+          k) -> new AtomicLong(0));
+      if (time.get() < forceReloadTime) {
+        LOG.info("Forcing rebuild after some scss files were modified: " + scssPath);
+        time.set(System.currentTimeMillis());
+        reload = true;
+      }
+    }
+
+    URL resource = servletContext.getResource(pathInContext);
+    if (resource == null) {
+      // scss exists, but css is not yet generated
+
+      if (pathWatcher.mayRegister(scssPath)) {
+        // watch any changes to the scss file
+        // see ScssFilter for other related files
+        PathRegistration reg = pathWatcher.register(scssPath, (p) -> {
+          markForceReloadNextTime();
+        });
+        if (reg.isFresh()) {
+          LOG.info("Watching for changes: {}", scssPath);
+        }
+      }
+    } else if (!reload) {
+      // already transformed or existing resource
+      return false;
     }
 
     long mdFileLength = Files.size(scssPath);

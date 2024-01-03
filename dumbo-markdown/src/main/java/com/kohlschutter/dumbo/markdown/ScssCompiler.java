@@ -32,7 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kohlschutter.dumbo.ServerApp;
-import com.kohlschutter.dumbo.util.PathUtils;
+import com.kohlschutter.efesnitch.PathWatcher;
+import com.kohlschutter.util.PathUtil;
 import com.sass_lang.embedded_protocol.InboundMessage.ImportResponse.ImportSuccess;
 import com.sass_lang.embedded_protocol.OutputStyle;
 
@@ -44,7 +45,7 @@ import de.larsgrefer.sass.embedded.importer.CustomImporter;
 
 /**
  * Compiles .scss to .css, supporting Liquid templates in the initial .scss file.
- * 
+ *
  * @author Christian Kohlschütter
  */
 final class ScssCompiler implements Closeable {
@@ -57,6 +58,13 @@ final class ScssCompiler implements Closeable {
     this.app = app;
     mdSupport = app.getImplementationByIdentity(MarkdownSupportImpl.COMPONENT_IDENTITY,
         () -> new MarkdownSupportImpl(app));
+
+    PathWatcher pathWatcher = app.getPathWatcher();
+    Path sassPath = PathUtil.toPathIfPossible(app.getResource("markdown/_sass"));
+    if (pathWatcher.mayRegister(sassPath)) {
+      LOG.info("Watching for changes: {}", sassPath);
+      pathWatcher.register(sassPath, (p) -> CssFilter.markForceReloadNextTime());
+    }
   }
 
   private final class SassImporter extends CustomImporter {
@@ -78,7 +86,7 @@ final class ScssCompiler implements Closeable {
       }
       url = url.substring(CUSTOM_SASS_URI_SCHEME.length()) + ".scss";
 
-      LOG.info("Importing {}", url);
+      LOG.debug("Importing {}", url);
 
       URL resUrl = getSassURL(url);
       if (resUrl == null) {
@@ -128,9 +136,9 @@ final class ScssCompiler implements Closeable {
 
   public void compile(String relativePath, Path scssPath, Path generatedCssPath)
       throws IOException {
-    PathUtils.createAncestorDirectories(generatedCssPath);
+    PathUtil.createAncestorDirectories(generatedCssPath);
 
-    Path sourceMapPath = PathUtils.resolveSiblingAppendingSuffix(generatedCssPath, ".map");
+    Path sourceMapPath = PathUtil.resolveSiblingAppendingSuffix(generatedCssPath, ".map");
 
     Path tempFile = Files.createTempFile("dumbo-", ".scss");
     mdSupport.renderLiquid(relativePath, scssPath, tempFile.toFile(), true, null);
@@ -146,7 +154,7 @@ final class ScssCompiler implements Closeable {
 
       try (BufferedWriter out = Files.newBufferedWriter(generatedCssPath)) {
         out.write(cs.getCss());
-        out.write("\n\n/*# sourceMappingURL=" + PathUtils.relativizeSibling(generatedCssPath,
+        out.write("\n\n/*# sourceMappingURL=" + PathUtil.relativizeSibling(generatedCssPath,
             sourceMapPath) + " */\n");
       }
       try (BufferedWriter out = Files.newBufferedWriter(sourceMapPath)) {
@@ -154,7 +162,7 @@ final class ScssCompiler implements Closeable {
       }
       // FIXME need to copy the source files to the sourcemap folder
     } catch (SassCompilationFailedException e) {
-      throw new IOException("Cannot compile scss: " + scssPath, e);
+      throw new IOException("Cannot compile scss: " + scssPath + ": " + e.getMessage(), e);
     }
   }
 

@@ -84,6 +84,11 @@
             <artifactId>stringhold-common</artifactId>
             <version>${stringhold.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.kohlschutter.efesnitch</groupId>
+            <artifactId>efesnitch-core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <build>
         <pluginManagement>

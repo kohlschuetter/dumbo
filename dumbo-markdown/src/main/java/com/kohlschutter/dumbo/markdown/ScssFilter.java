@@ -71,12 +71,4 @@ public final class ScssFilter extends HttpFilter {
     resp.sendRedirect(url);
     return true;
   }
-
-  public static void main(String[] args) {
-    Matcher m = PAT_SCSS_SUFFIX.matcher("yo/test.scss?reload=true");
-    if (!m.find()) {
-      throw new IllegalStateException("Unexpected");
-    }
-
-  }
 }
