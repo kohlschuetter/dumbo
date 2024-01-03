@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,7 +52,6 @@ import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.api.EventHandler;
 import com.kohlschutter.dumbo.console.ConsoleService;
 import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
-import com.kohlschutter.efesnitch.PathWatcher;
 
 /**
  * Internal base class for a lightweight Server-based application.
@@ -84,8 +82,6 @@ public final class ServerApp implements Closeable {
   private final Map<ImplementationIdentity<?>, Object> implementationIdentities =
       new WeakHashMap<>();
 
-  private final PathWatcher pathWatcher;
-
   private File workDir;
   private File webappWorkDir;
 
@@ -94,7 +90,6 @@ public final class ServerApp implements Closeable {
   public ServerApp(Class<? extends DumboApplication> applicationClass) {
     this.applicationClass = applicationClass;
     this.applicationExtensionImpl = new ExtensionImpl(applicationClass, true);
-    this.pathWatcher = ServiceLoader.load(PathWatcher.class).findFirst().get();
 
     resolveExtensions();
     initEventHandlers();
@@ -286,7 +281,6 @@ public final class ServerApp implements Closeable {
         }
       }
     }
-    pathWatcher.close();
     closed = true;
   }
 
@@ -429,9 +423,5 @@ public final class ServerApp implements Closeable {
 
   Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> getComponentToSubComponentMap() {
     return componentToSubComponentMap;
-  }
-
-  public PathWatcher getPathWatcher() {
-    return pathWatcher;
   }
 }
