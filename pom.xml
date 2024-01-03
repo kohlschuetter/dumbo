@@ -143,7 +143,6 @@
         <module>dumbo-api</module>
         <module>dumbo-core</module>
         <module>dumbo-extensions</module>
-        <module>dumbo-markdown</module>
         <module>dumbo-helloworld</module>
         <module>dumbo-jacline</module>
         <module>dumbo-jacline-helloworld</module>
