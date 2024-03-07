@@ -61,8 +61,10 @@
 
         var elem = Dumbo.clone(Dumbo.app.console.templates.unknown);
 
-        const jsonText = JSON.stringify(chunk, null, 2);
-        Dumbo.forEach(elem, ".app-json", (e) => { e.appendChild(jsonText); });
+        const jsonText = document.createTextNode(JSON.stringify(chunk, null, 2));
+        Dumbo.forEach(elem, ".app-json", (e) => {
+            e.appendChild(jsonText);
+            });
         return elem;
     };
 
