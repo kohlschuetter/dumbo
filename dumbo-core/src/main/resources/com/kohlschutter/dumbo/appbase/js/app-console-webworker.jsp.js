@@ -49,6 +49,9 @@ commands["init"] = function(data) {
         }
         commands["next"]();
     }, url);
+
+    var methods = ["ConsoleService.requestNextChunk"]; // NOTE optimized
+    rpc._fetchMethods(methods);
 };
 
 self.onmessage = function(ev) {
