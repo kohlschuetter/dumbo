@@ -83,6 +83,8 @@
     Dumbo.app.console.objConverter = Dumbo.app.console.defaultObjConverter;
     Dumbo.app.console.target = null;
 
+    Dumbo.consoleDefaultObjConverter = Dumbo.app.console.defaultObjConverter;
+
     Dumbo.setConsole = function(targetElement, objConverter) {
         if (typeof targetElement == "string") {
             targetElement = document.body.querySelector(targetElement);
