@@ -20,6 +20,7 @@ package com.kohlschutter.dumbo.js;
 import org.eclipse.jdt.annotation.NonNull;
 
 import com.kohlschutter.jacline.annotations.JsImport;
+import com.kohlschutter.jacline.lib.function.JsFunctionCallback;
 import com.kohlschutter.jacline.lib.function.JsRunnable;
 
 import elemental2.dom.Node;
@@ -55,6 +56,23 @@ public class Dumbo {
 
   @JsMethod(name = "setText")
   private static native void setText0(Object first, Object... args);
+
+  @JsOverlay
+  public static void setConsole(String targetElement) {
+    setConsole(targetElement, null);
+  }
+
+  @JsOverlay
+  public static void setConsole(String targetElement,
+      JsFunctionCallback<Object, Object> objConverter) {
+    setConsole0(targetElement, objConverter);
+  }
+
+  @JsMethod(name = "setConsole")
+  private static native void setConsole0(Object targetElement,
+      JsFunctionCallback<Object, Object> objConverter);
+
+  public static native Object consoleDefaultObjConverter(Object object);
 
   public static native void whenLoaded(JsRunnable op);
 
