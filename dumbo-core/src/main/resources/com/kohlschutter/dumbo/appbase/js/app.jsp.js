@@ -215,29 +215,38 @@ var Dumbo;
 
     if (location.search != "?static") {
         Dumbo.rpc = new JSONRpcClient(function(_, _) {
-            var cb;
-            if (Dumbo.app._onStaticModeCallbacks.condition()) {
-                cb = Dumbo.app._onStaticModeCallbacks;
+            var callback = function() {
+                var cb;
+                if (Dumbo.app._onStaticModeCallbacks.condition()) {
+                    cb = Dumbo.app._onStaticModeCallbacks;
+                } else {
+                    cb = Dumbo.app._onLiveModeCallbacks;
+                }
+
+                cb.afterwards = function() {
+                    _runCallbacks(Dumbo.app._onReadyCallbacks);
+                };
+
+                Dumbo.app._onLoadedCallbacks.afterwards = function() {
+                    _runCallbacks(cb);
+                };
+
+                _runCallbacks(Dumbo.app._onLoadedCallbacks);
+
+            };
+
+            if (document.readyState === "complete" || document.readyState === "interactive") {
+                setTimeout(callback, 1);
             } else {
-                cb = Dumbo.app._onLiveModeCallbacks;
+                document.addEventListener("DOMContentLoaded", callback);
             }
-
-            cb.afterwards = function() {
-                _runCallbacks(Dumbo.app._onReadyCallbacks);
-            };
-
-            Dumbo.app._onLoadedCallbacks.afterwards = function() {
-                _runCallbacks(cb);
-            };
-
-            _runCallbacks(Dumbo.app._onLoadedCallbacks);
         }, jsonUrl);
 
-        var methods = JSON.parse('<%= application.getAttribute("dumborb.json.methods") %>');
-        Dumbo.rpc._fetchMethods(methods);
-    }
-
-    if (location.search == "?static") {
+       // FIXME: This would be better, but it currently breaks the helloworld console demos
+        // var methods = JSON.parse('<%= application.getAttribute("dumborb.json.methods") %>');
+       // Dumbo.rpc._fetchMethods(methods);
+        Dumbo.rpc._fetchMethods();
+    } else {
         let showOutline = (location.hash == "#outline");
 
         console.log("Static design mode enabled; outline " + (showOutline ? "enabled" : "disabled — enable by adding #outline to URL"));
@@ -259,5 +268,28 @@ var Dumbo;
                 document.body.classList.add("static-design-mode-outline");
             }
         });
+
+        var callback = function() {
+            var cb;
+            if (Dumbo.app._onStaticModeCallbacks.condition()) {
+                cb = Dumbo.app._onStaticModeCallbacks;
+            } else {
+                cb = null;
+            }
+
+            if (cb) {
+                Dumbo.app._onLoadedCallbacks.afterwards = function() {
+                    _runCallbacks(cb);
+                };
+            }
+
+            _runCallbacks(Dumbo.app._onLoadedCallbacks);
+        };
+
+        if (document.readyState === "complete" || document.readyState === "interactive") {
+            setTimeout(callback, 1);
+        } else {
+            document.addEventListener("DOMContentLoaded", callback);
+        }
     }
 })(Dumbo || (window.Dumbo = Dumbo = {}));
