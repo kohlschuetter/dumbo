@@ -59,6 +59,7 @@ class DemoServiceTest {
     assertThrows(Exception.class, () -> service.hello(true));
   }
 
+  @SuppressWarnings("null")
   static Stream<DemoService> demoServices() {
     return DumboServiceProviders.allRegisteredImplementationsForService(DemoService.class);
   }

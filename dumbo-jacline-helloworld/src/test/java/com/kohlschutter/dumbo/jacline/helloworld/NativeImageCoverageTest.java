@@ -37,6 +37,7 @@ public class NativeImageCoverageTest {
   public void testCoverage() throws Exception {
     assumeTrue(Locations.isAvailable());
 
+    @SuppressWarnings("null")
     DumboServer server = ServiceLoader.load(DumboServerProvider.class).findFirst().get()
         .getDumboServer().start();
 
