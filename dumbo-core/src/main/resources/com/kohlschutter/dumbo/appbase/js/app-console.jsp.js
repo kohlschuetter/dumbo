@@ -85,13 +85,41 @@
 
     Dumbo.consoleDefaultObjConverter = Dumbo.app.console.defaultObjConverter;
 
-    Dumbo.setConsole = function(targetElement, objConverter) {
+    Dumbo.setConsole = function(targetElement, objConverter, typeMap) {
         if (typeof targetElement == "string") {
             targetElement = document.body.querySelector(targetElement);
         }
         Dumbo.app.console.target = targetElement;
-        if (objConverter != null) {
-            Dumbo.app.console.objConverter = objConverter;
+
+        if (typeMap) {
+            var getter;
+            if (typeof typeMap.get == "function") {
+                getter = (k) => typeMap.get(k);
+            } else {
+                getter = (k) => typeMap[k];
+            }
+            if (typeMap.dict) {
+                typeMap = typeMap.dict;
+            }
+            if (objConverter == null) {
+                objConverter = function(o) {
+                    return null;
+                };
+            }
+            Dumbo.app.console.objConverter = function(o) {
+                var c = o != null ? o.javaClass : null;
+                if (c != null) {
+                    c = getter(c);
+                    if (c) {
+                        return c(o);
+                    }
+                }
+                return objConverter(o);
+            };
+        } else {
+            if (objConverter != null) {
+                Dumbo.app.console.objConverter = objConverter;
+            }
         }
     };
 

@@ -19,9 +19,15 @@ package com.kohlschutter.dumbo.js;
 
 import org.eclipse.jdt.annotation.NonNull;
 
+import com.kohlschutter.dumbo.annotations.DumboService;
+import com.kohlschutter.jacline.annotations.JsImplementationProvidedSeparately;
 import com.kohlschutter.jacline.annotations.JsImport;
+import com.kohlschutter.jacline.lib.coding.CodingException;
+import com.kohlschutter.jacline.lib.coding.Decodables;
+import com.kohlschutter.jacline.lib.coding.Dictionary;
 import com.kohlschutter.jacline.lib.function.JsFunctionCallback;
 import com.kohlschutter.jacline.lib.function.JsRunnable;
+import com.kohlschutter.jacline.lib.log.CommonLog;
 
 import elemental2.dom.Node;
 import jsinterop.annotations.JsMethod;
@@ -44,6 +50,26 @@ public class Dumbo {
 
   public static native void setServiceAlias(String alias, String serviceName);
 
+  @SuppressWarnings("unused")
+  @JsImplementationProvidedSeparately
+  public static String resolveServiceTypeFromAlias(Class<?> clazz) {
+    if (!clazz.isAnnotationPresent(DumboService.class)) {
+      return null;
+    }
+    @SuppressWarnings("null")
+    DumboService service = clazz.getDeclaredAnnotation(DumboService.class);
+    if (service == null) {
+      return null;
+    }
+
+    String rpcName = service.rpcName();
+    if (rpcName.isEmpty()) {
+      return clazz.getName();
+    } else {
+      return rpcName;
+    }
+  }
+
   @JsOverlay
   public static void setText(Node node, String selector, Object text) {
     setText0(node, selector, text);
@@ -65,12 +91,20 @@ public class Dumbo {
   @JsOverlay
   public static void setConsole(String targetElement,
       JsFunctionCallback<Object, Object> objConverter) {
-    setConsole0(targetElement, objConverter);
+    setConsole0(targetElement, objConverter, null);
+  }
+
+  @JsOverlay
+  public static void setConsole(String targetElement,
+      Dictionary<JsFunctionCallback<? extends Object, Object>> javaClassMap,
+      JsFunctionCallback<? extends Object, Object> fallbackObjConverter) {
+    setConsole0(targetElement, fallbackObjConverter, javaClassMap);
   }
 
   @JsMethod(name = "setConsole")
   private static native void setConsole0(Object targetElement,
-      JsFunctionCallback<Object, Object> objConverter);
+      JsFunctionCallback<? extends Object, Object> objConverter,
+      Dictionary<JsFunctionCallback<? extends Object, Object>> javaClassMap);
 
   public static native Object consoleDefaultObjConverter(Object object);
 
@@ -83,16 +117,39 @@ public class Dumbo {
   public static native void whenReady(JsRunnable op);
 
   @JsOverlay
-  public static Object cloneBySelector(String selector) {
+  public static Node cloneBySelector(String selector) {
     return clone(selector);
   }
 
   @JsOverlay
-  public static Object cloneTemplateBySelectors(String templateSelector, String selector) {
+  public static Node cloneNode(Node node) {
+    return clone(node);
+  }
+
+  @JsOverlay
+  public static Node cloneTemplateBySelectors(String templateSelector, String selector) {
     return cloneTemplate(templateSelector, selector);
   }
 
-  private static native Object clone(Object arg);
+  private static native Node clone(Object arg);
 
-  private static native Object cloneTemplate(Object template, Object arg);
+  private static native Node cloneTemplate(Object template, Object arg);
+
+  @SuppressWarnings("unchecked")
+  @JsOverlay
+  public static <T> void registerConsoleObject(
+      Dictionary<JsFunctionCallback<? extends Object, Object>> javaClassMap, Class<T> klazz,
+      JsFunctionCallback<T, Object> fc) {
+    String key = Dumbo.resolveServiceTypeFromAlias(klazz);
+    if (key == null) {
+      throw new IllegalArgumentException("Not registered: " + klazz);
+    }
+    javaClassMap.put(key, (jsObj) -> {
+      try {
+        return fc.apply((T)Decodables.getDecoder(key).decode(null, jsObj));
+      } catch (CodingException e) {
+        return null;
+      }
+    });
+  }
 }

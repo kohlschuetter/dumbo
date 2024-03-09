@@ -26,6 +26,10 @@ var Dumbo;
         Dumbo.serviceAliases[al] = service;
     };
 
+    Dumbo.resolveServiceTypeFromAlias = function(al) {
+        return Dumbo.serviceAliases[al];
+    };
+
     const jsonUrl = '<%@page session="false" contentType="application/javascript; charset=UTF-8" %><%= application.getAttribute("jsonPath") %>';
 
     Dumbo.rpc = null;
