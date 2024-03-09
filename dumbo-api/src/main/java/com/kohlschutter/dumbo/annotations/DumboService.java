@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a certain interface as a Dumbo RPC service.
+ * Marks a certain interface or class known by the Dumbo RPC service.
  *
  * @author Christian Kohlschütter
  */
@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 public @interface DumboService {
   /**
-   * If non-empty, the name (identifier) used for this RPC service.
+   * If non-empty, the name (identifier) used for this type by the RPC service.
    *
    * By default, the fully qualified classname is used.
    *
