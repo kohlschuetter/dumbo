@@ -27,7 +27,6 @@ import com.kohlschutter.jacline.lib.coding.Decodables;
 import com.kohlschutter.jacline.lib.coding.Dictionary;
 import com.kohlschutter.jacline.lib.function.JsFunctionCallback;
 import com.kohlschutter.jacline.lib.function.JsRunnable;
-import com.kohlschutter.jacline.lib.log.CommonLog;
 
 import elemental2.dom.Node;
 import jsinterop.annotations.JsMethod;
@@ -146,7 +145,7 @@ public class Dumbo {
     }
     javaClassMap.put(key, (jsObj) -> {
       try {
-        return fc.apply((T)Decodables.getDecoder(key).decode(null, jsObj));
+        return fc.apply((T) Decodables.getDecoder(key).decode(null, jsObj));
       } catch (CodingException e) {
         return null;
       }
