@@ -38,6 +38,10 @@ public abstract class DumboSession {
     }
   }
 
+  public static Console getSessionConsole() {
+    return getSession().getConsole();
+  }
+
   public static DumboSession getSessionIfExists() {
     return TL_DUMBO_SESSION.get();
   }
