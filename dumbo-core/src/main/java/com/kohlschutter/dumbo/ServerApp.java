@@ -233,7 +233,7 @@ public final class ServerApp implements Closeable {
     for (Class<?> serviceClass : serviceClasses) {
       Class<?>[] interfaces = serviceClass.getInterfaces();
       if (interfaces.length == 0) {
-        throw new IllegalStateException("Class does not implement any interfaces: "+serviceClass);
+        throw new IllegalStateException("Class does not implement any interfaces: " + serviceClass);
       }
       registry.registerRPCService((Class) interfaces[0], getInstance(serviceClass));
     }
