@@ -14,8 +14,6 @@
 
     <properties>
         <mainClass>com.kohlschutter.dumbo.jacline.helloworld.HelloWorldApp</mainClass>
-        <!--<graal.plugin.version>0.9.29-SNAPSHOT</graal.plugin.version>-->
-        <graal.plugin.version>0.9.28</graal.plugin.version>
     </properties>
 
     <build>
@@ -41,7 +39,6 @@
             <plugin>
                 <groupId>com.kohlschutter.jacline</groupId>
                 <artifactId>jacline-maven-plugin</artifactId>
-                <version>${jacline.version}</version>
                 <executions>
                     <execution>
                         <id>default-jacline-compile</id>
@@ -100,7 +97,6 @@
                     <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
-                        <version>${graal.plugin.version}</version>
                         <extensions>true</extensions>
                         <executions>
                             <execution>
@@ -283,7 +279,6 @@
         <dependency>
             <groupId>com.kohlschutter.dumbo</groupId>
             <artifactId>dumbo-jacline</artifactId>
-            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>
