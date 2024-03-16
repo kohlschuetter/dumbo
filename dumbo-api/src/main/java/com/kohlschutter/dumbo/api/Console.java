@@ -25,7 +25,7 @@ public interface Console extends Closeable {
    *
    * @param o The object to be added to the output.
    */
-  void add(Object o);
+  void add(Object... o);
 
   /**
    * Convenience method for {@code getPrintWriter().println(s);}.

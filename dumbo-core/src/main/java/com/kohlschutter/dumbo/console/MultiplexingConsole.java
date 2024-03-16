@@ -29,7 +29,7 @@ public abstract class MultiplexingConsole implements Console {
   }
 
   @Override
-  public void add(Object o) {
+  public void add(Object... o) {
     for (Console c : getConsoles()) {
       c.add(o);
     }

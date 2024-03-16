@@ -222,13 +222,17 @@ final class ConsoleImpl implements Console {
    * @param o The object to be added to the output.
    */
   @Override
-  public void add(Object o) {
+  public void add(Object... o) {
     synchronized (consoleService) {
-      if (closed.get() || o == null || (shutdownRequested != null)) {
+      if (closed.get() || o == null || o.length == 0 || (shutdownRequested != null)) {
         return;
       }
       addChunkFromBufferToCache();
-      cachedChunks.add(o);
+      if (o.length == 1) {
+        cachedChunks.add(o[0]);
+      } else {
+        cachedChunks.add(new MultipleChunks(o));
+      }
       consoleService.notifyAll();
     }
   }
