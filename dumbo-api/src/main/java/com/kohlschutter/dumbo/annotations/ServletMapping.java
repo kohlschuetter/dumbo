@@ -29,6 +29,7 @@ import jakarta.servlet.Servlet;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ServletMapping {
+  @SuppressWarnings("PMD.ShortMethodName")
   Class<? extends Servlet> to();
 
   String[] map();

@@ -35,6 +35,7 @@ public class DumboServerServiceImpl implements DumboServerService {
   private final JsonRpcClient client;
   private final Set<String> knownRpcServices;
 
+  @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
   public DumboServerServiceImpl(Class<? extends DumboApplication> applicationClass)
       throws IOException, InterruptedException {

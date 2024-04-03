@@ -58,6 +58,7 @@ import jakarta.servlet.http.HttpSession;
 /**
  * A Dumborb-based JSON-RPC Servlet.
  */
+@SuppressWarnings("PMD.CouplingBetweenObjects")
 class JsonRpcServlet extends HttpServlet {
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcServlet.class);
   private static final long serialVersionUID = 1L;

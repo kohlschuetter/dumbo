@@ -30,6 +30,7 @@ import jakarta.servlet.Filter;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FilterMapping {
+  @SuppressWarnings("PMD.ShortMethodName")
   Class<? extends Filter> to();
 
   String[] map();

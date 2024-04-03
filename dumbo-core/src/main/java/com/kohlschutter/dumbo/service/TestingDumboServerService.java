@@ -37,6 +37,7 @@ import com.kohlschutter.dumborb.client.SessionAccess;
 public class TestingDumboServerService extends DumboServerServiceImpl {
   private final String randomKey = "testing-" + UUID.randomUUID().toString();
 
+  @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
   public TestingDumboServerService(Class<? extends DumboApplication> applicationClass)
       throws IOException, InterruptedException {

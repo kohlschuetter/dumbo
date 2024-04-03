@@ -56,6 +56,7 @@ import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
 /**
  * Internal base class for a lightweight Server-based application.
  */
+@SuppressWarnings("PMD.CouplingBetweenObjects")
 public final class ServerApp implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
 
@@ -118,6 +119,7 @@ public final class ServerApp implements Closeable {
   }
 
   private void resolveExtensions() throws ExtensionDependencyException {
+    @SuppressWarnings("PMD.LooseCoupling")
     LinkedHashSet<Class<?>> reachableComponents = applicationExtensionImpl.getReachableComponents();
 
     for (Class<?> compClass : reachableComponents) {

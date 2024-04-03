@@ -638,7 +638,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       for (ServletMapping mapping : s.value()) {
         String[] mapPaths = mapping.map();
         for (String mapPath : mapPaths) {
-          pathFilters.add(mapPath);
+          pathFilters.add(mapPath); // NOPMD.UseArraysAsList false positive
           ServletMapping effectiveMapping = mappings.computeIfAbsent(mapPath, (k) -> mapping);
           if (!effectiveMapping.equals(mapping)) {
             throw new IllegalStateException("Conflicting servlet mapping: " + mapPath + " to "
@@ -689,8 +689,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       for (FilterMapping mapping : f.value()) {
         String[] mapPaths = mapping.map();
         for (String mapPath : mapPaths) {
-          pathFilters.add(mapPath);
-          mappings.computeIfAbsent(mapPath, (k) -> {
+          pathFilters.add(mapPath); // NOPMD.UseArraysAsList false positive
+          mappings.computeIfAbsent(mapPath, (k) -> { // NOPMD.UseArraysAsList false positive
             return new ArrayList<>();
           }).add(mapping);
         }
@@ -703,6 +703,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
       for (FilterMapping m : list) {
         Class<? extends Filter> mapToClass = m.to();
+
+        @SuppressWarnings("PMD.LooseCoupling") // false positive
         EnumSet<DispatcherType> types = EnumSet.copyOf(Arrays.asList(m.dispatcherTypes()));
 
         FilterHolder holder;
@@ -1000,7 +1002,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
             RUNNING_SERVERS.decrementAndGet();
             onServerStop();
           }
-        } catch (Exception e) {
+        } catch (Exception e) { // NOPMD.ExceptionAsFlowControl
           onServerException(e);
         }
       }
