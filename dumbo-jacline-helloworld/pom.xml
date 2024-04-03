@@ -39,6 +39,7 @@
             <plugin>
                 <groupId>com.kohlschutter.jacline</groupId>
                 <artifactId>jacline-maven-plugin</artifactId>
+                <version>${jacline.version}</version>
                 <executions>
                     <execution>
                         <id>default-jacline-compile</id>
