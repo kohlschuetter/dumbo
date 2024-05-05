@@ -19,6 +19,7 @@ package com.kohlschutter.dumbo;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.AccessibleObject;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ClosedByInterruptException;
@@ -43,6 +44,7 @@ import com.kohlschutter.dumbo.exceptions.NoSessionException;
 import com.kohlschutter.dumbo.exceptions.PermanentRPCException;
 import com.kohlschutter.dumborb.ExceptionTransformer;
 import com.kohlschutter.dumborb.JSONRPCBridge;
+import com.kohlschutter.dumborb.callback.InvocationCallback;
 import com.kohlschutter.dumborb.security.ClassResolver;
 import com.kohlschutter.dumborb.serializer.response.results.FailedResult;
 import com.kohlschutter.dumborb.serializer.response.results.JSONRPCResult;
@@ -96,6 +98,20 @@ class JsonRpcServlet extends HttpServlet {
           return t;
         }
       });
+      bridge.registerCallback(new InvocationCallback<HttpServletRequest>() {
+
+        @Override
+        public void preInvoke(HttpServletRequest context, Object instance,
+            AccessibleObject accessibleObject, Object[] arguments) throws Exception {
+          ThreadLocalRequestAccess.setHttpServletRequest(context);
+        }
+
+        @Override
+        public void postInvoke(HttpServletRequest context, Object instance,
+            AccessibleObject accessibleObject, Object result, Throwable error) throws Exception {
+          ThreadLocalRequestAccess.setHttpServletRequest(null);
+        }
+      }, HttpServletRequest.class);
 
       registry = new JSONRPCRegistryImpl(bridge);
 
