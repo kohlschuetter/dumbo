@@ -253,7 +253,7 @@ var Dumbo;
     } else {
         let showOutline = (location.hash == "#outline");
 
-        console.log("Static design mode enabled; outline " + (showOutline ? "enabled" : "disabled — enable by adding #outline to URL"));
+        console.warn("Static design mode enabled; outline " + (showOutline ? "enabled" : "disabled — enable by adding #outline to URL"));
 
         Dumbo.whenLoaded(function() {
             var templates = document.getElementsByTagName("template");
@@ -308,7 +308,7 @@ var Dumbo;
                 }
             };
         } else {
-            console.warn("Cannot register marshal filters, RPC is disabled");
+            // console.warn("Cannot register marshal filters, RPC is disabled");
         }
     };
 
