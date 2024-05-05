@@ -22,13 +22,18 @@ import org.eclipse.jdt.annotation.NonNull;
 import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.jacline.annotations.JsImplementationProvidedSeparately;
 import com.kohlschutter.jacline.annotations.JsImport;
+import com.kohlschutter.jacline.lib.coding.Codable;
 import com.kohlschutter.jacline.lib.coding.CodingException;
 import com.kohlschutter.jacline.lib.coding.Decodables;
 import com.kohlschutter.jacline.lib.coding.Dictionary;
+import com.kohlschutter.jacline.lib.coding.KeyDecoder;
+import com.kohlschutter.jacline.lib.coding.KeyEncoder;
 import com.kohlschutter.jacline.lib.function.JsFunctionCallback;
 import com.kohlschutter.jacline.lib.function.JsRunnable;
+import com.kohlschutter.jacline.lib.log.CommonLog;
 
 import elemental2.dom.Node;
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
@@ -147,8 +152,54 @@ public class Dumbo {
       try {
         return fc.apply((T) Decodables.getDecoder(key).decode(null, jsObj));
       } catch (CodingException e) {
+        CommonLog.error("Coding exception", e);
         return null;
       }
+    });
+  }
+
+  public static native void registerMarshallFilters(PreMarshalFunction preMarshal,
+      PostUnmarshalFunction postUnmarshal);
+
+  @FunctionalInterface
+  @JsFunction
+  public interface PreMarshalFunction {
+    Object preMarshallObject(Object obj);
+  }
+
+  @FunctionalInterface
+  @JsFunction
+  public interface PostUnmarshalFunction {
+    Object postUnmarshallObject(String javaClass, Object obj);
+  }
+
+  @JsOverlay
+  public static void jaclineInit() {
+    Dumbo.whenLive(Dumbo::registerMarshallFiltersForJacline);
+  }
+
+  @JsOverlay
+  private static void registerMarshallFiltersForJacline() {
+    Dumbo.registerMarshallFilters((m) -> {
+      if (m instanceof Codable) {
+        try {
+          m = ((Codable) m).encode(KeyEncoder::begin);
+        } catch (CodingException e) {
+          CommonLog.error("Could not encode object for Jacline", e);
+          throw new IllegalStateException(e);
+        }
+      }
+      return m;
+    }, (javaClass, u) -> {
+      if (javaClass != null && Decodables.hasDecoder(javaClass)) {
+        try {
+          u = Decodables.getDecoder(javaClass).decode(KeyDecoder::load, u);
+        } catch (CodingException e) {
+          CommonLog.error("Could not decode object for Jacline", e);
+          throw new IllegalStateException(e);
+        }
+      }
+      return u;
     });
   }
 }

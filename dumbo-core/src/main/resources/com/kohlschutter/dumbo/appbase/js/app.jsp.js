@@ -296,4 +296,20 @@ var Dumbo;
             document.addEventListener("DOMContentLoaded", callback);
         }
     }
+
+    Dumbo.registerMarshallFilters = function(mf, umf) {
+        if (Dumbo.rpc) {
+            Dumbo.rpc.preMarshallObject = mf;
+            Dumbo.rpc.postUnmarshallObject = function(o) {
+                if (o) {
+                    return umf(o.javaClass, o);
+                } else {
+                    return o;
+                }
+            };
+        } else {
+            console.warn("Cannot register marshal filters, RPC is disabled");
+        }
+    };
+
 })(Dumbo || (window.Dumbo = Dumbo = {}));
