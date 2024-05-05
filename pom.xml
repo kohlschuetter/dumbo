@@ -11,7 +11,7 @@
     <parent>
         <groupId>com.kohlschutter</groupId>
         <artifactId>kohlschutter-parent</artifactId>
-        <version>1.7.0</version>
+        <version>1.7.2</version>
         <relativePath>../kohlschutter-parent/pom.xml</relativePath>
     </parent>
 
@@ -33,6 +33,7 @@
         <efesnitch.version>1.0.1-SNAPSHOT</efesnitch.version>
         <stringhold.version>1.0.3-SNAPSHOT</stringhold.version>
         <liqp.version>0.8.5.4.1-SNAPSHOT</liqp.version>
+        <jetty.version>12.0.8</jetty.version>
     </properties>
 
     <organization>
@@ -105,6 +106,58 @@
                 <groupId>com.kohlschutter.dumbo</groupId>
                 <artifactId>dumbo-jacline</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10</artifactId>
+                <version>${jetty.version}</version>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-webapp</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-servlet</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+                <artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-apache-jsp</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-server</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-session</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-client</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.http2</groupId>
+                <artifactId>jetty-http2-server</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.http3</groupId>
+                <artifactId>jetty-http3-server</artifactId>
+                <version>${jetty.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
