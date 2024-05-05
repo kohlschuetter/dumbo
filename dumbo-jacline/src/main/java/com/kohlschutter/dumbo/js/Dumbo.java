@@ -25,6 +25,7 @@ import com.kohlschutter.jacline.annotations.JsImport;
 import com.kohlschutter.jacline.lib.coding.Codable;
 import com.kohlschutter.jacline.lib.coding.CodingException;
 import com.kohlschutter.jacline.lib.coding.Decodables;
+import com.kohlschutter.jacline.lib.coding.Decoder;
 import com.kohlschutter.jacline.lib.coding.Dictionary;
 import com.kohlschutter.jacline.lib.coding.KeyDecoder;
 import com.kohlschutter.jacline.lib.coding.KeyEncoder;
@@ -72,6 +73,13 @@ public class Dumbo {
     } else {
       return rpcName;
     }
+  }
+
+  @JsOverlay
+  public static String registerCodable(Class<?> clazz, Decoder<?> dec) {
+    String codedType = resolveServiceTypeFromAlias(clazz);
+    Decodables.setDecoder(codedType, dec);
+    return codedType;
   }
 
   @JsOverlay
@@ -174,12 +182,7 @@ public class Dumbo {
   }
 
   @JsOverlay
-  public static void jaclineInit() {
-    Dumbo.whenLive(Dumbo::registerMarshallFiltersForJacline);
-  }
-
-  @JsOverlay
-  private static void registerMarshallFiltersForJacline() {
+  static void registerMarshallFiltersForJacline() {
     Dumbo.registerMarshallFilters((m) -> {
       if (m instanceof Codable) {
         try {
