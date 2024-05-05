@@ -166,18 +166,18 @@ public class Dumbo {
     });
   }
 
-  public static native void registerMarshallFilters(PreMarshalFunction preMarshal,
+  static native void registerMarshallFilters(PreMarshalFunction preMarshal,
       PostUnmarshalFunction postUnmarshal);
 
   @FunctionalInterface
   @JsFunction
-  public interface PreMarshalFunction {
+  interface PreMarshalFunction {
     Object preMarshallObject(Object obj);
   }
 
   @FunctionalInterface
   @JsFunction
-  public interface PostUnmarshalFunction {
+  interface PostUnmarshalFunction {
     Object postUnmarshallObject(String javaClass, Object obj);
   }
 
