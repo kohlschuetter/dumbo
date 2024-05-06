@@ -1,0 +1,7 @@
+BODY:not([class*=dumbo-ready]) .dumbo-placeholder {
+	opacity: 0;
+}
+
+BODY[class*=dumbo-ready]:not([class*=static-design-mode]) .dumbo-placeholder {
+    transition: opacity 0.33s ease-in;
+}
