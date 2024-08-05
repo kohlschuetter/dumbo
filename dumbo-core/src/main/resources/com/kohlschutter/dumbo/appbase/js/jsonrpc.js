@@ -303,7 +303,7 @@ JSONRpcClient._createMethodPromise = function(client, methodName) {
         return new Promise((success, failure) => {
             var callback = function(ret, err) {
                 if(err) {
-                    console.error("jsonrpc error", err);
+                    console.error("jsonrpc error", err); // FIXME remove me
                     failure(err);
                 } else {
                     success(ret);
