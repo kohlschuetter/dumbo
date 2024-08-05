@@ -22,13 +22,11 @@ import org.eclipse.jdt.annotation.NonNull;
 import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.jacline.annotations.JsImplementationProvidedSeparately;
 import com.kohlschutter.jacline.annotations.JsImport;
-import com.kohlschutter.jacline.lib.coding.Codable;
 import com.kohlschutter.jacline.lib.coding.CodingException;
 import com.kohlschutter.jacline.lib.coding.Decodables;
 import com.kohlschutter.jacline.lib.coding.Decoder;
 import com.kohlschutter.jacline.lib.coding.Dictionary;
 import com.kohlschutter.jacline.lib.coding.KeyDecoder;
-import com.kohlschutter.jacline.lib.coding.KeyEncoder;
 import com.kohlschutter.jacline.lib.function.JsFunctionCallback;
 import com.kohlschutter.jacline.lib.function.JsRunnable;
 import com.kohlschutter.jacline.lib.log.CommonLog;
@@ -183,17 +181,7 @@ public class Dumbo {
 
   @JsOverlay
   static void registerMarshallFiltersForJacline() {
-    Dumbo.registerMarshallFilters((m) -> {
-      if (m instanceof Codable) {
-        try {
-          m = ((Codable) m).encode(KeyEncoder::begin);
-        } catch (CodingException e) {
-          CommonLog.error("Could not encode object for Jacline", e);
-          throw new IllegalStateException(e);
-        }
-      }
-      return m;
-    }, (javaClass, u) -> {
+    Dumbo.registerMarshallFilters((o) -> JaclineInit.preMarshallObject(o), (javaClass, u) -> {
       if (javaClass != null && Decodables.hasDecoder(javaClass)) {
         try {
           u = Decodables.getDecoder(javaClass).decode(KeyDecoder::load, u);
