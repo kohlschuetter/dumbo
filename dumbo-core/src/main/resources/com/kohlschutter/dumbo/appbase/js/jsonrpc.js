@@ -293,7 +293,9 @@ JSONRpcClient._createMethod = function(client, methodName) {
     return serverMethodCaller;
 };
 
-JSONRpcClient._createMethodPromise = function(client, methodName) {
+JSONRpcClient.prototype._createMethodPromise = function(client, methodName) {
+    var clientThis = this;
+
     return function() {
         var args = [];
         for (var i = 0; i < arguments.length; i++) {
@@ -304,6 +306,7 @@ JSONRpcClient._createMethodPromise = function(client, methodName) {
             var callback = function(ret, err) {
                 if(err) {
                     console.error("jsonrpc error", err); // FIXME remove me
+                    err = clientThis.errorUnmarshalObject(err);
                     failure(err);
                 } else {
                     success(ret);
@@ -438,7 +441,7 @@ JSONRpcClient.prototype._addMethods = function(methodNames, dontAdd) {
                 obj[name] = JSONRpcClient.bind(method, this);
 
                 if (name.indexOf("$async") == -1) {
-                    var methodPromise = JSONRpcClient._createMethodPromise(this, methodName);
+                    var methodPromise = this._createMethodPromise(this, methodName);
                     obj[name+"$async"] = JSONRpcClient.bind(methodPromise, this);
                 }
             }
@@ -1137,5 +1140,8 @@ JSONRpcClient.prototype.preMarshallObject = function(obj) {
     return obj;
 };
 JSONRpcClient.prototype.postUnmarshallObject = function(obj) {
+    return obj;
+};
+JSONRpcClient.prototype.errorUnmarshalObject = function(obj) {
     return obj;
 };

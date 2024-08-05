@@ -36,6 +36,7 @@ import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
@@ -165,7 +166,7 @@ public class Dumbo {
   }
 
   static native void registerMarshallFilters(PreMarshalFunction preMarshal,
-      PostUnmarshalFunction postUnmarshal);
+      PostUnmarshalFunction postUnmarshal, ErrorUnmarshalFunction errorUnmarshal);
 
   @FunctionalInterface
   @JsFunction
@@ -177,6 +178,24 @@ public class Dumbo {
   @JsFunction
   interface PostUnmarshalFunction {
     Object postUnmarshallObject(String javaClass, Object obj);
+  }
+
+  @FunctionalInterface
+  @JsFunction
+  interface ErrorUnmarshalFunction {
+    Object unmarshallError(RpcError error);
+  }
+
+  @JsType
+  interface RpcError {
+    @JsProperty
+    int getCode();
+
+    @JsProperty
+    String getMessage();
+
+    @JsProperty
+    String getData();
   }
 
   @JsOverlay
@@ -191,6 +210,6 @@ public class Dumbo {
         }
       }
       return u;
-    });
+    }, (e) -> new RpcException(e.getMessage(), e.getCode(), e.getData()));
   }
 }

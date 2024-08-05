@@ -297,7 +297,7 @@ var Dumbo;
         }
     }
 
-    Dumbo.registerMarshallFilters = function(mf, umf) {
+    Dumbo.registerMarshallFilters = function(mf, umf, errumf) {
         if (Dumbo.rpc) {
             Dumbo.rpc.preMarshallObject = mf;
             Dumbo.rpc.postUnmarshallObject = function(o) {
@@ -307,6 +307,7 @@ var Dumbo;
                     return o;
                 }
             };
+            Dumbo.rpc.errorUnmarshalObject = errumf;
         } else {
             // console.warn("Cannot register marshal filters, RPC is disabled");
         }
