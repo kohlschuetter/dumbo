@@ -701,7 +701,7 @@ public class DumboServerImpl implements DumboServer {
 
     ServletHolder holderDefaultServlet = sh.addServletWithMapping(DefaultServlet.class.getName(),
         "/");
-    holderDefaultServlet.setAsyncSupported(false);
+    holderDefaultServlet.setAsyncSupported(false); // https://github.com/jetty/jetty.project/issues/12153
     holderDefaultServlet.setInitParameter("etags", "true");
     // holderDefaultServlet.setInitParameter("dirAllowed", "false");
     holderDefaultServlet.setInitParameter("useFileMappedBuffer", "true");
