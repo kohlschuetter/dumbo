@@ -104,7 +104,6 @@ import com.kohlschutter.dumbo.annotations.Filters;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
 import com.kohlschutter.dumbo.api.DumboServer;
-import com.kohlschutter.dumbo.api.DumboServiceProvider;
 import com.kohlschutter.dumbo.api.DumboTLSConfig;
 import com.kohlschutter.dumbo.util.DevTools;
 import com.kohlschutter.dumbo.util.NativeImageUtil;
@@ -126,7 +125,7 @@ import jakarta.servlet.http.HttpSession;
  */
 @SuppressWarnings({
     "PMD.ExcessiveImports", "PMD.CyclomaticComplexity", "PMD.CouplingBetweenObjects"})
-public class DumboServerImpl implements DumboServer, DumboServiceProvider {
+public class DumboServerImpl implements DumboServer {
   private static final boolean TERMINATE_VM = Boolean.parseBoolean(System.getProperty(
       "dumbo.terminate-vm", "false"));
 
@@ -169,7 +168,6 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   private final Map<String, Supplier<Path>> publicUrlPathsToStaticResource = new LinkedHashMap<>();
   private final Map<String, Supplier<Path>> publicUrlPathsToDynamicResource = new LinkedHashMap<>();
-  private final JsonRpcServlet jsonRpc;
 
   private final Map<String, Consumer<JsonRpcContext>> jsonRpcSecrets = new HashMap<>();
 
@@ -216,8 +214,6 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     // server.setDumpAfterStart(true); // for debugging
 
     contextHandlers = new ContextHandlerCollection();
-    this.jsonRpc = new JsonRpcServlet();
-    jsonRpc.setServer(this);
 
     for (ServerApp app : apps) {
       String path = app.getPrefix();
@@ -240,7 +236,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
         wac = initMainWebAppContextPreprocessed(app, paths);
       }
 
-      ServletHolder sh = new ServletHolder(this.jsonRpc);
+      app.setServer(this);
+
+      ServletHolder sh = new ServletHolder(app.getJsonRpc());
       sh.setInitOrder(0); // initialize right upon start
       wac.addServlet(sh, JSON_PATH);
 
@@ -813,9 +811,13 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       try {
         URI serverURI = getLocalURI();
 
-        JSONArray jsonMethods = jsonRpc.getBridge().getSystemMethods();
         for (WebAppContext wac : contexts.keySet()) {
-          wac.setAttribute("dumborb.json.methods", jsonMethods.toString());
+          ServletContext sc = wac.getServletContext();
+          if (sc != null) {
+            ServerApp app = (ServerApp) sc.getAttribute(ServerApp.class.getName());
+            JSONArray jsonMethods = app.getJsonRpc().getBridge().getSystemMethods();
+            wac.setAttribute("dumborb.json.methods", jsonMethods.toString());
+          }
         }
 
         String serverURIBase = new URI(serverURI.getScheme(), serverURI.getUserInfo(), serverURI
@@ -1454,11 +1456,6 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     return cachedPaths != null;
   }
 
-  @Override
-  public <T> T getDumboService(Class<T> clazz) {
-    return jsonRpc.getRPCService(clazz);
-  }
-
   /**
    * Returns a new JSON-RPC client that is connected to this server's json-rpc service.
    *
@@ -1494,5 +1491,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   public Map<String, ServerApp> getApps() {
     return apps;
+  }
+
+  public ServerApp getMainApplication() {
+    return apps.get("");
   }
 }

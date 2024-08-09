@@ -49,6 +49,7 @@ import com.kohlschutter.dumbo.annotations.EventHandlers;
 import com.kohlschutter.dumbo.annotations.Services;
 import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboComponent;
+import com.kohlschutter.dumbo.api.DumboServiceProvider;
 import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.api.EventHandler;
 import com.kohlschutter.dumbo.console.ConsoleService;
@@ -58,7 +59,7 @@ import com.kohlschutter.dumbo.exceptions.ExtensionDependencyException;
  * Internal base class for a lightweight Server-based application.
  */
 @SuppressWarnings("PMD.CouplingBetweenObjects")
-public final class ServerApp implements Closeable {
+public final class ServerApp implements Closeable, DumboServiceProvider {
   private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
 
   @SuppressWarnings("PMD.LooseCoupling")
@@ -94,6 +95,8 @@ public final class ServerApp implements Closeable {
   private final String prefix;
 
   private final String contextPath;
+
+  private final JsonRpcServlet jsonRpc = new JsonRpcServlet();
 
   private static String sanitzePrefix(String prefix) {
     if (prefix == null) {
@@ -471,5 +474,18 @@ public final class ServerApp implements Closeable {
 
   public String getContextPath() {
     return contextPath;
+  }
+
+  @Override
+  public <T> T getDumboService(Class<T> clazz) {
+    return jsonRpc.getRPCService(clazz);
+  }
+
+  public void setServer(DumboServerImpl dumboServerImpl) {
+    jsonRpc.setServer(dumboServerImpl);
+  }
+
+  JsonRpcServlet getJsonRpc() {
+    return jsonRpc;
   }
 }

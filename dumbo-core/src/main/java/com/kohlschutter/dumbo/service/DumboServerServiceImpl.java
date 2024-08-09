@@ -71,9 +71,9 @@ public class DumboServerServiceImpl implements DumboServerService {
       rpcName = clazz.getName();
     }
 
-    return Stream.of(server.getDumboService(clazz), knownRpcServices.contains(rpcName)
-        ? decorateRpcClientProxy(client.openProxy(rpcName, clazz)) : null).filter((p) -> p != null)
-        .toList();
+    return Stream.of(server.getMainApplication().getDumboService(clazz), knownRpcServices.contains(
+        rpcName) ? decorateRpcClientProxy(client.openProxy(rpcName, clazz)) : null).filter((
+            p) -> p != null).toList();
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP")
@@ -86,8 +86,8 @@ public class DumboServerServiceImpl implements DumboServerService {
     return server;
   }
 
-  private DumboServerImpl newServerImpl(String prefix, Class<? extends DumboApplication> applicationClass)
-      throws IOException {
+  private DumboServerImpl newServerImpl(String prefix,
+      Class<? extends DumboApplication> applicationClass) throws IOException {
     DumboServerImplBuilder builder = new DumboServerImplBuilder();
     configureNewServerImpl(builder);
     builder.withApplication(prefix, applicationClass);
