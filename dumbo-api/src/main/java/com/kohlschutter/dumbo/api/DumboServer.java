@@ -42,9 +42,19 @@ public interface DumboServer {
   DumboServer awaitIdle() throws InterruptedException;
 
   /**
-   * Returns a {@link URI} for this server; the URI may change upon {@link #start()}.
+   * Returns a {@link URI} for this server that can be used at least in the local network,
+   * potentially with TLS encryption where configured. Calling this before {@link #start()} may
+   * return unexpected results.
    *
    * @return The URI.
    */
-  URI getURI();
+  URI getNetworkURI();
+
+  /**
+   * Returns a {@link URI} for this server that can be used from {@code localhost}. Calling this
+   * before {@link #start()} may return unexpected results.
+   *
+   * @return The URI.
+   */
+  URI getLocalURI();
 }

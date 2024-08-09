@@ -50,6 +50,8 @@ public interface DumboServerBuilder {
    */
   DumboServerBuilder withPort(int port);
 
+  DumboServerBuilder withTLS(DumboTLSConfig tlsConfig);
+
   DumboServerBuilder withPrefix(String prefix);
 
   DumboServerBuilder withApplication(Class<? extends DumboApplication> application);

@@ -33,6 +33,7 @@ import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboContent;
 import com.kohlschutter.dumbo.api.DumboServer;
 import com.kohlschutter.dumbo.api.DumboServerBuilder;
+import com.kohlschutter.dumbo.api.DumboTLSConfig;
 import com.kohlschutter.dumbo.api.DumboTargetEnvironment;
 
 @SuppressWarnings("hiding")
@@ -43,6 +44,7 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
 
   private boolean prewarm = false;
   private int port;
+  private DumboTLSConfig tls;
   private Class<? extends DumboApplication> application;
   private boolean webappSet = false;
   private URL webapp;
@@ -61,8 +63,8 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
     if (!webappSet) {
       webapp = DumboServerImpl.getWebappBaseURL(app);
     }
-    return new DumboServerImpl(prewarm, bindAddress, port, socketPath, app, prefix, webapp, null,
-        paths);
+    return new DumboServerImpl(prewarm, bindAddress, port, socketPath, tls, app, prefix, webapp,
+        null, paths);
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
@@ -75,6 +77,12 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   @Override
   public DumboServerBuilder withPort(int port) {
     this.port = port;
+    return this;
+  }
+
+  @Override
+  public DumboServerBuilder withTLS(DumboTLSConfig tlsConfig) {
+    this.tls = tlsConfig;
     return this;
   }
 

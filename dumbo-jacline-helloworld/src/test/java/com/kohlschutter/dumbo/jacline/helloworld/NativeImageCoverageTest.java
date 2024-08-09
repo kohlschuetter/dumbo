@@ -41,7 +41,7 @@ public class NativeImageCoverageTest {
     DumboServer server = ServiceLoader.load(DumboServerProvider.class).findFirst().get()
         .getDumboServer().start();
 
-    URI rootUri = server.getURI();
+    URI rootUri = server.getLocalURI();
     try {
       load(rootUri);
       try {

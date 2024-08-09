@@ -96,8 +96,8 @@ public final class DevTools {
 
   public static void openURL(DumboServer server, String page) {
     try {
-      String url = server.getURI().toString().replaceFirst("/$", "") + "/" + page.replaceFirst("^/",
-          "");
+      String url = server.getNetworkURI().toString().replaceFirst("/$", "") + "/" + page
+          .replaceFirst("^/", "");
 
       if (staticMode) {
         url += "?static";

@@ -78,13 +78,17 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.RequestLog;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.util.resource.CombinedResource;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceFactory;
+import org.eclipse.jetty.util.resource.URLResourceFactory;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.json.JSONArray;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
@@ -100,9 +104,12 @@ import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
 import com.kohlschutter.dumbo.api.DumboServer;
 import com.kohlschutter.dumbo.api.DumboServiceProvider;
+import com.kohlschutter.dumbo.api.DumboTLSConfig;
 import com.kohlschutter.dumbo.util.DevTools;
 import com.kohlschutter.dumbo.util.NativeImageUtil;
+import com.kohlschutter.dumbo.util.NetworkHostnameUtil;
 import com.kohlschutter.dumborb.security.ClassResolver;
+import com.kohlschutter.util.Lazy;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
@@ -168,12 +175,19 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   private final boolean prewarm;
 
+  private Lazy<String> networkHostname = Lazy.of(() -> NetworkHostnameUtil.getNetworkHostname());
+  private Lazy<URI> uri;
+  private Lazy<URI> localUri;
+
+  private final DumboTLSConfig tlsConfig;
+
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings({"EI_EXPOSE_REP2", "CT_CONSTRUCTOR_THROW"})
   DumboServerImpl(boolean prewarm, InetAddress bindAddr, int tcpPort, String socketPath,
-      final ServerApp app, final String path, final URL webappBaseURL, RequestLog requestLog,
-      Path... paths) throws IOException {
+      DumboTLSConfig tlsConfig, final ServerApp app, final String path, final URL webappBaseURL,
+      RequestLog requestLog, Path... paths) throws IOException {
     this.prewarm = prewarm;
+    this.tlsConfig = tlsConfig;
     final int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081"))
         : tcpPort;
 
@@ -228,7 +242,37 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     app.initComponents(this);
 
     server.setHandler(contextHandlers);
-    server.setConnectors(initConnectors(bindAddr, port, socketPath, server));
+    server.setConnectors(initConnectors(bindAddr, port, socketPath, tlsConfig, server));
+
+    updateUris();
+  }
+
+  private void updateUris() {
+    this.uri = initServerUri(true);
+    this.localUri = initServerUri(false);
+  }
+
+  private Lazy<URI> initServerUri(boolean tls) {
+    return Lazy.of(() -> {
+      URI u = server.getURI();
+      if (u == null) {
+        u = FALLBACK_URI;
+      }
+
+      if (tls && tlsConfig != null) {
+        String hostname = tlsConfig.getHostname();
+        if (hostname == null) {
+          hostname = networkHostname.get();
+        }
+        try {
+          u = new URI("https", null, hostname, tlsConfig.getPort(), u.getPath(), null, null);
+        } catch (URISyntaxException e) {
+          e.printStackTrace();
+        }
+      }
+
+      return u;
+    });
   }
 
   private WebAppContext initMainWebAppContext(URL webappBaseURL) throws IOException {
@@ -756,7 +800,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     return CompletableFuture.runAsync(() -> {
       try {
-        URI serverURI = getURI();
+        URI serverURI = getLocalURI();
 
         JSONArray jsonMethods = jsonRpc.getBridge().getSystemMethods();
         for (WebAppContext wac : contexts.keySet()) {
@@ -981,6 +1025,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
           try {
             server.start();
 
+            updateUris();
+
             regeneratePaths().thenRun(() -> prewarmContent()).thenAccept((v) -> pathsRegenerated
                 .release());
 
@@ -1034,7 +1080,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     HttpClient client = newServerHttpClient();
     client.start();
 
-    URI baseURI = getURI();
+    URI baseURI = getLocalURI();
 
     List<Path> list = Files.walk(p).filter(Files::isRegularFile).collect(Collectors.toList());
     CountDownLatch cdl = new CountDownLatch(list.size());
@@ -1077,6 +1123,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     }
     startDontWait();
     serverStarted.acquire();
+
     return this;
   }
 
@@ -1182,7 +1229,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
    * @throws IOException on error.
    */
   protected Connector[] initConnectors(InetAddress address, int tcpPort, String socketPath,
-      Server targetServer) throws IOException {
+      DumboTLSConfig tls, Server targetServer) throws IOException {
     String dumboSocketId;
     ServerConnector tcpConn;
     if (tcpPort == -1) {
@@ -1205,13 +1252,48 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       unixConnector = initUnixConnector(targetServer, serverUNIXSocketAddress);
     }
 
-    if (tcpConn == null) {
-      return new Connector[] {unixConnector};
-    } else if (unixConnector == null) {
-      return new Connector[] {tcpConn};
-    } else {
-      return new Connector[] {tcpConn, unixConnector};
+    List<Connector> connectors = new ArrayList<>();
+    if (tcpConn != null) {
+      connectors.add(tcpConn);
     }
+    if (unixConnector != null) {
+      connectors.add(unixConnector);
+    }
+
+    if (tls != null) {
+      connectors.add(createHttpsConnector(tls, targetServer));
+    }
+
+    return connectors.toArray(new Connector[0]);
+  }
+
+  private ServerConnector createHttpsConnector(DumboTLSConfig tls, Server targetServer) {
+    int securePort = tls.getPort();
+
+    HttpConfiguration httpsConfig = new HttpConfiguration();
+    httpsConfig.setSecurePort(securePort); // FIXME
+    httpsConfig.setSecureScheme("https");
+    httpsConfig.setSendServerVersion(false);
+    httpsConfig.addCustomizer(new SecureRequestCustomizer());;
+
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+    sslContextFactory.setKeyStoreResource(new URLResourceFactory().newResource(tls
+        .getKeystorePath()));
+    sslContextFactory.setKeyStorePassword(tls.getKeystorePassword());
+
+    ServerConnector connector = new ServerConnector(targetServer, new SslConnectionFactory(
+        sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
+    connector.setPort(securePort);
+    connector.setReuseAddress(true);
+    connector.setReusePort(true);
+
+    String hostname = tls.getHostname();
+    if (hostname == null) {
+      hostname = networkHostname.get();
+    }
+    connector.setHost(hostname);
+
+    return connector;
   }
 
   protected HttpConnectionFactory newHttpConnectionFactory() {
@@ -1268,13 +1350,13 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   }
 
   @Override
-  public URI getURI() {
-    URI uri = server.getURI();
-    if (uri == null) {
-      return FALLBACK_URI;
-    } else {
-      return uri;
-    }
+  public URI getNetworkURI() {
+    return uri.get();
+  }
+
+  @Override
+  public URI getLocalURI() {
+    return localUri.get();
   }
 
   void onSessionShutdown(String sessionId, WeakReference<HttpSession> weakSession) {
@@ -1371,7 +1453,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     }
     URL jsonRpcUrl;
     try {
-      jsonRpcUrl = getURI().resolve(JSON_PATH).toURL();
+      jsonRpcUrl = getLocalURI().resolve(JSON_PATH).toURL();
     } catch (MalformedURLException e) {
       throw new IllegalStateException(e);
     }
