@@ -41,7 +41,7 @@ public class TestingDumboServerService extends DumboServerServiceImpl {
   @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
   public TestingDumboServerService(Class<? extends DumboApplication> applicationClass)
       throws IOException, InterruptedException {
-    super(applicationClass);
+    super("", applicationClass);
 
     DumboServerImpl server = getDumboServerImpl();
     server.setJsonRpcTestSecretConsumer(randomKey, (c) -> {

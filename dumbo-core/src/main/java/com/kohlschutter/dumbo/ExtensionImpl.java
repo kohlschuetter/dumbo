@@ -133,12 +133,12 @@ final class ExtensionImpl extends ComponentImpl {
    * @throws IOException on error.
    */
   void initExtension(ServerApp app, final DumboServerImpl server) throws IOException {
-    serverContextPath = server.getContextPath().replaceFirst("/$", "");
+    serverContextPath = app.getContextPath().replaceFirst("/$", "");
     contextPath = serverContextPath;
     if (extensionPath != null) {
       URL webappUrl = initExtensionResourceURL(server);
       if (webappUrl != null) {
-        WebAppContext wac = server.registerContext(this, extensionPath, webappUrl);
+        WebAppContext wac = server.registerContext(this, app, extensionPath, webappUrl);
         contextPath = wac.getContextPath().replaceFirst("/$", "");
       }
     }

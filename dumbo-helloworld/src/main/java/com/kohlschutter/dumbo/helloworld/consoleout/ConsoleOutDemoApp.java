@@ -41,7 +41,7 @@ public class ConsoleOutDemoApp implements DumboApplication, BootstrapSupport, Co
     EventHandler {
   public static void main(String[] args) throws IOException, InterruptedException {
     DumboServer server = DumboServerBuilder.begin() //
-        .withApplication(ConsoleOutDemoApp.class) //
+        .withMainApplication(ConsoleOutDemoApp.class) //
         .withWebapp(ConsoleOutDemoApp.class.getResource(
             "/com/kohlschutter/dumbo/helloworld/webapp/")).build().start();
     DevTools.openURL(server, "/consoleOutDemo.jsp");

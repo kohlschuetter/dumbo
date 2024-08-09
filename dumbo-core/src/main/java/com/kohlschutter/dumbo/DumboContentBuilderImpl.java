@@ -60,8 +60,7 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
       serverBuilder = serverBuilder.withWebapp(webapp);
     }
     DumboServerImpl server = (DumboServerImpl) serverBuilder //
-        .withApplication(application) //
-        .withPrefix(prefix) //
+        .withApplication(prefix, application) //
         .withPort(-1) // no need to bind on TCP
         .build();
     try {
@@ -74,10 +73,10 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
       if (primaryHostname == null || primaryHostname.isEmpty()) {
         throw new IllegalArgumentException("Primary hostname not set (required for CNAME file)");
       }
-    }
 
-    try (Writer out = Files.newBufferedWriter(staticOutput.resolve("CNAME"))) {
-      out.write(primaryHostname.trim() + "\n");
+      try (Writer out = Files.newBufferedWriter(staticOutput.resolve("CNAME"))) {
+        out.write(primaryHostname.trim() + "\n");
+      }
     }
 
     return new DumboContentImpl(outputPath);

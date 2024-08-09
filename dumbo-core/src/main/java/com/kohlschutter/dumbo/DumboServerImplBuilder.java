@@ -22,6 +22,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -45,26 +46,44 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   private boolean prewarm = false;
   private int port;
   private DumboTLSConfig tls;
-  private Class<? extends DumboApplication> application;
+  private final LinkedHashMap<String, Class<? extends DumboApplication>> applications =
+      new LinkedHashMap<>();
   private boolean webappSet = false;
   private URL webapp;
-  private String prefix = "";
   private Path[] paths;
   private String socketPath = "auto";
 
   private InetAddress bindAddress = LOOPBACK;
+
+  private String prefix = "";
 
   public DumboServerImplBuilder() {
   }
 
   @Override
   public DumboServer build() throws IOException {
-    ServerApp app = new ServerApp(application);
-    if (!webappSet) {
-      webapp = DumboServerImpl.getWebappBaseURL(app);
+    LinkedHashMap<String, ServerApp> apps = new LinkedHashMap<>();
+
+    if (webappSet) {
+      if (applications.size() > 1) {
+        throw new IllegalArgumentException("webapp URL set, but more than one application");
+      }
     }
-    return new DumboServerImpl(prewarm, bindAddress, port, socketPath, tls, app, prefix, webapp,
-        null, paths);
+
+    for (Map.Entry<String, Class<? extends DumboApplication>> en : applications.entrySet()) {
+      String path = en.getKey();
+      if (path == null) {
+        path = "";
+      }
+
+      ServerApp app = new ServerApp(prefix + path, en.getValue(), (webappSet ? () -> webapp
+          : null));
+
+      apps.put(app.getPrefix(), app);
+    }
+
+    return new DumboServerImpl(prewarm, bindAddress, port, socketPath, tls, apps.values(), null,
+        paths);
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
@@ -87,8 +106,9 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   }
 
   @Override
-  public DumboServerBuilder withApplication(Class<? extends DumboApplication> application) {
-    this.application = Objects.requireNonNull(application);
+  public DumboServerBuilder withApplication(String path,
+      Class<? extends DumboApplication> application) {
+    this.applications.put(path, Objects.requireNonNull(application));
     return this;
   }
 
@@ -96,12 +116,6 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   public DumboServerBuilder withWebapp(URL resource) {
     this.webappSet = true;
     this.webapp = resource;
-    return this;
-  }
-
-  @Override
-  public DumboServerBuilder withPrefix(String prefix) {
-    this.prefix = Objects.requireNonNull(prefix);
     return this;
   }
 
@@ -189,6 +203,12 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
 
   public DumboServerBuilder enablePrewarm() {
     this.prewarm = true;
+    return this;
+  }
+
+  @Override
+  public DumboServerBuilder withPrefix(String prefix) {
+    this.prefix = Objects.requireNonNull(prefix);
     return this;
   }
 }

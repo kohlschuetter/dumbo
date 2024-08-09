@@ -52,11 +52,15 @@ public interface DumboServerBuilder {
 
   DumboServerBuilder withTLS(DumboTLSConfig tlsConfig);
 
-  DumboServerBuilder withPrefix(String prefix);
+  default DumboServerBuilder withMainApplication(Class<? extends DumboApplication> application) {
+    return withApplication("", application);
+  }
 
-  DumboServerBuilder withApplication(Class<? extends DumboApplication> application);
+  DumboServerBuilder withApplication(String prefix, Class<? extends DumboApplication> application);
 
   DumboServerBuilder withWebapp(URL resource);
+
+  DumboServerBuilder withPrefix(String prefix);
 
   DumboServerBuilder withContent(Path... paths);
 

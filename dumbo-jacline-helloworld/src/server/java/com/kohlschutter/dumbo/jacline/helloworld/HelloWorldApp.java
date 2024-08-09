@@ -35,9 +35,9 @@ public class HelloWorldApp implements DumboApplication, AppDefaultsSupport {
   public static void main(String[] args) throws IOException, InterruptedException {
     DumboServer server = DumboServerBuilder.begin() //
         .initFromEnvironmentVariables() //
-        .withApplication(HelloWorldApp.class) //
+        .withMainApplication(HelloWorldApp.class) //
         .build().start();
 
-    DevTools.openURL(server, "/");
+    DevTools.openURL(server);
   }
 }

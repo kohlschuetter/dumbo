@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,12 +89,42 @@ public final class ServerApp implements Closeable {
 
   private DumboServerImpl appServer = null;
 
-  public ServerApp(Class<? extends DumboApplication> applicationClass) {
+  private final URL webappBaseURL;
+
+  private final String prefix;
+
+  private final String contextPath;
+
+  private static String sanitzePrefix(String prefix) {
+    if (prefix == null) {
+      return "";
+    } else {
+      if (prefix.startsWith("/")) {
+        prefix = prefix.substring(1);
+      }
+      if (prefix.endsWith("/")) {
+        prefix = prefix.substring(0, prefix.length() - 1);
+      }
+      return prefix;
+    }
+  }
+
+  public ServerApp(String prefix, Class<? extends DumboApplication> applicationClass,
+      Supplier<URL> webappBaseURLsupplier) {
+    prefix = sanitzePrefix(prefix);
+    this.prefix = prefix;
+    this.contextPath = ("/" + (prefix.replaceFirst("^/", "").replaceFirst("/$", ""))).replaceAll(
+        "//+", "/");
+
     this.applicationClass = applicationClass;
+
     this.applicationExtensionImpl = new ExtensionImpl(applicationClass, true);
 
     resolveExtensions();
     initEventHandlers();
+
+    this.webappBaseURL = webappBaseURLsupplier == null ? DumboServerImpl.getWebappBaseURL(this)
+        : webappBaseURLsupplier.get();
   }
 
   /**
@@ -428,5 +459,17 @@ public final class ServerApp implements Closeable {
 
   Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> getComponentToSubComponentMap() {
     return componentToSubComponentMap;
+  }
+
+  public URL getWebappBaseURL() {
+    return webappBaseURL;
+  }
+
+  public String getPrefix() {
+    return prefix;
+  }
+
+  public String getContextPath() {
+    return contextPath;
   }
 }

@@ -15,8 +15,8 @@ var Dumbo;
         }
 
         if (!service) {
-            console.error("Cannot resolve Dumbo service: " + id);
-            throw new Error("Cannot resolve Dumbo service: " + id);
+            console.error("Cannot resolve Dumbo service: ", id);
+            throw new Error("Cannot resolve Dumbo service: ", id);
         }
 
         return service;

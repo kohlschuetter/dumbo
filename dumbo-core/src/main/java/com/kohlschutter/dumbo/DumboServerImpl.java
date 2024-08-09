@@ -39,6 +39,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -138,11 +139,10 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   private final Server server;
   private final AtomicBoolean shutdownRequested = new AtomicBoolean(false);
-  private final String contextPath;
   private Thread serverThread;
 
+  private final Map<String, ServerApp> apps;
   private final ContextHandlerCollection contextHandlers;
-  private final ServerApp app;
 
   private final ErrorHandler errorHandler;
 
@@ -184,14 +184,17 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings({"EI_EXPOSE_REP2", "CT_CONSTRUCTOR_THROW"})
   DumboServerImpl(boolean prewarm, InetAddress bindAddr, int tcpPort, String socketPath,
-      DumboTLSConfig tlsConfig, final ServerApp app, final String path, final URL webappBaseURL,
-      RequestLog requestLog, Path... paths) throws IOException {
+      DumboTLSConfig tlsConfig, Collection<ServerApp> apps, RequestLog requestLog, Path... paths)
+      throws IOException {
+    this.apps = new LinkedHashMap<>();
+    for (ServerApp app : apps) {
+      this.apps.put(app.getPrefix(), app);
+    }
     this.prewarm = prewarm;
     this.tlsConfig = tlsConfig;
     final int port = tcpPort == 0 ? Integer.parseInt(System.getProperty("dumbo.port", "8081"))
         : tcpPort;
 
-    this.app = app;
     this.cachedPaths = paths != null && paths.length > 0 ? paths : null;
 
     this.errorHandler = new ErrorHandler();
@@ -212,34 +215,39 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     // server.setDumpAfterStart(true); // for debugging
 
-    this.contextPath = "/" + (path.replaceFirst("^/", "").replaceFirst("/$", ""));
-    app.registerCloseable(new Closeable() {
-      @Override
-      public void close() throws IOException {
-        shutdown();
-      }
-    });
-
     contextHandlers = new ContextHandlerCollection();
-
-    app.init(this, path);
-
-    WebAppContext wac;
-    if (webappBaseURL != null) {
-      wac = initMainWebAppContext(webappBaseURL);
-    } else {
-      wac = initMainWebAppContextPreprocessed(paths);
-    }
-
     this.jsonRpc = new JsonRpcServlet();
     jsonRpc.setServer(this);
-    ServletHolder sh = new ServletHolder(this.jsonRpc);
-    sh.setInitOrder(0); // initialize right upon start
-    wac.addServlet(sh, JSON_PATH);
 
-    wac.setServer(server);
+    for (ServerApp app : apps) {
+      String path = app.getPrefix();
 
-    app.initComponents(this);
+      app.registerCloseable(new Closeable() {
+        @Override
+        public void close() throws IOException {
+          shutdown();
+        }
+      });
+
+      app.init(this, path);
+
+      URL webappBaseURL = app.getWebappBaseURL();
+
+      WebAppContext wac;
+      if (webappBaseURL != null) {
+        wac = initMainWebAppContext(app, webappBaseURL);
+      } else {
+        wac = initMainWebAppContextPreprocessed(app, paths);
+      }
+
+      ServletHolder sh = new ServletHolder(this.jsonRpc);
+      sh.setInitOrder(0); // initialize right upon start
+      wac.addServlet(sh, JSON_PATH);
+
+      wac.setServer(server);
+
+      app.initComponents(this);
+    }
 
     server.setHandler(contextHandlers);
     server.setConnectors(initConnectors(bindAddr, port, socketPath, tlsConfig, server));
@@ -275,7 +283,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     });
   }
 
-  private WebAppContext initMainWebAppContext(URL webappBaseURL) throws IOException {
+  private WebAppContext initMainWebAppContext(ServerApp app, URL webappBaseURL) throws IOException {
     URI webappBaseURI;
     try {
       webappBaseURI = webappBaseURL.toURI();
@@ -290,13 +298,13 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     } catch (URISyntaxException e) {
       throw new IllegalStateException(e);
     }
-    final WebAppContext wac = new WebAppContext(res, contextPath);
+    final WebAppContext wac = new WebAppContext(res, app.getContextPath());
     wac.setBaseResource(res);
 
-    initMainWebAppContextCommon(wac);
+    initMainWebAppContextCommon(app, wac);
 
-    Predicate<String> filteredPathsPredicate = initWebAppContext(app.getApplicationExtensionImpl(),
-        wac);
+    Predicate<String> filteredPathsPredicate = initWebAppContext(app, app
+        .getApplicationExtensionImpl(), wac);
 
     registerContext(wac, webappBaseURI);
 
@@ -307,17 +315,18 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     return wac;
   }
 
-  private WebAppContext initMainWebAppContextPreprocessed(Path... paths) throws IOException {
+  private WebAppContext initMainWebAppContextPreprocessed(ServerApp app, Path... paths)
+      throws IOException {
     Resource res = combinedResource(app.getWebappWorkDir().toPath(), paths);
-    final WebAppContext wac = new WebAppContext(res, contextPath);
+    final WebAppContext wac = new WebAppContext(res, app.getContextPath());
     wac.setBaseResource(res);
-    initMainWebAppContextCommon(wac);
-    initWebAppContext(app.getApplicationExtensionImpl(), wac);
+    initMainWebAppContextCommon(app, wac);
+    initWebAppContext(app, app.getApplicationExtensionImpl(), wac);
     registerContext(wac, null);
     return wac;
   }
 
-  private void initMainWebAppContextCommon(WebAppContext wac) throws IOException {
+  private void initMainWebAppContextCommon(ServerApp app, WebAppContext wac) throws IOException {
     wac.setLogger(LOG);
     wac.addServletContainerInitializer(new JettyJasperInitializer());
     wac.setTempDirectory(new File(app.getWorkDir(), "jetty.tmp"));
@@ -592,8 +601,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
    * @return The context.
    * @throws IOException on error.
    */
-  public WebAppContext registerContext(ComponentImpl comp, final String contextPrefix,
-      final URL pathToWebAppURL) throws IOException {
+  public WebAppContext registerContext(ComponentImpl comp, ServerApp app,
+      final String contextPrefix, final URL pathToWebAppURL) throws IOException {
     URI resourceBaseUri;
     try {
       resourceBaseUri = pathToWebAppURL.toURI();
@@ -601,7 +610,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       throw new IllegalStateException(e);
     }
 
-    String prefix = (contextPath + contextPrefix).replaceAll("//+", "/");
+    String prefix = (app.getContextPath() + contextPrefix).replaceAll("//+", "/");
     String relativePrefixWithContext = prefix.replaceAll("^/+", "");
     String relativePrefix = contextPrefix.replaceAll("^/+", "");
 
@@ -634,7 +643,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     wac.setLogger(LOG);
     wac.addServletContainerInitializer(new JettyJasperInitializer());
 
-    Predicate<String> filteredPathsPredicate = initWebAppContext(comp, wac);
+    Predicate<String> filteredPathsPredicate = initWebAppContext(app, comp, wac);
     if (cachedPaths == null) {
       scanWebApp(wac.getContextPath(), res, filteredPathsPredicate);
     }
@@ -644,7 +653,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     return registerContext(wac, resourceBaseUri);
   }
 
-  private Predicate<String> initWebAppContext(ComponentImpl comp, WebAppContext wac)
+  private Predicate<String> initWebAppContext(ServerApp app, ComponentImpl comp, WebAppContext wac)
       throws IOException {
     wac.setDefaultRequestCharacterEncoding("UTF-8");
     wac.setDefaultResponseCharacterEncoding("UTF-8");
@@ -661,7 +670,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     wac.setAttribute(DumboServerImpl.class.getName(), this);
 
-    wac.setAttribute("jsonPath", (contextPath + "/" + JSON_PATH).replaceAll("//+", "/"));
+    wac.setAttribute("jsonPath", (app.getContextPath() + "/" + JSON_PATH).replaceAll("//+", "/"));
 
     ServletContext sc = wac.getServletContext();
     sc.setAttribute(ServerApp.class.getName(), app);
@@ -694,6 +703,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
     ServletHolder holderDefaultServlet = sh.addServletWithMapping(DefaultServlet.class.getName(),
         "/");
+    holderDefaultServlet.setAsyncSupported(false);
     holderDefaultServlet.setInitParameter("etags", "true");
     // holderDefaultServlet.setInitParameter("dirAllowed", "false");
     holderDefaultServlet.setInitParameter("useFileMappedBuffer", "true");
@@ -753,6 +763,7 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
         FilterHolder holder;
         if (mapToClass.getPackage().equals(DumboServerImpl.class.getPackage())) {
+          // allow dumbo-internal filters that are otherwise not public
           Filter filter;
           try {
             filter = Objects.requireNonNull(mapToClass.getDeclaredConstructor().newInstance());
@@ -934,14 +945,16 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     });
   }
 
-  private void copyResourcesToMappedDir(Map<String, Supplier<Path>> resources, Path outputBaseDir,
-      boolean sourceMaps) throws IOException {
+  private void copyResourcesToMappedDir(ServerApp app, Map<String, Supplier<Path>> resources,
+      Path outputBaseDir, boolean sourceMaps) throws IOException {
+    String contextPath = app.getContextPath();
+
     for (Map.Entry<String, Supplier<Path>> en : resources.entrySet()) {
       String urlPath = en.getKey();
-      if (!urlPath.startsWith(this.contextPath)) {
+      if (!urlPath.startsWith(contextPath)) {
         throw new IllegalStateException("Unexpected URL: " + urlPath);
       }
-      urlPath = urlPath.substring(this.contextPath.length()).replaceAll("^/+", "");
+      urlPath = urlPath.substring(contextPath.length()).replaceAll("^/+", "");
 
       if (!sourceMaps) {
         if ("sourcemaps".equals(urlPath) || urlPath.startsWith("sourcemaps/") || urlPath.endsWith(
@@ -971,17 +984,25 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     }
   }
 
+  public void generateFiles(Path staticOut, Path dynamicOut, boolean sourceMaps) throws IOException,
+      InterruptedException {
+    for (ServerApp app : apps.values()) {
+      generateFiles(app, staticOut, dynamicOut, sourceMaps);;
+    }
+  }
+
   /**
    * Starts the HTTP Server to regenerate resources, copies all resources, then stops the server.
    *
+   * @param app The app.
    * @param staticOut The target path for static content.
    * @param dynamicOut The target path for dynamic content (jsp files, etc.)
    * @param sourceMaps Whether {@code /sourcemaps} should be included.
    * @throws IOException on error.
    * @throws InterruptedException on interruption.
    */
-  public void generateFiles(Path staticOut, Path dynamicOut, boolean sourceMaps) throws IOException,
-      InterruptedException {
+  public void generateFiles(ServerApp app, Path staticOut, Path dynamicOut, boolean sourceMaps)
+      throws IOException, InterruptedException {
     boolean started = server.isStarted();
     if (!started) {
       start();
@@ -996,8 +1017,8 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
       copyFiles(webappWorkDir, staticOut, (p) -> isStaticFileName(p.getFileName().toString()));
       copyFiles(webappWorkDir, dynamicOut, (p) -> !isStaticFileName(p.getFileName().toString()));
 
-      copyResourcesToMappedDir(publicUrlPathsToStaticResource, staticOut, sourceMaps);
-      copyResourcesToMappedDir(publicUrlPathsToDynamicResource, dynamicOut, sourceMaps);
+      copyResourcesToMappedDir(app, publicUrlPathsToStaticResource, staticOut, sourceMaps);
+      copyResourcesToMappedDir(app, publicUrlPathsToDynamicResource, dynamicOut, sourceMaps);
       LOG.info("Generated cached version at (static:) {} and (dynamic:) {}", staticOut, dynamicOut);
       if (!started) {
         shutdown();
@@ -1345,10 +1366,6 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
     return unixConnector;
   }
 
-  String getContextPath() {
-    return contextPath;
-  }
-
   @Override
   public URI getNetworkURI() {
     return uri.get();
@@ -1473,5 +1490,9 @@ public class DumboServerImpl implements DumboServer, DumboServiceProvider {
 
   static DumboServerImpl getInstance(ServletContext context) {
     return (DumboServerImpl) context.getAttribute(DumboServerImpl.class.getName());
+  }
+
+  public Map<String, ServerApp> getApps() {
+    return apps;
   }
 }

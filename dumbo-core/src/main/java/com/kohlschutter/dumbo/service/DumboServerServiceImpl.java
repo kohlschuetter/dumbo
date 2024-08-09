@@ -34,12 +34,14 @@ public class DumboServerServiceImpl implements DumboServerService {
   private final DumboServerImpl server;
   private final JsonRpcClient client;
   private final Set<String> knownRpcServices;
+  private final String prefix;
 
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
-  public DumboServerServiceImpl(Class<? extends DumboApplication> applicationClass)
+  public DumboServerServiceImpl(String prefix, Class<? extends DumboApplication> applicationClass)
       throws IOException, InterruptedException {
-    server = newServerImpl(applicationClass).start();
+    this.prefix = prefix;
+    server = newServerImpl(prefix, applicationClass).start();
 
     this.client = server.newJsonRpcClient();
     this.knownRpcServices = retrieveKnownRpcServices();
@@ -84,14 +86,18 @@ public class DumboServerServiceImpl implements DumboServerService {
     return server;
   }
 
-  private DumboServerImpl newServerImpl(Class<? extends DumboApplication> applicationClass)
+  private DumboServerImpl newServerImpl(String prefix, Class<? extends DumboApplication> applicationClass)
       throws IOException {
     DumboServerImplBuilder builder = new DumboServerImplBuilder();
     configureNewServerImpl(builder);
-    builder.withApplication(applicationClass);
+    builder.withApplication(prefix, applicationClass);
     return (DumboServerImpl) builder.build();
   }
 
   protected void configureNewServerImpl(DumboServerImplBuilder builder) {
+  }
+
+  public String getPrefix() {
+    return prefix;
   }
 }

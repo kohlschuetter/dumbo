@@ -45,7 +45,7 @@ import jsinterop.annotations.JsType;
  *
  * @author Christian Kohlschütter
  */
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Dumbo")
+@JsType(isNative = true, namespace = JsPackage.GLOBAL)
 @JsImport
 public class Dumbo {
   public static native void keep(Object obj);
