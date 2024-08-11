@@ -257,14 +257,31 @@ public class DumboServerImpl implements DumboServer {
     updateUris();
   }
 
+  private void flattenCombinedResource(Resource r, Consumer<Resource> consumer,
+      Predicate<Resource> filter) {
+    if (r == null) {
+      return;
+    }
+    if (r instanceof CombinedResource) {
+      for (Resource res : r.getAllResources()) {
+        if (filter.test(res)) {
+          flattenCombinedResource(res, consumer, filter);
+        }
+      }
+    } else {
+      if (filter.test(r)) {
+        consumer.accept(r);
+      }
+    }
+  }
+
   private WebAppContext initSourceMapsWebAppContext() throws MalformedURLException, IOException {
     Set<Resource> resources = new LinkedHashSet<>();
     for (Map.Entry<WebAppContext, ContextMetadata> en : contexts.entrySet()) {
       WebAppContext wac = en.getKey();
       Resource r = wac.getResource("/sourcemaps/");
-      if (r != null && r.isDirectory()) {
-        resources.add(r);
-      }
+
+      flattenCombinedResource(r, resources::add, Resource::isDirectory);
     }
 
     Resource res;
