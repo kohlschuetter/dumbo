@@ -249,7 +249,7 @@ public class DumboServerImpl implements DumboServer {
 
     }
 
-    initSourceMapsWebAppContext().setServer(server);
+    initSourceMapsWebAppContext();
 
     server.setHandler(contextHandlers);
     server.setConnectors(initConnectors(bindAddr, port, socketPath, tlsConfig, server));
@@ -275,7 +275,7 @@ public class DumboServerImpl implements DumboServer {
     }
   }
 
-  private WebAppContext initSourceMapsWebAppContext() throws MalformedURLException, IOException {
+  private void initSourceMapsWebAppContext() throws MalformedURLException, IOException {
     Set<Resource> resources = new LinkedHashSet<>();
     for (Map.Entry<WebAppContext, ContextMetadata> en : contexts.entrySet()) {
       WebAppContext wac = en.getKey();
@@ -286,15 +286,17 @@ public class DumboServerImpl implements DumboServer {
 
     Resource res;
     res = ResourceFactory.combine(resources.toArray(new Resource[0]));
-    final WebAppContext wac = new WebAppContext(res, "/sourcemaps/");
-    wac.setBaseResource(res);
+    if (res == null) {
+      return;
+    }
 
+    final WebAppContext wac = new WebAppContext(res, "/sourcemaps/");
+    wac.setServer(server);
+    wac.setBaseResource(res);
     registerContext(wac, URI.create("/sourcemaps/"));
 
     initMainWebAppContextCommon(wac, null);
     initDefaultServlet(wac.getServletHandler());
-
-    return wac;
   }
 
   private void updateUris() {
