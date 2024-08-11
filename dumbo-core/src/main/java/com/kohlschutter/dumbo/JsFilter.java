@@ -55,6 +55,10 @@ final class JsFilter extends HttpFilter {
     String requestURI = req.getRequestURI();
     String pathInContext = requestURI.substring(req.getContextPath().length());
 
+    // FIXME make this configurable
+    resp.setHeader("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate");
+    resp.setHeader("Pragma", "no-cache");
+
     if (DumboServerImpl.checkResourceExists(servletContext, pathInContext)) {
       chain.doFilter(req, resp);
       return;
