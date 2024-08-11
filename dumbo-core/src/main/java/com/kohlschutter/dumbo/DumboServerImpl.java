@@ -45,6 +45,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -245,12 +246,38 @@ public class DumboServerImpl implements DumboServer {
       wac.setServer(server);
 
       app.initComponents(this);
+
     }
+
+    initSourceMapsWebAppContext().setServer(server);
 
     server.setHandler(contextHandlers);
     server.setConnectors(initConnectors(bindAddr, port, socketPath, tlsConfig, server));
 
     updateUris();
+  }
+
+  private WebAppContext initSourceMapsWebAppContext() throws MalformedURLException, IOException {
+    Set<Resource> resources = new LinkedHashSet<>();
+    for (Map.Entry<WebAppContext, ContextMetadata> en : contexts.entrySet()) {
+      WebAppContext wac = en.getKey();
+      Resource r = wac.getResource("/sourcemaps/");
+      if (r != null && r.isDirectory()) {
+        resources.add(r);
+      }
+    }
+
+    Resource res;
+    res = ResourceFactory.combine(resources.toArray(new Resource[0]));
+    final WebAppContext wac = new WebAppContext(res, "/sourcemaps/");
+    wac.setBaseResource(res);
+
+    registerContext(wac, URI.create("/sourcemaps/"));
+
+    initMainWebAppContextCommon(wac, null);
+    initDefaultServlet(wac.getServletHandler());
+
+    return wac;
   }
 
   private void updateUris() {
@@ -299,7 +326,7 @@ public class DumboServerImpl implements DumboServer {
     final WebAppContext wac = new WebAppContext(res, app.getContextPath());
     wac.setBaseResource(res);
 
-    initMainWebAppContextCommon(app, wac);
+    initMainWebAppContextCommon(wac, app);
 
     Predicate<String> filteredPathsPredicate = initWebAppContext(app, app
         .getApplicationExtensionImpl(), wac);
@@ -318,17 +345,19 @@ public class DumboServerImpl implements DumboServer {
     Resource res = combinedResource(app.getWebappWorkDir().toPath(), paths);
     final WebAppContext wac = new WebAppContext(res, app.getContextPath());
     wac.setBaseResource(res);
-    initMainWebAppContextCommon(app, wac);
+    initMainWebAppContextCommon(wac, app);
     initWebAppContext(app, app.getApplicationExtensionImpl(), wac);
     registerContext(wac, null);
     return wac;
   }
 
-  private void initMainWebAppContextCommon(ServerApp app, WebAppContext wac) throws IOException {
+  private void initMainWebAppContextCommon(WebAppContext wac, ServerApp app) throws IOException {
     wac.setLogger(LOG);
     wac.addServletContainerInitializer(new JettyJasperInitializer());
-    wac.setTempDirectory(new File(app.getWorkDir(), "jetty.tmp"));
-    wac.setTempDirectoryPersistent(true);
+    if (app != null) {
+      wac.setTempDirectory(new File(app.getWorkDir(), "jetty.tmp"));
+      wac.setTempDirectoryPersistent(true);
+    }
   }
 
   private Resource combinedResource(URI... uris) throws IOException {
@@ -339,6 +368,8 @@ public class DumboServerImpl implements DumboServer {
 
       try {
         Paths.get(u);
+      } catch (IllegalArgumentException e) {
+        throw (IllegalArgumentException) new IllegalArgumentException("url:" + u).initCause(e);
       } catch (FileSystemNotFoundException e) {
         String uriPath = u.getSchemeSpecificPart();
         int sep = uriPath.indexOf("!/");
@@ -683,6 +714,16 @@ public class DumboServerImpl implements DumboServer {
     return filteredPathsPredicate;
   }
 
+  private void initDefaultServlet(ServletHandler sh) {
+    ServletHolder holderDefaultServlet = sh.addServletWithMapping(DefaultServlet.class.getName(),
+        "/");
+    holderDefaultServlet.setAsyncSupported(false); // https://github.com/jetty/jetty.project/issues/12153
+    holderDefaultServlet.setInitParameter("etags", "true");
+    // holderDefaultServlet.setInitParameter("dirAllowed", "false");
+    holderDefaultServlet.setInitParameter("useFileMappedBuffer", "true");
+    holderDefaultServlet.setInitParameter("stylesheet", "/css/jetty-dir.css");
+  }
+
   private void mapServlets(ComponentImpl comp, ServletHandler sh, Set<String> pathFilters) {
     Map<String, ServletMapping> mappings = new HashMap<>();
     for (Servlets s : comp.getAnnotatedMappingsFromAllReachableComponents(Servlets.class)) {
@@ -699,13 +740,7 @@ public class DumboServerImpl implements DumboServer {
       }
     }
 
-    ServletHolder holderDefaultServlet = sh.addServletWithMapping(DefaultServlet.class.getName(),
-        "/");
-    holderDefaultServlet.setAsyncSupported(false); // https://github.com/jetty/jetty.project/issues/12153
-    holderDefaultServlet.setInitParameter("etags", "true");
-    // holderDefaultServlet.setInitParameter("dirAllowed", "false");
-    holderDefaultServlet.setInitParameter("useFileMappedBuffer", "true");
-    holderDefaultServlet.setInitParameter("stylesheet", "/css/jetty-dir.css");
+    initDefaultServlet(sh);
 
     for (Map.Entry<String, ServletMapping> en : mappings.entrySet()) {
       String mapPath = en.getKey();
@@ -815,8 +850,10 @@ public class DumboServerImpl implements DumboServer {
           ServletContext sc = wac.getServletContext();
           if (sc != null) {
             ServerApp app = (ServerApp) sc.getAttribute(ServerApp.class.getName());
-            JSONArray jsonMethods = app.getJsonRpc().getBridge().getSystemMethods();
-            wac.setAttribute("dumborb.json.methods", jsonMethods.toString());
+            if (app != null) {
+              JSONArray jsonMethods = app.getJsonRpc().getBridge().getSystemMethods();
+              wac.setAttribute("dumborb.json.methods", jsonMethods.toString());
+            }
           }
         }
 
