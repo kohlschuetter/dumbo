@@ -123,8 +123,10 @@
         }
     };
 
+    var consoleLoop;
     var connProblemsTimeoutId = -1;
     var connProblemsCheckEnabled = true;
+
     const connProblems = function() {
         var callout = document.getElementById("noLongerCurrentTopCallout");
         if (callout) {
@@ -134,6 +136,11 @@
             cl.add("bs-callout-info");
             callout.textContent = "There are connection problems.";
             cl.remove("hidden");
+        }
+
+        var worker = Dumbo.app.console.worker;
+        if (worker && worker.terminated) {
+            consoleLoop();
         }
     };
     const connProblemsCheck = function() {
@@ -261,12 +268,14 @@
         }
     };
 
-    Dumbo.whenReady(function() {
+    consoleLoop = function() {
         const consoleService = Dumbo.getService("ConsoleService");
         if (consoleService) {
             // Dumbo.rpc.dontQueueCalls = true;
 
             setTimeout(function() {
+                connProblemsCheckEnabled = true;
+
                 if (noWorkerLoop) {
                     noWorkerLoop();
                     return;
@@ -301,5 +310,9 @@
                 worker.postMessage({ command: "init", url: Dumbo.rpc.serverURL });
             }, 0);
         }
-    });
+    };
+
+    document.addEventListener("visibilitychange", connProblemsGone);
+
+    Dumbo.whenReady(consoleLoop);
 }(Dumbo));
