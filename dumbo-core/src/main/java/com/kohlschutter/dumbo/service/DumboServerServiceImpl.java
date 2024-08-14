@@ -86,7 +86,7 @@ public class DumboServerServiceImpl implements DumboServerService {
     return server;
   }
 
-  private DumboServerImpl newServerImpl(String prefix,
+  private DumboServerImpl newServerImpl(@SuppressWarnings("hiding") String prefix,
       Class<? extends DumboApplication> applicationClass) throws IOException {
     DumboServerImplBuilder builder = new DumboServerImplBuilder();
     configureNewServerImpl(builder);

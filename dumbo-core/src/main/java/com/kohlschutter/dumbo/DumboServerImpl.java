@@ -76,7 +76,6 @@ import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.io.ClientConnector;
-import org.eclipse.jetty.io.IOResources;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -88,7 +87,6 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.util.resource.CombinedResource;
-import org.eclipse.jetty.util.resource.PathResourceFactory;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.resource.URLResourceFactory;
@@ -899,9 +897,9 @@ public class DumboServerImpl implements DumboServer {
           }
           for (String path : urlPathsToRegenerate.keySet()) {
             LOG.info("Regenerating {}", path);
-            String uri = serverURIBase + path + "?reload=true";
+            String reloadUri = serverURIBase + path + "?reload=true";
             try {
-              client.newRequest(uri).method(HttpMethod.HEAD).send(new CompleteListener() {
+              client.newRequest(reloadUri).method(HttpMethod.HEAD).send(new CompleteListener() {
 
                 @Override
                 public void onComplete(Result result) {
