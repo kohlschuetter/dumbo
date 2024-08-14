@@ -57,7 +57,7 @@ final class JaclineInit {
           } else if (val instanceof String) {
             kenc.encodeString(key, (String) val);
           } else if (val instanceof Boolean) {
-            kenc.encodeNumber(key, ((Boolean) val).booleanValue() ? 1 :0);
+            kenc.encodeNumber(key, ((Boolean) val).booleanValue() ? 1 : 0);
           } else {
             CommonLog.error("Could not encode object for Jacline; unsupported value", val);
             throw new IllegalStateException("Unsupported value");
