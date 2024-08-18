@@ -24,7 +24,6 @@ import com.kohlschutter.dumbo.annotations.HTMLResources;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
 import com.kohlschutter.dumbo.api.DumboComponent;
-import com.kohlschutter.dumbo.jquery.JQuerySupport;
 
 /**
  * Helper class to add Bootstrap.js support to the demo server.
@@ -35,9 +34,9 @@ import com.kohlschutter.dumbo.jquery.JQuerySupport;
     @CSSResource({"css/bootstrap.min.css", "css/bootstrap-extras.css"}) //
 })
 @JavaScriptResources({//
-    @JavaScriptResource({"js/bootstrap.bundle.min.js", "js/bootstrap-extras.js"}) //
+    @JavaScriptResource({"js/bootstrap.bundle.min.js" /*, "js/bootstrap-extras.js" */}) //
 })
 @HTMLResources({@HTMLResource(value = "include/noLongerCurrent.html", target = Target.BODY)})
-public interface BootstrapSupport extends DumboComponent, JQuerySupport {
+public interface BootstrapSupport extends DumboComponent {
 
 }

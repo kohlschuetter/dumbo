@@ -12,33 +12,45 @@
 				<p>The connection to the service has been terminated.</p>
 			</div>
 			<div class="modal-footer">
-				<a href="javascript:location.reload()"><button type="button"
-						class="btn btn-default">Reload page</button></a> <a
-					href="javascript:$('BODY').addClass('noLongerCurrent');$('#noLongerCurrentTopCallout').removeClass('hidden');$('#noLongerCurrentModal').modal('hide');"><button
-						type="button" class="btn btn-default">Keep it open</button></a> <a
-					href="javascript:window.close()"><button type="button"
-						class="btn btn-primary">Close Window</button></a>
+				<a href="#" class="modal-a-reloadpage"><button type="button"
+						class="btn btn-default">Reload page</button></a><a href="#"
+					class="modal-a-keepopen"><button type="button"
+						class="btn btn-default">Keep it open</button></a> <a
+					href="javascript:window.close()" class="modal-a-closewindow"><button
+						type="button" class="btn btn-primary">Close Window</button></a>
 			</div>
 		</div>
 	</div>
 </div>
 <script type="text/javascript">
-    $(document)
-            .ready(
-                    function() {
+    Dumbo.whenLoaded(() => {
                         if (Dumbo && Dumbo.app && Dumbo.app.console) {
                             Dumbo.app.console.onClose = function() {
-                                var callout = $('#noLongerCurrentTopCallout');
-                                callout.addClass("hidden");
-                                $('BODY').addClass('noLongerCurrent');
-                                callout.removeClass('bs-callout-danger');
-                                callout.addClass('bs-callout-info');
-                                callout
-                                        .text("The connection to the service has been terminated. This window is no longer being updated.");
-                                if ($("#noLongerCurrentModal").length == 0) {
-                                    callout.removeClass('hidden');
+                                var callout = document.getElementById("noLongerCurrentTopCallout");
+
+                                callout.classList.add("hidden");
+                                document.body.classList.add('noLongerCurrent');
+                                callout.classList.remove('bs-callout-danger');
+                                callout.classList.add('bs-callout-info');
+                                callout.innerText = "The connection to the service has been terminated. This window is no longer being updated.";
+
+                                var modal = document.getElementById("noLongerCurrentModal");
+                                if (modal) {
+                                    var bsModal = new bootstrap.Modal(modal);
+
+                                    var keepOpen = () => {
+                                        document.body.classList.add('noLongerCurrent');
+                                        document.getElementById('noLongerCurrentTopCallout').classList.remove('hidden');
+                                        bsModal.hide();
+                                    };
+
+                                    modal.querySelector(".modal-a-reloadpage").onclick = () => { location.reload(); };
+                                    modal.querySelector(".modal-a-keepopen").onclick = keepOpen;
+                                    modal.querySelector(".modal-a-closewindow").onclick = () => { setTimeout(() => { window.close(); }, 0); keepOpen(); };
+
+                                    bsModal.show();
                                 } else {
-                                    $("#noLongerCurrentModal").modal("show");
+                                    callout.classList.remove('hidden');
                                 }
                             };
                         }
