@@ -139,7 +139,7 @@
         }
 
         var worker = Dumbo.app.console.worker;
-        if (worker && worker.terminated) {
+        if (worker && worker.terminated && connProblemsCheckEnabled) {
             consoleLoop();
         }
     };
