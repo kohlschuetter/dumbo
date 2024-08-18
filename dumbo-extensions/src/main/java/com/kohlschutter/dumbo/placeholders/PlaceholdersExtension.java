@@ -19,12 +19,11 @@ package com.kohlschutter.dumbo.placeholders;
 import com.kohlschutter.dumbo.annotations.CSSResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.api.DumboComponent;
-import com.kohlschutter.dumbo.jquery.JQuerySupport;
 
 /**
  * Improves handling of placeholder resources
  */
 @CSSResource(value = "css/placeholders.css", group = "dumbo")
 @JavaScriptResource(value = "js/placeholders.js", group = "dumbo", async = true)
-public interface PlaceholdersExtension extends DumboComponent, JQuerySupport {
+public interface PlaceholdersExtension extends DumboComponent {
 }
