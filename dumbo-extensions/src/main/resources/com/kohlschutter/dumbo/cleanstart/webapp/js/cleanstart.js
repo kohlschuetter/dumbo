@@ -1,3 +1,3 @@
-$.app.whenReady(function() {
-    $("BODY").addClass("visible");
+Dumbo.whenLoaded(() => {
+    document.body.classList.add("visible");
 });
