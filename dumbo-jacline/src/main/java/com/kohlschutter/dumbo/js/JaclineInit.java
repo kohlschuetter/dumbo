@@ -34,6 +34,7 @@ final class JaclineInit {
     }
   }
 
+  @SuppressWarnings("PMD.CognitiveComplexity")
   static Object preMarshallObject(Object obj) {
     if (obj instanceof Codable) {
       try {
@@ -57,14 +58,14 @@ final class JaclineInit {
           } else if (val instanceof String) {
             kenc.encodeString(key, (String) val);
           } else if (val instanceof Boolean) {
-            kenc.encodeNumber(key, ((Boolean) val).booleanValue() ? 1 : 0);
+            kenc.encodeNumber(key, ((Boolean) val) ? 1 : 0);
           } else {
             CommonLog.error("Could not encode object for Jacline; unsupported value", val);
             throw new IllegalStateException("Unsupported value");
           }
         }
         obj = kenc.end().end().getEncoded();
-      } catch (Exception e) {
+      } catch (Exception e) { // NOPMD
         CommonLog.error("Could not encode object for Jacline", e);
         throw new IllegalStateException(e);
       }

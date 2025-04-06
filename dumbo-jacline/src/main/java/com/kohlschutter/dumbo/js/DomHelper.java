@@ -1,3 +1,20 @@
+/*
+ * dumbo-jacline
+ *
+ * Copyright 2023 Christian Kohlschütter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.kohlschutter.dumbo.js;
 
 import com.kohlschutter.jacline.lib.log.CommonLog;
@@ -6,6 +23,7 @@ import elemental2.dom.DOMTokenList;
 import elemental2.dom.DomGlobal;
 import elemental2.dom.Element;
 
+@SuppressWarnings("PMD.GuardLogStatement")
 public final class DomHelper {
   private DomHelper() {
   }
@@ -52,9 +70,9 @@ public final class DomHelper {
    * means that the element-to-be-found contains an attribute named "for" that contains the id of
    * the reference element — or, as a fallback if no id is given, checks if the next sibling has
    * that class).
-   * 
-   * @param className
-   * @param referenceElement
+   *
+   * @param className The class name.
+   * @param referenceElement The reference element.
    * @return The element, or {@code null}.
    */
   public static Element findElementWithClassForElement(String className, Element referenceElement) {
