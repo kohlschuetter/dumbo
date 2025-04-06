@@ -21,20 +21,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContext;
 
 /**
- * Specifies a string-to-class mapping for servlets.
+ * Specifies {@link ServletContext} attributes.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ServletMapping {
-  @SuppressWarnings("PMD.ShortMethodName")
-  Class<? extends Servlet> to();
+public @interface ServletContextAttribute {
+  String key();
 
-  String[] map();
+  Class<?> valueProvider();
 
-  int initOrder() default -1;
-
-  ServletInitParameter[] initParameters() default {};
+  String method();
 }
