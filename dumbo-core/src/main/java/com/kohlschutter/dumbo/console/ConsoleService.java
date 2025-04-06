@@ -20,7 +20,7 @@ import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.dumbo.api.Console;
 
 /**
- * Provides access to an object-oriented console ("System.out")
+ * Provides access to an object-oriented console ("System.out").
  *
  * @see Console
  */
