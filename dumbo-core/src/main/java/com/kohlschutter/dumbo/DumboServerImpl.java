@@ -1409,6 +1409,7 @@ public class DumboServerImpl implements DumboServer {
     connector.setReuseAddress(true);
     connector.setReusePort(true);
     connector.setHost(addr == null ? null : addr.getHostAddress());
+    connector.setIdleTimeout(30000); // Allow keep-alive for 30s
 
     return connector;
   }
