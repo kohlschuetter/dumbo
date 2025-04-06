@@ -30,9 +30,9 @@
         <kohlschutter.java.release>11</kohlschutter.java.release>
 
         <junixsocket.version>2.10.1</junixsocket.version>
-        <jacline.version>1.0.2-SNAPSHOT</jacline.version>
-        <efesnitch.version>1.0.1-SNAPSHOT</efesnitch.version>
-        <stringhold.version>1.0.3-SNAPSHOT</stringhold.version>
+        <jacline.version>1.0.2</jacline.version>
+        <efesnitch.version>1.0.1</efesnitch.version>
+        <stringhold.version>1.0.3</stringhold.version>
         <liqp.version>0.8.5.4.1-SNAPSHOT</liqp.version>
         <jetty.version>12.0.12</jetty.version>
     </properties>
