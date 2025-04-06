@@ -1558,7 +1558,7 @@ public class DumboServerImpl implements DumboServer {
   }
 
   public Map<String, ServerApp> getApps() {
-    return apps;
+    return Collections.unmodifiableMap(apps);
   }
 
   public ServerApp getMainApplication() {
