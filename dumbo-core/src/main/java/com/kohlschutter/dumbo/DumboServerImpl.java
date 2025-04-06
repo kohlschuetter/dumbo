@@ -1364,7 +1364,8 @@ public class DumboServerImpl implements DumboServer {
     httpsConfig.setSecurePort(securePort); // FIXME
     httpsConfig.setSecureScheme("https");
     httpsConfig.setSendServerVersion(false);
-    httpsConfig.addCustomizer(new SecureRequestCustomizer());;
+    httpsConfig.addCustomizer(new SecureRequestCustomizer());
+    // httpsConfig.setOutputBufferSize(64 * 1024);
 
     SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
     sslContextFactory.setKeyStoreResource(new URLResourceFactory().newResource(tls
@@ -1389,13 +1390,12 @@ public class DumboServerImpl implements DumboServer {
   protected HttpConnectionFactory newHttpConnectionFactory() {
     HttpConfiguration config = new HttpConfiguration();
     config.setSendServerVersion(false);
+    // config.setOutputBufferSize(64 * 1024);
     return new HttpConnectionFactory(config);
   }
 
   /**
-   * Returns a Jetty {@link ServerConnector} that listens by default on localhost TCP port 8084.
-   *
-   * The port can be configured using the {@code dumbo.port} system property.
+   * Returns a Jetty {@link ServerConnector}.
    *
    * @param targetServer The server this connector is assigned to.
    * @return The connector.
