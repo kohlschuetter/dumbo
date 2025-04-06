@@ -878,8 +878,11 @@ public class DumboServerImpl implements DumboServer {
           if (sc != null) {
             ServerApp app = (ServerApp) sc.getAttribute(ServerApp.class.getName());
             if (app != null) {
-              JSONArray jsonMethods = app.getJsonRpc().getBridge().getSystemMethods();
-              wac.setAttribute("dumborb.json.methods", jsonMethods.toString());
+              JSONRPCBridge bridge = app.getJsonRpc().getBridge();
+              if (bridge != null) {
+                JSONArray jsonMethods = bridge.getSystemMethods();
+                wac.setAttribute("dumborb.json.methods", jsonMethods.toString());
+              }
             }
           }
         }
