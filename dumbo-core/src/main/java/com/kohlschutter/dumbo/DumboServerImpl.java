@@ -147,7 +147,7 @@ public class DumboServerImpl implements DumboServer {
   private final ErrorHandler errorHandler;
 
   /**
-   * All resource paths to regenerate
+   * All resource paths to regenerate.
    *
    * e.g,<br>
    * key: /prefix/app_/base/js/app.jsp.js<br>
@@ -174,7 +174,8 @@ public class DumboServerImpl implements DumboServer {
 
   private final boolean prewarm;
 
-  private Lazy<String> networkHostname = Lazy.of(() -> NetworkHostnameUtil.getNetworkHostname());
+  private final Lazy<String> networkHostname = Lazy.of(() -> NetworkHostnameUtil
+      .getNetworkHostname());
   private Lazy<URI> uri;
   private Lazy<URI> localUri;
 
@@ -486,14 +487,15 @@ public class DumboServerImpl implements DumboServer {
 
   private Path checkValidPath(Path resourcePath, List<Path> validPaths) {
     for (Path p : validPaths) {
+      if (p == null) {
+        return null;
+      }
       try {
         if (resourcePath.startsWith(p)) {
           return p;
         }
       } catch (ProviderMismatchException e) {
-        System.err.println("ERROR: " + e + " checking " + resourcePath + " startsWith " + p);
-        e.printStackTrace();
-        return null;
+        continue;
       }
     }
     return null;
@@ -510,7 +512,7 @@ public class DumboServerImpl implements DumboServer {
   @SuppressWarnings("PMD.CognitiveComplexity")
   private void scanWebApp(String context, Resource dir, Predicate<String> filteredPathsPredicate)
       throws IOException {
-    LOG.info("Scanning contents of context {} from {}", context, dir);
+    LOG.debug("Scanning contents of context {} from {}", context, dir);
     scanWebApp(context, dir, filteredPathsPredicate, null);
   }
 
@@ -892,11 +894,11 @@ public class DumboServerImpl implements DumboServer {
         CountDownLatch cdl = new CountDownLatch(urlPathsToRegenerate.size());
         client.setMaxConnectionsPerDestination(1);
         try {
-          if (LOG.isInfoEnabled()) {
-            LOG.info("Regenerating " + cdl.getCount() + " paths...");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Regenerating " + cdl.getCount() + " paths...");
           }
           for (String path : urlPathsToRegenerate.keySet()) {
-            LOG.info("Regenerating {}", path);
+            LOG.debug("Regenerating {}", path);
             String reloadUri = serverURIBase + path + "?reload=true";
             try {
               client.newRequest(reloadUri).method(HttpMethod.HEAD).send(new CompleteListener() {
@@ -926,8 +928,8 @@ public class DumboServerImpl implements DumboServer {
             }
           }
           cdl.await();
-          if (LOG.isInfoEnabled()) {
-            LOG.info("Regeneration completed after " + (System.currentTimeMillis() - time) + "ms");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Regeneration completed after " + (System.currentTimeMillis() - time) + "ms");
           }
         } finally {
           client.stop();

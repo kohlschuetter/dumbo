@@ -52,11 +52,11 @@ public final class DevTools {
     throw new IllegalStateException("No instances");
   }
 
-  public static boolean isShiftPressed() {
-    if (!SUPPORTED_OS) {
-      return false;
-    }
+  public static boolean canDetectShiftPress() {
+    return PATH_TO_MODIFIERKEYS != null;
+  }
 
+  public static boolean isShiftPressed() {
     if (PATH_TO_MODIFIERKEYS == null) {
       // Cannot check
       return false;
@@ -110,8 +110,8 @@ public final class DevTools {
   }
 
   public static void init() {
-    if (!SUPPORTED_OS) {
-      LOG.info("DevTools unsupported in this environment");
+    if (!canDetectShiftPress()) {
+      LOG.debug("DevTools unsupported in this environment");
       return;
     }
     staticMode = DevTools.isShiftPressed();

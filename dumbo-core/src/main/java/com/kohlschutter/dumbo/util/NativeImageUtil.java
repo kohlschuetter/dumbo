@@ -47,7 +47,7 @@ public final class NativeImageUtil {
     if (u != null) {
       Path root = urlToPath(u);
       try {
-        LOG.info("Walking resource tree for root {}", root);
+        LOG.debug("Walking resource tree for root {}", root);
         Files.walk(root).forEach((p) -> {
           URL url = resourceResolver.apply(prefix + root.relativize(p).toString());
           LOG.debug("Found {}", url);
