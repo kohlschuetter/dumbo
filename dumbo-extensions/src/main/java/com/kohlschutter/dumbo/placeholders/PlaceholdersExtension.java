@@ -21,7 +21,7 @@ import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
- * Improves handling of placeholder resources
+ * Improves handling of placeholder resources.
  */
 @CSSResource(value = "css/placeholders.css", group = "dumbo")
 @JavaScriptResource(value = "js/placeholders.js", group = "dumbo", async = true)

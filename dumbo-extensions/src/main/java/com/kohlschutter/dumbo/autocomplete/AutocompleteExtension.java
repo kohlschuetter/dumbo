@@ -20,7 +20,7 @@ import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
- * Improves handling of placeholder resources
+ * Improves handling of placeholder resources.
  */
 @JavaScriptResource(value = "js/autocomplete.js", async = true)
 public interface AutocompleteExtension extends DumboComponent {

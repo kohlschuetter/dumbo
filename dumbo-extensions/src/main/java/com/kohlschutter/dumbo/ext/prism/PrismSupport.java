@@ -22,7 +22,7 @@ import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.api.DumboComponent;
 
 /**
- * prism.js
+ * Support for prism.js.
  */
 @CSSResources({//
     @CSSResource(value = "css/prism.css", optional = true), //

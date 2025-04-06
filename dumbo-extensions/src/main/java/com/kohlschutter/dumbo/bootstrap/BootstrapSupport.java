@@ -34,7 +34,7 @@ import com.kohlschutter.dumbo.api.DumboComponent;
     @CSSResource({"css/bootstrap.min.css", "css/bootstrap-extras.css"}) //
 })
 @JavaScriptResources({//
-    @JavaScriptResource({"js/bootstrap.bundle.min.js" /*, "js/bootstrap-extras.js" */}) //
+    @JavaScriptResource({"js/bootstrap.bundle.min.js" /* , "js/bootstrap-extras.js" */}) //
 })
 @HTMLResources({@HTMLResource(value = "include/noLongerCurrent.html", target = Target.BODY)})
 public interface BootstrapSupport extends DumboComponent {
