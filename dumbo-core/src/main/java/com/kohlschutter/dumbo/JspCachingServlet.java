@@ -47,6 +47,7 @@ final class JspCachingServlet extends JettyJspServlet {
 
   @Override
   public void init() throws ServletException {
+    super.init();
     this.context = getServletContext();
   }
 

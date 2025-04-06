@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -61,7 +63,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.Response.CompleteListener;
@@ -102,6 +104,8 @@ import org.slf4j.LoggerFactory;
 import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.annotations.FilterMapping;
 import com.kohlschutter.dumbo.annotations.Filters;
+import com.kohlschutter.dumbo.annotations.ServletContextAttribute;
+import com.kohlschutter.dumbo.annotations.ServletInitParameter;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
 import com.kohlschutter.dumbo.api.DumboServer;
@@ -109,6 +113,7 @@ import com.kohlschutter.dumbo.api.DumboTLSConfig;
 import com.kohlschutter.dumbo.util.DevTools;
 import com.kohlschutter.dumbo.util.NativeImageUtil;
 import com.kohlschutter.dumbo.util.NetworkHostnameUtil;
+import com.kohlschutter.dumborb.JSONRPCBridge;
 import com.kohlschutter.dumborb.security.ClassResolver;
 import com.kohlschutter.util.Lazy;
 
@@ -163,6 +168,7 @@ public class DumboServerImpl implements DumboServer {
   private final Set<String> scannedFiles = new HashSet<>();
 
   private final Path[] cachedPaths;
+  private final String[] prewarmUrlPaths;
 
   private final Semaphore serverStarted = new Semaphore(0);
   private final Semaphore pathsRegenerated = new Semaphore(0);
@@ -184,8 +190,8 @@ public class DumboServerImpl implements DumboServer {
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
   @SuppressFBWarnings({"EI_EXPOSE_REP2", "CT_CONSTRUCTOR_THROW"})
   DumboServerImpl(boolean prewarm, InetAddress bindAddr, int tcpPort, String socketPath,
-      DumboTLSConfig tlsConfig, Collection<ServerApp> apps, RequestLog requestLog, Path... paths)
-      throws IOException {
+      DumboTLSConfig tlsConfig, Collection<ServerApp> apps, RequestLog requestLog, Path[] paths,
+      String[] urlPaths) throws IOException {
     this.apps = new LinkedHashMap<>();
     for (ServerApp app : apps) {
       this.apps.put(app.getPrefix(), app);
@@ -196,6 +202,7 @@ public class DumboServerImpl implements DumboServer {
         : tcpPort;
 
     this.cachedPaths = paths != null && paths.length > 0 ? paths : null;
+    this.prewarmUrlPaths = urlPaths != null && urlPaths.length > 0 ? urlPaths : null;
 
     this.errorHandler = new ErrorHandler();
 
@@ -734,7 +741,7 @@ public class DumboServerImpl implements DumboServer {
     ServletHandler sh = wac.getServletHandler();
 
     Set<String> pathFilters = new HashSet<>();
-    mapServlets(comp, sh, pathFilters);
+    mapServlets(sc, comp, sh, pathFilters);
     mapFilters(comp, sh, pathFilters);
 
     Predicate<String> filteredPathsPredicate = constructFilteredPathsPredicate(pathFilters);
@@ -751,7 +758,8 @@ public class DumboServerImpl implements DumboServer {
     holderDefaultServlet.setInitParameter("stylesheet", "/css/jetty-dir.css");
   }
 
-  private void mapServlets(ComponentImpl comp, ServletHandler sh, Set<String> pathFilters) {
+  private void mapServlets(ServletContext servletContext, ComponentImpl comp, ServletHandler sh,
+      Set<String> pathFilters) {
     Map<String, ServletMapping> mappings = new HashMap<>();
     for (Servlets s : comp.getAnnotatedMappingsFromAllReachableComponents(Servlets.class)) {
       for (ServletMapping mapping : s.value()) {
@@ -764,6 +772,28 @@ public class DumboServerImpl implements DumboServer {
                 + effectiveMapping + " vs. " + mapping);
           }
         }
+      }
+
+      for (ServletContextAttribute at : s.contextAttributes()) {
+        String name = at.key();
+        Class<?> valueProvider = at.valueProvider();
+        String methodName = at.method();
+
+        Object value;
+        try {
+          Method method = valueProvider.getMethod(methodName);
+          value = method.invoke(null);
+        } catch (NoSuchMethodException e) {
+          throw new IllegalStateException(
+              "Annotation has custom valueType but value is not a static method in the specified class: "
+                  + valueProvider + ":" + methodName, e);
+        } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
+          throw new IllegalStateException(
+              "Annotation has custom valueType but value cannot be retrieved: " + valueProvider
+                  + ":" + methodName, e);
+        }
+
+        servletContext.setAttribute(name, value);
       }
     }
 
@@ -789,6 +819,53 @@ public class DumboServerImpl implements DumboServer {
         holder.setServletHandler(sh);
       } else {
         holder = new ServletHolder(mapToClass);
+      }
+
+      ServerApp app = getServerApp(servletContext);
+
+      for (ServletInitParameter initParam : m.initParameters()) {
+        String value = initParam.value();
+        Class<?> valueType = initParam.valueProvider();
+        if (String.class.equals(valueType)) {
+          // regular string
+        } else if (value == null) {
+          throw new IllegalStateException("Annotation has custom valueType but value is null: "
+              + initParam);
+        } else {
+          try {
+            Method method = valueType.getMethod(value);
+            Object val;
+            int modifiers = method.getModifiers();
+            if ((modifiers & Modifier.STATIC) != 0) {
+              val = method.invoke(null);
+            } else {
+              if (((modifiers & Modifier.PUBLIC) != 0) && value.startsWith("get") && ServerApp.class
+                  .equals(valueType)) {
+                val = method.invoke(app);
+              } else {
+                throw new IllegalStateException("Don't know to access non-static method: "
+                    + initParam);
+              }
+            }
+            if (val == null) {
+              value = null;
+            } else {
+              value = String.valueOf(val);
+            }
+          } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(
+                "Annotation has custom valueType but value is not a static method in the specified class: "
+                    + initParam, e);
+          } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException(
+                "Annotation has custom valueType but value cannot be retrieved: " + initParam, e);
+          }
+        }
+
+        if (value == null) {
+          continue;
+        }
+        holder.setInitParameter(initParam.key(), value);
       }
 
       holder.setInitOrder(m.initOrder());
@@ -1056,7 +1133,16 @@ public class DumboServerImpl implements DumboServer {
   public void generateFiles(Path staticOut, Path dynamicOut, boolean sourceMaps) throws IOException,
       InterruptedException {
     for (ServerApp app : apps.values()) {
-      generateFiles(app, staticOut, dynamicOut, sourceMaps);;
+      generateFiles(app, staticOut, dynamicOut, sourceMaps);
+    }
+  }
+
+  public void startAwaitAndStopIfNotYetStarted() throws IOException, InterruptedException {
+    boolean started = server.isStarted();
+    if (!started) {
+      start();
+      awaitIdle();
+      shutdown();
     }
   }
 
@@ -1089,11 +1175,12 @@ public class DumboServerImpl implements DumboServer {
       copyResourcesToMappedDir(app, publicUrlPathsToStaticResource, staticOut, sourceMaps);
       copyResourcesToMappedDir(app, publicUrlPathsToDynamicResource, dynamicOut, sourceMaps);
       LOG.info("Generated cached version at (static:) {} and (dynamic:) {}", staticOut, dynamicOut);
-      if (!started) {
-        shutdown();
-      }
     } finally {
       pathsRegenerated.release();
+    }
+    if (!started) {
+      awaitIdle();
+      shutdown();
     }
   }
 
@@ -1149,54 +1236,89 @@ public class DumboServerImpl implements DumboServer {
 
   private void prewarmContent() {
     if (!prewarm) {
-      LOG.info("Prewarm disabled");
+      LOG.debug("Prewarm disabled");
       return;
     }
-    if (cachedPaths == null) {
+    if (cachedPaths == null && prewarmUrlPaths == null) {
       LOG.info("Prewarm enabled, but no cached paths");
       return;
     }
+
+    HttpClient client = newServerHttpClient();
     try {
+      client.start();
+    } catch (Exception e) {
+      LOG.warn("Error while creating HttpClient for prewarm", e);
+      return;
+    }
+    URI baseURI = getLocalURI();
+
+    Set<String> relativePaths = new HashSet<>();
+
+    if (cachedPaths != null) {
       for (Path p : cachedPaths) {
         LOG.info("Prewarming content from {}", p);
-        visitStaticContent(p);
+        try (Stream<Path> stream = Files.walk(p)) {
+          stream.filter(Files::isRegularFile).map((f) -> p.relativize(f).toString()).forEach(
+              relativePaths::add);
+        } catch (IOException e) {
+          LOG.error("Error prewarming contents under path: {}", p, e);
+          continue;
+        }
       }
-    } catch (Exception e) {
-      LOG.warn("Error while visiting static context", e);
+    }
+
+    Arrays.stream(prewarmUrlPaths).map((p) -> {
+      while (p.startsWith("/")) {
+        p = p.substring(1);
+      }
+      return p;
+    }).filter((p) -> {
+      if (p == null || p.isEmpty() || p.startsWith("/") || p.contains("//") || p.contains(":")) {
+        LOG.warn("Skipping illegal URL path for prewarming: {}", p);
+        return false;
+      } else {
+        LOG.info("Prewarming URL path: {}", p);
+        return true;
+      }
+    }).forEach(relativePaths::add);
+
+    CountDownLatch cdl = new CountDownLatch(relativePaths.size());
+    relativePaths.forEach((relativeUrl) -> {
+      prewarmRelativeUrl(relativeUrl, client, baseURI, cdl);
+    });
+    try {
+      cdl.await();
+    } catch (InterruptedException e) {
+      LOG.warn("Error while prewarming", e);
+    } finally {
+      try {
+        client.stop();
+      } catch (Exception e) {
+        LOG.warn("Error while stopping HttpClient for prewarm", e);
+      }
     }
   }
 
-  private void visitStaticContent(Path p) throws Exception {
-    HttpClient client = newServerHttpClient();
-    client.start();
+  private void prewarmRelativeUrl(String relativeUrl, HttpClient client, URI baseURI,
+      CountDownLatch cdl) {
+    LOG.debug("Request prewarm: {}", relativeUrl);
+    client.newRequest(baseURI.resolve(relativeUrl)).method(HttpMethod.GET).send(
+        new CompleteListener() {
 
-    URI baseURI = getLocalURI();
-
-    List<Path> list = Files.walk(p).filter(Files::isRegularFile).collect(Collectors.toList());
-    CountDownLatch cdl = new CountDownLatch(list.size());
-
-    list.forEach((f) -> {
-      String relativeUrl = p.relativize(f).toString();
-      LOG.debug("Request prewarm: {}", relativeUrl);
-      client.newRequest(baseURI.resolve(relativeUrl)).method(HttpMethod.GET).send(
-          new CompleteListener() {
-
-            @Override
-            public void onComplete(Result result) {
-              if (result.isSucceeded()) {
-                LOG.debug("Prewarm OK: {}", relativeUrl);
-              } else {
-                if (LOG.isWarnEnabled()) {
-                  LOG.warn("Prewarm failed with status {} for {} ", result.getResponse()
-                      .getStatus(), relativeUrl);
-                }
+          @Override
+          public void onComplete(Result result) {
+            if (result.isSucceeded()) {
+              LOG.debug("Prewarm OK: {}", relativeUrl);
+            } else {
+              if (LOG.isWarnEnabled()) {
+                LOG.warn("Prewarm failed with status {} for {} ", result.getResponse().getStatus(),
+                    relativeUrl);
               }
-              cdl.countDown();
             }
-          });
-    });
-
-    cdl.await();
+            cdl.countDown();
+          }
+        });
   }
 
   @Override

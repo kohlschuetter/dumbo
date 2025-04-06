@@ -49,6 +49,12 @@ public interface DumboContentBuilder {
    */
   DumboContentBuilder withCreateCNAMEFile(boolean enabled);
 
+  DumboContentBuilder withVisitRelativeURL(String... relativeURL);
+
+  DumboContentBuilder withJspSourceOutputPath(Path outputPath);
+
+  DumboContentBuilder withJspClassOutputPath(Path outputPath);
+
   DumboContent openExisting(Path outputPath) throws IOException;
 
   /**

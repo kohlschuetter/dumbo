@@ -72,6 +72,10 @@ public interface DumboServerBuilder {
 
   DumboServerBuilder initFromEnvironmentVariables();
 
+  DumboServerBuilder withPrewarm(boolean enabled);
+
+  DumboServerBuilder withPrewarmRelativeURL(String... relativeURL);
+
   /**
    * Returns a new {@link DumboServerBuilder}.
    *

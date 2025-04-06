@@ -66,6 +66,6 @@ public class TestingDumboServerService extends DumboServerServiceImpl {
   @Override
   protected void configureNewServerImpl(DumboServerImplBuilder builder) {
     builder.initFromEnvironmentVariables();
-    builder.enablePrewarm();
+    builder.withPrewarm(true);
   }
 }

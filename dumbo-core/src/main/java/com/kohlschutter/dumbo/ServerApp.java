@@ -87,6 +87,7 @@ public final class ServerApp implements Closeable, DumboServiceProvider {
 
   private File workDir;
   private File webappWorkDir;
+  private File jspWorkDir;
 
   private DumboServerImpl appServer = null;
 
@@ -97,20 +98,6 @@ public final class ServerApp implements Closeable, DumboServiceProvider {
   private final String contextPath;
 
   private final JsonRpcServlet jsonRpc = new JsonRpcServlet();
-
-  private static String sanitzePrefix(String prefix) {
-    if (prefix == null) {
-      return "";
-    } else {
-      if (prefix.startsWith("/")) {
-        prefix = prefix.substring(1);
-      }
-      if (prefix.endsWith("/")) {
-        prefix = prefix.substring(0, prefix.length() - 1);
-      }
-      return prefix;
-    }
-  }
 
   public ServerApp(String prefix, Class<? extends DumboApplication> applicationClass,
       Supplier<URL> webappBaseURLsupplier) {
@@ -128,6 +115,20 @@ public final class ServerApp implements Closeable, DumboServiceProvider {
 
     this.webappBaseURL = webappBaseURLsupplier == null ? DumboServerImpl.getWebappBaseURL(this)
         : webappBaseURLsupplier.get();
+  }
+
+  private static String sanitzePrefix(String prefix) {
+    if (prefix == null) {
+      return "";
+    } else {
+      if (prefix.startsWith("/")) {
+        prefix = prefix.substring(1);
+      }
+      if (prefix.endsWith("/")) {
+        prefix = prefix.substring(0, prefix.length() - 1);
+      }
+      return prefix;
+    }
   }
 
   /**
@@ -225,6 +226,7 @@ public final class ServerApp implements Closeable, DumboServiceProvider {
       }
     });
     this.webappWorkDir = new File(this.workDir, "webapp");
+    this.jspWorkDir = new File(this.workDir, "jsp");
     Files.createDirectories(webappWorkDir.toPath());
 
     LOG.info("Workdir: {}", workDir);
@@ -458,6 +460,10 @@ public final class ServerApp implements Closeable, DumboServiceProvider {
 
   public File getWebappWorkDir() {
     return webappWorkDir;
+  }
+
+  public File getJspWorkDir() {
+    return jspWorkDir;
   }
 
   Map<Class<? extends DumboComponent>, Set<Class<? extends DumboComponent>>> getComponentToSubComponentMap() {

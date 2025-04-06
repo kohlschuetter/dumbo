@@ -22,9 +22,11 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +48,11 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   private boolean prewarm = false;
   private int port;
   private DumboTLSConfig tls;
-  private final LinkedHashMap<String, Class<? extends DumboApplication>> applications =
-      new LinkedHashMap<>();
+  private final Map<String, Class<? extends DumboApplication>> applications = new LinkedHashMap<>();
   private boolean webappSet = false;
   private URL webapp;
-  private Path[] paths;
+  private final Set<Path> paths = new HashSet<>();
+  private final Set<String> prewarmUrlPaths = new HashSet<>();
   private String socketPath = "auto";
 
   private InetAddress bindAddress = LOOPBACK;
@@ -62,7 +64,7 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
 
   @Override
   public DumboServer build() throws IOException {
-    LinkedHashMap<String, ServerApp> apps = new LinkedHashMap<>();
+    Map<String, ServerApp> apps = new LinkedHashMap<>();
 
     if (webappSet) {
       if (applications.size() > 1) {
@@ -83,7 +85,7 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
     }
 
     return new DumboServerImpl(prewarm, bindAddress, port, socketPath, tls, apps.values(), null,
-        paths);
+        paths.toArray(new Path[0]), prewarmUrlPaths.toArray(new String[0]));
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
@@ -121,7 +123,8 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
 
   @Override
   public DumboServerBuilder withContent(Path... paths) {
-    this.paths = Arrays.copyOf(Objects.requireNonNull(paths), paths.length);
+    Objects.requireNonNull(paths);
+    this.paths.addAll(Arrays.asList(paths));
     if (!webappSet) {
       withWebapp(null);
     }
@@ -131,6 +134,14 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
   @Override
   public DumboServerBuilder withContent(DumboContent content) {
     return withContent(content.toContentPaths());
+  }
+
+  @Override
+  public DumboServerBuilder withPrewarmRelativeURL(String... relativeURL) {
+    if (relativeURL != null) {
+      this.prewarmUrlPaths.addAll(Arrays.asList(relativeURL));
+    }
+    return withPrewarm(true);
   }
 
   @Override
@@ -201,8 +212,9 @@ public class DumboServerImplBuilder implements DumboServerBuilder {
     return this;
   }
 
-  public DumboServerBuilder enablePrewarm() {
-    this.prewarm = true;
+  @Override
+  public DumboServerBuilder withPrewarm(boolean enabled) {
+    this.prewarm = enabled;
     return this;
   }
 
