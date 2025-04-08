@@ -30,11 +30,12 @@ import jakarta.servlet.DispatcherType;
 /**
  * Base resources, such as jQuery and json-rpc.
  */
-  @Servlets({ //
-      @ServletMapping(map = "*.jsp.js", to = JspCachingServlet.class, initOrder = 0, initParameters = {
-          @ServletInitParameter(key = "scratchdir", value = "getJspWorkDir", valueProvider = ServerApp.class)}),
-      @ServletMapping(map = "*.jsp", to = JspCachingServlet.class, initOrder = 0),
-      //
+@Servlets({ //
+    @ServletMapping(map = "*.jsp.js", to = JspCachingServlet.class, initOrder = 0, initParameters = {
+        @ServletInitParameter(key = "scratchdir", value = "getJspWorkDir", valueProvider = ServerApp.class)}),
+    @ServletMapping(map = "*.jsp", to = JspCachingServlet.class, initOrder = 0, initParameters = {
+        @ServletInitParameter(key = "scratchdir", value = "getJspWorkDir", valueProvider = ServerApp.class)}),
+    //
 })
 @Filters({@FilterMapping(map = "*.js", to = JsFilter.class, initOrder = 0, //
     dispatcherTypes = {DispatcherType.REQUEST}),
