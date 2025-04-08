@@ -50,7 +50,7 @@ commands["init"] = function(data) {
         commands["next"]();
     }, url);
 
-    var methods = ["ConsoleService.requestNextChunk"]; // NOTE optimized
+    var methods = ["ConsoleService.requestNextChunk"]; // optimized
     rpc._fetchMethods(methods);
 };
 
