@@ -63,23 +63,30 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
     if (outputPath == null) {
       return;
     }
-    File jspWorkDir = server.getMainApplication().getJspWorkDir();
 
-    Path jspWorkDirPath = jspWorkDir.toPath();
+    Set<File> workDirs = new HashSet<>();
+    for (ServerApp app : server.getApps().values()) {
+      File jspWorkDir = app.getJspWorkDir();
+      workDirs.add(jspWorkDir);
+    }
 
-    List<Path> list = Files.walk(jspWorkDirPath).filter((p) -> Files.isDirectory(p) || p
-        .getFileName().toString().endsWith(fileSuffix)).toList();
+    for (File jspWorkDir : workDirs) {
+      Path jspWorkDirPath = jspWorkDir.toPath();
 
-    LOG.info("Compiled JSP {} files to copy to {}", fileSuffix, jspWorkDirPath);
-    for (Path p : list) {
-      Path relPath = jspWorkDirPath.relativize(p);
+      List<Path> list = Files.walk(jspWorkDirPath).filter((p) -> Files.isDirectory(p) || p
+          .getFileName().toString().endsWith(fileSuffix)).toList();
 
-      Path targetPath = outputPath.resolve(relPath);
-      if (Files.isDirectory(p)) {
-        Files.createDirectories(targetPath);
-      } else {
-        LOG.info("Copying JSP {} file: {}", fileSuffix, relPath);
-        Files.copy(p, targetPath, StandardCopyOption.REPLACE_EXISTING);
+      LOG.info("Compiled JSP {} files to copy to {}", fileSuffix, jspWorkDirPath);
+      for (Path p : list) {
+        Path relPath = jspWorkDirPath.relativize(p);
+
+        Path targetPath = outputPath.resolve(relPath);
+        if (Files.isDirectory(p)) {
+          Files.createDirectories(targetPath);
+        } else {
+          LOG.info("Copying JSP {} file: {}", fileSuffix, relPath);
+          Files.copy(p, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
       }
     }
 
