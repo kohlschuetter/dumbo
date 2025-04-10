@@ -1,5 +1,5 @@
 /*
- * Copyright 2022,2023 Christian Kohlschütter
+ * Copyright 2022-2025 Christian Kohlschütter
  * Copyright 2014,2015 Evernote Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
