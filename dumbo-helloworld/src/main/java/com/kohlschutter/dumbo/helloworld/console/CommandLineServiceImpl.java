@@ -20,7 +20,7 @@ import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.api.DumboSession;
 
 public class CommandLineServiceImpl implements CommandLineService {
-  final String[] colors = {"red", "coral", "gold", "green", "blue", "fuchsia"};
+  private static final String[] COLORS = {"red", "coral", "gold", "green", "blue", "fuchsia"};
 
   int count = 0; // this is an application-level state (i.e., shared across pages!)
 
@@ -29,7 +29,7 @@ public class CommandLineServiceImpl implements CommandLineService {
   public void sendLine(String line) {
     DumboSession session = DumboSession.getSession();
     session.getOrCreatePageAttribute(State.class, State::new).enteredCommand = true;
-    final String color = colors[count++ % colors.length];
+    final String color = COLORS[count++ % COLORS.length];
 
     session.getConsole().add(new ColorMessage(line, color));
     synchronized (session) {

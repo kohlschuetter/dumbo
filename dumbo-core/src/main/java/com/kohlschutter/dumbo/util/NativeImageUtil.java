@@ -31,6 +31,8 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
+
 public final class NativeImageUtil {
   private static final Logger LOG = LoggerFactory.getLogger(NativeImageUtil.class);
 
@@ -61,6 +63,7 @@ public final class NativeImageUtil {
   }
 
   @SuppressWarnings("PMD.PreserveStackTrace")
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN")
   private static Path urlToPath(URL url) {
     URI uri;
     try {

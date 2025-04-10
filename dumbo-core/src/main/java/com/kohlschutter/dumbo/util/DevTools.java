@@ -22,6 +22,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.api.DumboServer;
 
 /**
@@ -81,10 +82,15 @@ public final class DevTools {
    * @param url The URL to open.
    * @throws IOException on error.
    */
+  @SuppressFBWarnings("COMMAND_INJECTION")
   public static void openURL(String url) throws IOException {
     if (SUPPORTED_OS) {
-      LOG.info("Opening page in browser: {}", url);
-      Runtime.getRuntime().exec(new String[] {"/usr/bin/open", url});
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        LOG.info("Opening page in browser: {}", url);
+        Runtime.getRuntime().exec(new String[] {"/usr/bin/open", url});
+      } else {
+        LOG.error("Cannot open URL in browser: {}", url);
+      }
     } else {
       LOG.warn("Cannot page in browser (unsupported): {}", url);
     }

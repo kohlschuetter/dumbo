@@ -17,14 +17,14 @@
 package com.kohlschutter.dumbo.console;
 
 import com.kohlschutter.dumbo.annotations.DumboService;
-import com.kohlschutter.dumbo.api.Console;
 
 /**
  * Provides access to an object-oriented console ("System.out").
  *
- * @see Console
+ * @see com.kohlschutter.dumbo.api.Console
  */
 @DumboService(rpcName = "ConsoleService")
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ConsoleService {
   /**
    * Requests the next chunk of input readable from the console.

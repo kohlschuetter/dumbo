@@ -32,6 +32,8 @@ import org.eclipse.jetty.ee10.jsp.JettyJspServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
+
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -49,6 +51,34 @@ final class JspCachingServlet extends JettyJspServlet {
   public void init() throws ServletException {
     super.init();
     this.context = getServletContext();
+  }
+
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN") // FIXME double-check ?
+  private File generatedFileFromPath(String realPath) {
+    return new File(realPath);
+  }
+
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN")
+  private File createTempFileRelativeTo(File generatedFile) throws IOException {
+    File generatedFileParent = generatedFile.getParentFile();
+    if (!generatedFileParent.canWrite()) {
+      LOG.warn("Cannot write to location: {}", generatedFile);
+      return null;
+    }
+
+    return File.createTempFile(".jsp", ".tmp", generatedFileParent);
+  }
+
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN")
+  private File generatedFileUnderTmp(String contextRealPath, String p) {
+    File f = new File(contextRealPath, p);
+    if (!contextRealPath.endsWith(File.separator)) {
+      contextRealPath += File.separator;
+    }
+    if (!f.toString().startsWith(contextRealPath)) {
+      throw new IllegalStateException("Bad path: " + f + " doesn't start with " + contextRealPath);
+    }
+    return f;
   }
 
   @SuppressWarnings({"PMD.NcssCount", "PMD.CognitiveComplexity", "PMD.NPathComplexity"})
@@ -72,7 +102,7 @@ final class JspCachingServlet extends JettyJspServlet {
 
     File generatedFile;
     if (realPath != null) {
-      generatedFile = new File(realPath);
+      generatedFile = generatedFileFromPath(realPath);
     } else {
       if (DumboServerImpl.checkResourceExists(context, path) && !isReload) {
         LOG.debug("Generated file exists, and reload is not true for path {}", path);
@@ -91,7 +121,9 @@ final class JspCachingServlet extends JettyJspServlet {
         LOG.warn("Cannot get realpath for context path");
         return false;
       }
-      generatedFile = new File(contextRealPath, p.toString().replaceFirst("^/+", ""));
+
+      generatedFile = generatedFileUnderTmp(contextRealPath, p.toString().replaceFirst("^/+", ""));
+
       Path parentPath = generatedFile.toPath().getParent();
       if (parentPath != null) {
         Files.createDirectories(parentPath);
@@ -103,14 +135,10 @@ final class JspCachingServlet extends JettyJspServlet {
       return false;
     }
 
-    File generatedFileParent = generatedFile.getParentFile();
-    if (!generatedFileParent.canWrite()) {
-      LOG.warn("Cannot write to location: {}", generatedFile);
+    File tmpFile = createTempFileRelativeTo(generatedFile);
+    if (tmpFile == null) {
       return false;
     }
-
-    // long time = System.currentTimeMillis();
-    File tmpFile = File.createTempFile(".jsp", ".tmp", generatedFileParent);
 
     AtomicInteger status = new AtomicInteger(HttpServletResponse.SC_OK);
     AtomicBoolean generate = new AtomicBoolean(true);

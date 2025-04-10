@@ -188,7 +188,7 @@ public class DumboServerImpl implements DumboServer {
   private final DumboTLSConfig tlsConfig;
 
   @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
-  @SuppressFBWarnings({"EI_EXPOSE_REP2", "CT_CONSTRUCTOR_THROW"})
+  @SuppressFBWarnings({"CT_CONSTRUCTOR_THROW"})
   DumboServerImpl(boolean prewarm, InetAddress bindAddr, int tcpPort, String socketPath,
       DumboTLSConfig tlsConfig, Collection<ServerApp> apps, RequestLog requestLog, Path[] paths,
       String[] urlPaths) throws IOException {
@@ -393,6 +393,7 @@ public class DumboServerImpl implements DumboServer {
     }
   }
 
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN")
   private Resource combinedResource(URI... uris) throws IOException {
     ResourceFactory factory = ResourceFactory.root();
     List<Resource> list = new ArrayList<>(uris.length);
@@ -664,6 +665,7 @@ public class DumboServerImpl implements DumboServer {
    * @return The context.
    * @throws IOException on error.
    */
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN")
   public WebAppContext registerContext(ComponentImpl comp, ServerApp app,
       final String contextPrefix, final URL pathToWebAppURL) throws IOException {
     URI resourceBaseUri;
@@ -758,6 +760,7 @@ public class DumboServerImpl implements DumboServer {
     holderDefaultServlet.setInitParameter("stylesheet", "/css/jetty-dir.css");
   }
 
+  @SuppressWarnings({"PMD.NcssCount", "PMD.CognitiveComplexity"})
   private void mapServlets(ServletContext servletContext, ComponentImpl comp, ServletHandler sh,
       Set<String> pathFilters) {
     Map<String, ServletMapping> mappings = new HashMap<>();
@@ -852,10 +855,12 @@ public class DumboServerImpl implements DumboServer {
             } else {
               value = String.valueOf(val);
             }
+          } catch (IllegalStateException e) {
+            throw e;
           } catch (NoSuchMethodException e) {
             throw new IllegalStateException(
                 "Annotation has custom valueType but value is not a static method in the specified class: "
-                    + initParam, e);
+                    + initParam, e); // NOPMD.ExceptionAsFlowControl
           } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException(
                 "Annotation has custom valueType but value cannot be retrieved: " + initParam, e);
@@ -1234,6 +1239,7 @@ public class DumboServerImpl implements DumboServer {
     t.start();
   }
 
+  @SuppressWarnings("PMD.NPathComplexity")
   private void prewarmContent() {
     if (!prewarm) {
       LOG.debug("Prewarm disabled");
@@ -1440,6 +1446,7 @@ public class DumboServerImpl implements DumboServer {
    * @return The connector(s).
    * @throws IOException on error.
    */
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN")
   protected Connector[] initConnectors(InetAddress address, int tcpPort, String socketPath,
       DumboTLSConfig tls, Server targetServer) throws IOException {
     String dumboSocketId;

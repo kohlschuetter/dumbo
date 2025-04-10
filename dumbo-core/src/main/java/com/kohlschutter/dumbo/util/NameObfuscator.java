@@ -21,6 +21,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
+
+@SuppressFBWarnings("WEAK_MESSAGE_DIGEST_SHA1")
 public final class NameObfuscator {
   private static final ThreadLocal<MessageDigest> TL_SHA1 = SuppliedThreadLocal.of(() -> {
     try {

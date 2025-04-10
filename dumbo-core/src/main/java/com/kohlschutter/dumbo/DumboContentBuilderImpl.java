@@ -50,7 +50,7 @@ public class DumboContentBuilderImpl implements DumboContentBuilder {
 
   private Path outputPath;
   private String primaryHostname;
-  private Set<String> visitRelativeUrls = new HashSet<>();
+  private final Set<String> visitRelativeUrls = new HashSet<>();
   private boolean createCNAMEFile;
   private Path jspSourceOutputPath;
   private Path jspClassOutputPath;

@@ -188,6 +188,7 @@ public final class ServerApp implements Closeable, DumboServiceProvider {
     }
   }
 
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN")
   synchronized void init(DumboServerImpl server, String path) throws IOException {
     if (appServer != null) {
       throw new IllegalStateException("Already initialized");
@@ -354,6 +355,7 @@ public final class ServerApp implements Closeable, DumboServiceProvider {
     return staticDesignMode;
   }
 
+  @SuppressFBWarnings("AT_STALE_THREAD_WRITE_OF_PRIMITIVE")
   void setStaticDesignMode(boolean on) {
     this.staticDesignMode = on;
   }

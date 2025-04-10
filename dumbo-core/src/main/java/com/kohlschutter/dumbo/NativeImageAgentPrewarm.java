@@ -1,7 +1,6 @@
 /*
- * dumbo-core
- *
- * Copyright 2023 Christian Kohlschütter
+ * Copyright 2022,2023 Christian Kohlschütter
+ * Copyright 2014,2015 Evernote Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +24,7 @@ import com.kohlschutter.dumbo.api.DumboContentBuilder;
 /**
  * "Prewarms" GraalVM native-image-agent, so it learns about reflective access, etc., necessary for
  * some Dumbo application.
- * 
+ *
  * @author Christian Kohlschütter
  */
 public class NativeImageAgentPrewarm {

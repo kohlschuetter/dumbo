@@ -16,6 +16,7 @@
  */
 package com.kohlschutter.dumbo.api;
 
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface EventHandler {
   void onAppLoaded(DumboSession session);
 }

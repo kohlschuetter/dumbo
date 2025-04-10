@@ -21,6 +21,8 @@ import java.util.AbstractMap;
 import java.util.BitSet;
 import java.util.Map;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
+
 /**
  * An {@link Appendable} that multiplexes calls to zero or more {@link Appendable}s.
  *
@@ -111,6 +113,7 @@ public class MultiplexedAppendable implements Appendable {
      * @param targets The targets.
      * @return An {@link Appendable} that either is a {@link SuppressErrorsAppendable}, or not.
      */
+    @SuppressFBWarnings("HSM_HIDING_METHOD")
     public static Appendable multiplexIfNecessary(Appendable... targets) {
       Appendable onlyOne = checkIfOnlyOneNonNull(targets);
       if (onlyOne != null) {
