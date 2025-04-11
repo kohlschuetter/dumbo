@@ -105,6 +105,7 @@ import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.annotations.FilterMapping;
 import com.kohlschutter.dumbo.annotations.Filters;
 import com.kohlschutter.dumbo.annotations.ServletContextAttribute;
+import com.kohlschutter.dumbo.annotations.ServletContextAttributes;
 import com.kohlschutter.dumbo.annotations.ServletInitParameter;
 import com.kohlschutter.dumbo.annotations.ServletMapping;
 import com.kohlschutter.dumbo.annotations.Servlets;
@@ -776,8 +777,11 @@ public class DumboServerImpl implements DumboServer {
           }
         }
       }
+    }
 
-      for (ServletContextAttribute at : s.contextAttributes()) {
+    for (ServletContextAttributes s : comp.getAnnotatedMappingsFromAllReachableComponents(
+        ServletContextAttributes.class)) {
+      for (ServletContextAttribute at : s.value()) {
         String name = at.key();
         Class<?> valueProvider = at.valueProvider();
         String methodName = at.method();

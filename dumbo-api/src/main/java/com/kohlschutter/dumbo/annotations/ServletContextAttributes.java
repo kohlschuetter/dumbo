@@ -22,10 +22,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies a set of servlet mappings.
+ * Specifies a set of servlet context attributes.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Servlets {
-  ServletMapping[] value() default {};
+public @interface ServletContextAttributes {
+  ServletContextAttribute[] value() default {};
 }
