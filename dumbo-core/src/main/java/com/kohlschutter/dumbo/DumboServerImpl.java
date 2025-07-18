@@ -415,6 +415,10 @@ public class DumboServerImpl implements DumboServer {
       }
 
       r = factory.newResource(u);
+      if (r.isAlias()) {
+        // usually translates "jar:file:/path/to/dir" to "jar:file:///path/to/dir/"
+        r = factory.newResource(r.getRealURI());
+      }
       list.add(r);
     }
     return ResourceFactory.combine(list);
