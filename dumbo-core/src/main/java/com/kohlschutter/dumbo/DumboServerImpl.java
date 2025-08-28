@@ -1288,11 +1288,11 @@ public class DumboServerImpl implements DumboServer {
       }
       return p;
     }).filter((p) -> {
-      if (p == null || p.isEmpty() || p.startsWith("/") || p.contains("//") || p.contains(":")) {
+      if (p == null || p.startsWith("/") || p.contains("//") || p.contains(":")) {
         LOG.warn("Skipping illegal URL path for prewarming: {}", p);
         return false;
       } else {
-        LOG.info("Prewarming URL path: {}", p);
+        LOG.info("Prewarming URL path: {}/{}", baseURI, p);
         return true;
       }
     }).forEach(relativePaths::add);
