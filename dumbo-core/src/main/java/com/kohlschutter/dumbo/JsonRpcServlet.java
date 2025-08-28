@@ -37,6 +37,7 @@ import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.dumbo.api.DumboSession;
 import com.kohlschutter.dumbo.console.ConsoleService;
@@ -200,6 +201,7 @@ class JsonRpcServlet extends HttpServlet {
   @SuppressWarnings({
       "PMD.NcssCount", "PMD.CognitiveComplexity", "PMD.NPathComplexity",
       "PMD.CyclomaticComplexity"})
+  @SuppressFBWarnings("URL_REWRITING")
   private void doPost0(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
 
