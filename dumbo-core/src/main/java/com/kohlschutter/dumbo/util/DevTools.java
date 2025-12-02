@@ -92,7 +92,7 @@ public final class DevTools {
         LOG.error("Cannot open URL in browser: {}", url);
       }
     } else {
-      LOG.warn("Cannot page in browser (unsupported): {}", url);
+      LOG.warn("Cannot open page in browser (unsupported): {}", url);
     }
   }
 
