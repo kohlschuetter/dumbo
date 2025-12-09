@@ -328,7 +328,7 @@ public class DumboServerImpl implements DumboServer {
 
       if (tls && tlsConfig != null) {
         String hostname = tlsConfig.getHostname();
-        if (hostname == null) {
+        if (hostname == null || DumboTLSConfig.HOSTNAME_BIND_ANY.equals(hostname)) {
           hostname = networkHostname.get();
         }
         try {
@@ -1501,7 +1501,7 @@ public class DumboServerImpl implements DumboServer {
     httpsConfig.setSecurePort(securePort); // FIXME
     httpsConfig.setSecureScheme("https");
     httpsConfig.setSendServerVersion(false);
-    httpsConfig.addCustomizer(new SecureRequestCustomizer());
+    httpsConfig.addCustomizer(new SecureRequestCustomizer(tls.isRequireSni()));
     // httpsConfig.setOutputBufferSize(64 * 1024);
 
     SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
@@ -1516,8 +1516,10 @@ public class DumboServerImpl implements DumboServer {
     connector.setReusePort(true);
 
     String hostname = tls.getHostname();
-    if (hostname == null) {
+    if (hostname == /* null */DumboTLSConfig.HOSTNAME_DERIVE) {
       hostname = networkHostname.get();
+    } else if (DumboTLSConfig.HOSTNAME_BIND_ANY.equals(hostname)) {
+      hostname = null; // bind any
     }
     connector.setHost(hostname);
 

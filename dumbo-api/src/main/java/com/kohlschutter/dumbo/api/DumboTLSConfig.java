@@ -19,25 +19,36 @@ package com.kohlschutter.dumbo.api;
 import java.nio.file.Path;
 
 public final class DumboTLSConfig {
+  public static final String HOSTNAME_BIND_ANY = "*";
+  public static final String HOSTNAME_DERIVE = null;
+
   private final String hostname;
+  private final boolean requireSni;
   private final int port;
   private final Path keystore;
   private final String keystorePassword;
 
-  private DumboTLSConfig(String hostname, int port, Path keystore, String password) {
+  private DumboTLSConfig(String hostname, boolean requireSni, int port, Path keystore,
+      String password) {
     this.hostname = hostname;
+    this.requireSni = requireSni;
     this.port = port;
     this.keystore = keystore;
     this.keystorePassword = password;
   }
 
   public static DumboTLSConfig withPortAndKeystore(int port, Path keystore, String password) {
-    return withPortAndKeystore(null, port, keystore, password);
+    return withPortAndKeystore(HOSTNAME_BIND_ANY, false, port, keystore, password);
   }
 
   public static DumboTLSConfig withPortAndKeystore(String hostname, int port, Path keystore,
       String password) {
-    return new DumboTLSConfig(hostname, port, keystore, password);
+    return withPortAndKeystore(hostname, false, port, keystore, password);
+  }
+
+  public static DumboTLSConfig withPortAndKeystore(String hostname, boolean requireSni, int port,
+      Path keystore, String password) {
+    return new DumboTLSConfig(hostname, requireSni, port, keystore, password);
   }
 
   public int getPort() {
@@ -54,5 +65,9 @@ public final class DumboTLSConfig {
 
   public String getHostname() {
     return hostname;
+  }
+
+  public boolean isRequireSni() {
+    return requireSni;
   }
 }
