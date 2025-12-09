@@ -90,8 +90,10 @@ public final class JSONKeyEncoder implements KeyEncoder {
     JSONKeyEncoder p = this.parent;
     if (p != null) {
       p.object.put(parentKey, this.object);
+      return p;
+    } else {
+      return this;
     }
-    return p;
   }
 
   @Override
