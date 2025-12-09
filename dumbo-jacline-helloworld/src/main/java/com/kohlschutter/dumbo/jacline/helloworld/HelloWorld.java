@@ -22,12 +22,12 @@ import java.io.IOException;
 import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.jacline.annotations.JsEntryPoint;
 import com.kohlschutter.jacline.annotations.JsExport;
+import com.kohlschutter.jacline.lib.coding.ArrayDecoder;
+import com.kohlschutter.jacline.lib.coding.ArrayEncoder;
 import com.kohlschutter.jacline.lib.coding.Codable;
 import com.kohlschutter.jacline.lib.coding.CodingException;
-import com.kohlschutter.jacline.lib.coding.CodingProviders;
 import com.kohlschutter.jacline.lib.coding.Decodables;
 import com.kohlschutter.jacline.lib.coding.KeyDecoder;
-import com.kohlschutter.jacline.lib.coding.KeyDecoderProvider;
 import com.kohlschutter.jacline.lib.coding.KeyEncoder;
 import com.kohlschutter.jacline.lib.coding.KeyEncoderProvider;
 import com.kohlschutter.jacline.lib.coding.StandardArrayDecoders;
@@ -75,12 +75,13 @@ public class HelloWorld implements Codable {
   }
 
   @JsExport
-  public static HelloWorld decode(KeyDecoderProvider provider, Object obj) throws CodingException {
-    try (KeyDecoder jl = CodingProviders.decorateDecoderProvider(provider).load(CODED_TYPE, obj)) {
-      HelloWorld hw = new HelloWorld();
-      hw.setMessage(jl.stringForKey("message"));
+  public static HelloWorld decode(KeyDecoder dec) throws CodingException {
+    try (ArrayDecoder<String> stringsDecoder = StandardArrayDecoders.strings(dec)) {
 
-      hw.array = jl.arrayForKey("arr", StandardArrayDecoders::strings);
+      HelloWorld hw = new HelloWorld();
+      hw.setMessage(dec.stringForKey("message"));
+
+      hw.array = dec.arrayForKey("arr", stringsDecoder);
 
       return hw;
     } catch (IOException e) {
@@ -92,11 +93,14 @@ public class HelloWorld implements Codable {
   @JsExport
   @SuppressFBWarnings("CNT_ROUGH_CONSTANT_VALUE")
   public Object encode(KeyEncoderProvider provider) throws CodingException {
-    KeyEncoder enc = CodingProviders.decorateEncoderProvider(provider).begin(CODED_TYPE);
-    enc.encodeString("message", message);
-    enc.beginEncodeObject("obj", "someObj").encodeBoolean("cool", true).encodeNumber("pi", 3.14)
-        .end();
-    enc.encodeArray("arr", StandardArrayEncoders::strings, array);
-    return enc.getEncoded();
+    try (KeyEncoder enc = provider.keyEncoder(CODED_TYPE);
+        ArrayEncoder stringsEncoder = StandardArrayEncoders.strings(enc)) {
+
+      enc.encodeString("message", message);
+      enc.beginEncodeObject("obj", "someObj").encodeBoolean("cool", true).encodeNumber("pi", 3.14)
+          .end();
+      enc.encodeArray("arr", stringsEncoder, array);
+      return enc.getEncoded();
+    }
   }
 }

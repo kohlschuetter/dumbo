@@ -22,6 +22,7 @@ import java.util.Map;
 import com.kohlschutter.jacline.annotations.JsEntryPoint;
 import com.kohlschutter.jacline.lib.coding.Codable;
 import com.kohlschutter.jacline.lib.coding.CodingException;
+import com.kohlschutter.jacline.lib.coding.CodingServiceProvider;
 import com.kohlschutter.jacline.lib.coding.KeyEncoder;
 import com.kohlschutter.jacline.lib.log.CommonLog;
 import com.kohlschutter.jacline.lib.util.JaclineUtil;
@@ -34,19 +35,19 @@ final class JaclineInit {
     }
   }
 
+  private static final CodingServiceProvider CSP = CodingServiceProvider.getDefault();
+
   @SuppressWarnings("PMD.CognitiveComplexity")
   static Object preMarshallObject(Object obj) {
     if (obj instanceof Codable) {
       try {
-        obj = ((Codable) obj).encode(KeyEncoder::begin);
+        obj = ((Codable) obj).encode(CSP);
       } catch (CodingException e) {
         CommonLog.error("Could not encode object for Jacline", e);
         throw new IllegalStateException(e);
       }
     } else if (obj instanceof Map) {
-      try {
-        KeyEncoder kenc = KeyEncoder.begin("java.util.HashMap").beginEncodeObject("map", null);
-
+      try (KeyEncoder kenc = CSP.keyEncoder("java.util.HashMap").beginEncodeObject("map", null)) {
         for (Map.Entry<?, ?> en : ((Map<?, ?>) obj).entrySet()) {
           String key = String.valueOf(en.getKey());
           Object val = preMarshallObject(en.getValue());

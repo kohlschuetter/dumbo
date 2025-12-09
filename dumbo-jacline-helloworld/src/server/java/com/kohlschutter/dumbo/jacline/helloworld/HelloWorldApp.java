@@ -18,20 +18,17 @@ package com.kohlschutter.dumbo.jacline.helloworld;
 
 import java.io.IOException;
 
-import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.Services;
-import com.kohlschutter.dumbo.api.DumboApplication;
 import com.kohlschutter.dumbo.api.DumboServer;
 import com.kohlschutter.dumbo.api.DumboServerBuilder;
-import com.kohlschutter.dumbo.appdefaults.AppDefaultsSupport;
+import com.kohlschutter.dumbo.jacline.JaclineDumboApplication;
 import com.kohlschutter.dumbo.util.DevTools;
 
 /**
  * A simple "Hello world" demo.
  */
 @Services({DemoServiceImpl.class})
-@JavaScriptResource({"js/jacline-generated.js"}) // see pom.xml
-public class HelloWorldApp implements DumboApplication, AppDefaultsSupport {
+public class HelloWorldApp implements JaclineDumboApplication {
   public static void main(String[] args) throws IOException, InterruptedException {
     DumboServer server = DumboServerBuilder.begin() //
         .initFromEnvironmentVariables() //

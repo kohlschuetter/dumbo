@@ -23,6 +23,7 @@ import com.kohlschutter.dumbo.annotations.DumboService;
 import com.kohlschutter.jacline.annotations.JsImplementationProvidedSeparately;
 import com.kohlschutter.jacline.annotations.JsImport;
 import com.kohlschutter.jacline.lib.coding.CodingException;
+import com.kohlschutter.jacline.lib.coding.CodingServiceProvider;
 import com.kohlschutter.jacline.lib.coding.Decodables;
 import com.kohlschutter.jacline.lib.coding.Decoder;
 import com.kohlschutter.jacline.lib.coding.Dictionary;
@@ -151,13 +152,14 @@ public class Dumbo {
   public static <T> void registerConsoleObject(
       Dictionary<JsFunctionCallback<? extends Object, Object>> javaClassMap, Class<T> klazz,
       JsFunctionCallback<T, Object> fc) {
+    final CodingServiceProvider CSP = CodingServiceProvider.getDefault();
     String key = Dumbo.resolveServiceTypeFromAlias(klazz);
     if (key == null) {
       throw new IllegalArgumentException("Not registered: " + klazz);
     }
     javaClassMap.put(key, (jsObj) -> {
-      try {
-        return fc.apply((T) Decodables.getDecoder(key).decode(null, jsObj));
+      try (KeyDecoder dec = CSP.keyDecoder(KeyDecoder.ANY_CODED_TYPE, jsObj)) {
+        return fc.apply((T) Decodables.getDecoder(key).decode(dec));
       } catch (CodingException e) {
         CommonLog.error("Coding exception", e);
         return null;
@@ -200,10 +202,12 @@ public class Dumbo {
 
   @JsOverlay
   static void registerMarshallFiltersForJacline() {
-    Dumbo.registerMarshallFilters((o) -> JaclineInit.preMarshallObject(o), (javaClass, u) -> {
-      if (javaClass != null && Decodables.hasDecoder(javaClass)) {
-        try {
-          u = Decodables.getDecoder(javaClass).decode(KeyDecoder::load, u);
+    Dumbo.registerMarshallFilters((o) -> JaclineInit.preMarshallObject(o), (javaType, u) -> {
+      final CodingServiceProvider CSP = CodingServiceProvider.getDefault();
+
+      if (javaType != null && Decodables.hasDecoder(javaType)) {
+        try (KeyDecoder dec = CSP.keyDecoder(javaType, u)) {
+          u = Decodables.getDecoder(javaType).decode(dec);
         } catch (CodingException e) {
           CommonLog.error("Could not decode object for Jacline", e);
           throw new IllegalStateException(e);
