@@ -43,7 +43,7 @@ final class JaclineInit {
       try {
         obj = ((Codable) obj).encode(CSP);
       } catch (CodingException e) {
-        CommonLog.error("Could not encode object for Jacline", e);
+        CommonLog.error("Could not encode object for Jacline: CodingException", e);
         throw new IllegalStateException(e);
       }
     } else if (obj instanceof Map) {
@@ -66,6 +66,9 @@ final class JaclineInit {
           }
         }
         obj = kenc.end().end().getEncoded();
+      } catch (RuntimeException e) {
+        CommonLog.error("Could not encode object for Jacline", e);
+        throw e;
       } catch (Exception e) { // NOPMD
         CommonLog.error("Could not encode object for Jacline", e);
         throw new IllegalStateException(e);
