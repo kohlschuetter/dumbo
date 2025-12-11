@@ -122,6 +122,7 @@ import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.SessionCookieConfig;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
@@ -310,7 +311,7 @@ public class DumboServerImpl implements DumboServer {
     wac.setBaseResource(res);
     registerContext(wac, URI.create("/sourcemaps/"));
 
-    initMainWebAppContextCommon(wac, null);
+    initWebAppContextCommonMainApp(wac, null);
     initDefaultServlet(wac.getServletHandler());
   }
 
@@ -360,7 +361,7 @@ public class DumboServerImpl implements DumboServer {
     final WebAppContext wac = new WebAppContext(res, app.getContextPath());
     wac.setBaseResource(res);
 
-    initMainWebAppContextCommon(wac, app);
+    initWebAppContextCommonMainApp(wac, app);
 
     Predicate<String> filteredPathsPredicate = initWebAppContext(app, app
         .getApplicationExtensionImpl(), wac);
@@ -379,15 +380,22 @@ public class DumboServerImpl implements DumboServer {
     Resource res = combinedResource(app.getWebappWorkDir().toPath(), paths);
     final WebAppContext wac = new WebAppContext(res, app.getContextPath());
     wac.setBaseResource(res);
-    initMainWebAppContextCommon(wac, app);
+    initWebAppContextCommonMainApp(wac, app);
     initWebAppContext(app, app.getApplicationExtensionImpl(), wac);
     registerContext(wac, null);
     return wac;
   }
 
-  private void initMainWebAppContextCommon(WebAppContext wac, ServerApp app) throws IOException {
+  private void initWebAppContextCommon(WebAppContext wac, ServerApp app) throws IOException {
     wac.setLogger(LOG);
     wac.addServletContainerInitializer(new JettyJasperInitializer());
+
+    SessionCookieConfig sessionCookieConfig = wac.getSessionHandler().getSessionCookieConfig();
+    sessionCookieConfig.setHttpOnly(true);
+  }
+
+  private void initWebAppContextCommonMainApp(WebAppContext wac, ServerApp app) throws IOException {
+    initWebAppContextCommon(wac, app);
     if (app != null) {
       wac.setTempDirectory(new File(app.getWorkDir(), "jetty.tmp"));
       wac.setTempDirectoryPersistent(true);
@@ -710,8 +718,7 @@ public class DumboServerImpl implements DumboServer {
     WebAppContext wac = new WebAppContext(res, prefix);
 
     wac.setBaseResource(res);
-    wac.setLogger(LOG);
-    wac.addServletContainerInitializer(new JettyJasperInitializer());
+    initWebAppContextCommon(wac, app);
 
     Predicate<String> filteredPathsPredicate = initWebAppContext(app, comp, wac);
     if (cachedPaths == null) {
