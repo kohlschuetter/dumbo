@@ -345,6 +345,16 @@ public final class ServerApp implements Closeable, DumboServiceProvider {
   }
 
   /**
+   * Returns the extension registered with this app for the given component class.
+   * 
+   * @param componentClass The component class.
+   * @return The extension, or {@code null}.
+   */
+  ExtensionImpl getExtensionByClass(Class<? extends DumboComponent> componentClass) {
+    return extensions.get(componentClass);
+  }
+
+  /**
    * Checks whether static design mode is enabled.
    *
    * If enabled, {@link #onStart()} will not be called.

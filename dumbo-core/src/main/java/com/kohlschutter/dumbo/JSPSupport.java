@@ -69,6 +69,31 @@ public final class JSPSupport {
     }
   }
 
+  /**
+   * Returns an absolute path (from the server root) for a path relative to the given component
+   * class.
+   * 
+   * @param session The current Http session.
+   * @param componentClass The reference component class
+   * @param relativePath The path relative to the component's root.
+   * @return The absolute path.
+   */
+  public static String componentPath(final HttpSession session,
+      Class<? extends DumboComponent> componentClass, String relativePath) {
+    ServerApp app = getApp(session);
+    if (app == null) {
+      return null; // FIXME
+    }
+    ExtensionImpl ext = app.getExtensionByClass(componentClass);
+    if (ext == null) {
+      return null; // FIXME
+    }
+    if (!relativePath.startsWith("/")) {
+      relativePath = "/" + relativePath;
+    }
+    return app.getContextPath() + ext.getExtensionPath() + relativePath; // FIXME
+  }
+
   public static String htmlHead(final ServerApp app) {
     // RenderState.get().setMarkedUsedAllComponents(true);
     return ExtensionResourceHelper.htmlHead(app).toString();
