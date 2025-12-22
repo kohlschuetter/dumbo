@@ -37,6 +37,8 @@ import com.kohlschutter.dumbo.annotations.HTMLResource.Target;
 import com.kohlschutter.dumbo.annotations.HTMLResources;
 import com.kohlschutter.dumbo.annotations.JavaScriptResource;
 import com.kohlschutter.dumbo.annotations.JavaScriptResources;
+import com.kohlschutter.dumbo.annotations.WebAssemblyResource;
+import com.kohlschutter.dumbo.annotations.WebAssemblyResources;
 import com.kohlschutter.dumbo.api.DumboComponent;
 import com.kohlschutter.dumbo.util.NameObfuscator;
 import com.kohlschutter.dumbo.util.NativeImageUtil;
@@ -59,6 +61,7 @@ final class ExtensionImpl extends ComponentImpl {
   private List<JavaScriptResource> jsResources;
   private List<CSSResource> cssResources;
   private List<HTMLResource> htmlResources;
+  private List<WebAssemblyResource> wasmResources;
 
   ExtensionImpl(Class<? extends DumboComponent> comp, boolean isAppComponent) {
     super(comp);
@@ -124,6 +127,10 @@ final class ExtensionImpl extends ComponentImpl {
     this.htmlResources = getComponentAnnotations(HTMLResource.class);
     getComponentAnnotations(HTMLResources.class).stream().map((k) -> k.value()).flatMap(Stream::of)
         .collect(() -> htmlResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
+
+    this.wasmResources = getComponentAnnotations(WebAssemblyResource.class);
+    getComponentAnnotations(WebAssemblyResources.class).stream().map((k) -> k.value()).flatMap(Stream::of)
+        .collect(() -> wasmResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
   }
 
   /**
@@ -261,6 +268,10 @@ final class ExtensionImpl extends ComponentImpl {
       for (String path : html.value()) {
         sb.append(getContentsOfResource(path));
       }
+    }
+
+    for (WebAssemblyResource wasm : wasmResources) {
+      // FIXME?
     }
 
     return sb;
