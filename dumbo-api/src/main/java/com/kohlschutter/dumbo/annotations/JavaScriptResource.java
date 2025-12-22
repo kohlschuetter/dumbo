@@ -64,4 +64,11 @@ public @interface JavaScriptResource {
    * @return {@code true} if enabled.
    */
   boolean defer() default false;
+
+  /**
+   * Marks this Javascript resource as an ES Module (type="module").
+   * 
+   * @return {@code true} if enabled.
+   */
+  boolean module() default false;
 }

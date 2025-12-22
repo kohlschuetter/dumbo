@@ -236,7 +236,14 @@ final class ExtensionImpl extends ComponentImpl {
           }
         }
 
-        CharSequence s = "<script type=\"text/javascript\" src=\"" + xmlEntities(url) + "\"" + defer
+        String type;
+        if (js.module()) {
+          type = "module";
+        } else {
+          type = "text/javascript";
+        }
+
+        CharSequence s = "<script type=\"" + type + "\" src=\"" + xmlEntities(url) + "\"" + defer
             + async + "></script>\n";
         if (js.optional()) {
           s = StringHolder.withConditionalStringHolder(StringHolder.withContent(s),
