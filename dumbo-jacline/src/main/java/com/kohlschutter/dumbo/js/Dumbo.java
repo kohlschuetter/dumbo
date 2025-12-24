@@ -152,13 +152,13 @@ public class Dumbo {
   public static <T> void registerConsoleObject(
       Dictionary<JsFunctionCallback<? extends Object, Object>> javaClassMap, Class<T> klazz,
       JsFunctionCallback<T, Object> fc) {
-    final CodingServiceProvider CSP = CodingServiceProvider.getDefault();
+    final CodingServiceProvider csp = CodingServiceProvider.getDefault();
     String key = Dumbo.resolveServiceTypeFromAlias(klazz);
     if (key == null) {
       throw new IllegalArgumentException("Not registered: " + klazz);
     }
     javaClassMap.put(key, (jsObj) -> {
-      try (KeyDecoder dec = CSP.keyDecoder(KeyDecoder.ANY_CODED_TYPE, jsObj)) {
+      try (KeyDecoder dec = csp.keyDecoder(KeyDecoder.ANY_CODED_TYPE, jsObj)) {
         return fc.apply((T) Decodables.getDecoder(key).decode(dec));
       } catch (CodingException e) {
         CommonLog.error("Coding exception", e);
@@ -203,10 +203,10 @@ public class Dumbo {
   @JsOverlay
   static void registerMarshallFiltersForJacline() {
     Dumbo.registerMarshallFilters((o) -> JaclineInit.preMarshallObject(o), (javaType, u) -> {
-      final CodingServiceProvider CSP = CodingServiceProvider.getDefault();
+      final CodingServiceProvider csp = CodingServiceProvider.getDefault();
 
       if (javaType != null && Decodables.hasDecoder(javaType)) {
-        try (KeyDecoder dec = CSP.keyDecoder(javaType, u)) {
+        try (KeyDecoder dec = csp.keyDecoder(javaType, u)) {
           u = Decodables.getDecoder(javaType).decode(dec);
         } catch (CodingException e) {
           CommonLog.error("Could not decode object for Jacline", e);

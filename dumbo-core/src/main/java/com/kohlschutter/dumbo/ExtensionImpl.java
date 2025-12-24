@@ -115,6 +115,7 @@ final class ExtensionImpl extends ComponentImpl {
    * @see #registerCSS(String)
    * @see #registerJavaScript(String)
    */
+  @SuppressWarnings({"null", "PMD.UselessPureMethodCall"})
   private void initResources() {
     this.jsResources = getComponentAnnotations(JavaScriptResource.class);
     getComponentAnnotations(JavaScriptResources.class).stream().map((k) -> k.value()).flatMap(
@@ -129,8 +130,8 @@ final class ExtensionImpl extends ComponentImpl {
         .collect(() -> htmlResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
 
     this.wasmResources = getComponentAnnotations(WebAssemblyResource.class);
-    getComponentAnnotations(WebAssemblyResources.class).stream().map((k) -> k.value()).flatMap(Stream::of)
-        .collect(() -> wasmResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
+    getComponentAnnotations(WebAssemblyResources.class).stream().map((k) -> k.value()).flatMap(
+        Stream::of).collect(() -> wasmResources, (t, u) -> t.add(u), (t, u) -> t.addAll(u));
   }
 
   /**
@@ -270,9 +271,9 @@ final class ExtensionImpl extends ComponentImpl {
       }
     }
 
-    for (WebAssemblyResource wasm : wasmResources) {
-      // FIXME?
-    }
+    // for (WebAssemblyResource wasm : wasmResources) {
+    // // FIXME
+    // }
 
     return sb;
   }

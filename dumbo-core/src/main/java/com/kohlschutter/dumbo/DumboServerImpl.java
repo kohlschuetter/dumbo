@@ -386,7 +386,7 @@ public class DumboServerImpl implements DumboServer {
     return wac;
   }
 
-  private void initWebAppContextCommon(WebAppContext wac, ServerApp app) throws IOException {
+  private void initWebAppContextCommon(WebAppContext wac) throws IOException {
     wac.setLogger(LOG);
     wac.addServletContainerInitializer(new JettyJasperInitializer());
 
@@ -395,7 +395,7 @@ public class DumboServerImpl implements DumboServer {
   }
 
   private void initWebAppContextCommonMainApp(WebAppContext wac, ServerApp app) throws IOException {
-    initWebAppContextCommon(wac, app);
+    initWebAppContextCommon(wac);
     if (app != null) {
       wac.setTempDirectory(new File(app.getWorkDir(), "jetty.tmp"));
       wac.setTempDirectoryPersistent(true);
@@ -718,7 +718,7 @@ public class DumboServerImpl implements DumboServer {
     WebAppContext wac = new WebAppContext(res, prefix);
 
     wac.setBaseResource(res);
-    initWebAppContextCommon(wac, app);
+    initWebAppContextCommon(wac);
 
     Predicate<String> filteredPathsPredicate = initWebAppContext(app, comp, wac);
     if (cachedPaths == null) {
@@ -1523,7 +1523,7 @@ public class DumboServerImpl implements DumboServer {
     connector.setReusePort(true);
 
     String hostname = tls.getHostname();
-    if (hostname == /* null */DumboTLSConfig.HOSTNAME_DERIVE) {
+    if (hostname == null /* DumboTLSConfig.HOSTNAME_DERIVE */) {
       hostname = networkHostname.get();
     } else if (DumboTLSConfig.HOSTNAME_BIND_ANY.equals(hostname)) {
       hostname = null; // bind any

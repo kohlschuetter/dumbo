@@ -22,6 +22,7 @@ import java.util.Objects;
 
 import org.json.JSONObject;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.jacline.annotations.JsIgnoreType;
 import com.kohlschutter.jacline.lib.coding.ArrayEncoder;
 import com.kohlschutter.jacline.lib.coding.CodingAdvisory;
@@ -96,6 +97,7 @@ public final class JSONKeyEncoder implements KeyEncoder {
     }
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public JSONObject getEncoded() {
     return object;

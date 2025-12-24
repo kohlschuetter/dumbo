@@ -21,6 +21,7 @@ import java.util.Arrays;
 
 import org.json.JSONArray;
 
+import com.kohlschutter.annotations.compiletime.SuppressFBWarnings;
 import com.kohlschutter.jacline.annotations.JsIgnoreType;
 import com.kohlschutter.jacline.lib.coding.CodingException;
 import com.kohlschutter.jacline.lib.coding.ObjectEncoder;
@@ -85,6 +86,7 @@ public final class JSONSequenceEncoder implements SequenceEncoder {
     }
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public JSONArray getEncoded() {
     return array;

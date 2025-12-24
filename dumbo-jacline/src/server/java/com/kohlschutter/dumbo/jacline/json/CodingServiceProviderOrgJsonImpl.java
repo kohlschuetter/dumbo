@@ -7,7 +7,7 @@ import com.kohlschutter.jacline.lib.coding.KeyDecoder;
 import com.kohlschutter.jacline.lib.coding.KeyEncoder;
 
 @JsIgnoreType
-public class CodingServiceProviderOrgJsonImpl implements CodingServiceProvider {
+public final class CodingServiceProviderOrgJsonImpl implements CodingServiceProvider {
 
   static final CodingServiceProviderOrgJsonImpl INSTANCE = new CodingServiceProviderOrgJsonImpl();
 

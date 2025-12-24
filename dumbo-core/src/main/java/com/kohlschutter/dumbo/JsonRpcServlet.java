@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jetty.io.EofException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -99,16 +100,16 @@ class JsonRpcServlet extends HttpServlet {
           return t;
         }
       });
-      bridge.registerCallback(new InvocationCallback<HttpServletRequest>() {
+      bridge.registerCallback(new InvocationCallback<@NonNull HttpServletRequest>() {
 
         @Override
-        public void preInvoke(HttpServletRequest context, Object instance,
+        public void preInvoke(@NonNull HttpServletRequest context, Object instance,
             AccessibleObject accessibleObject, Object[] arguments) throws Exception {
           ThreadLocalRequestAccess.setHttpServletRequest(context);
         }
 
         @Override
-        public void postInvoke(HttpServletRequest context, Object instance,
+        public void postInvoke(@NonNull HttpServletRequest context, Object instance,
             AccessibleObject accessibleObject, Object result, Throwable error) throws Exception {
           ThreadLocalRequestAccess.setHttpServletRequest(null);
         }

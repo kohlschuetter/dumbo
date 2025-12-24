@@ -66,7 +66,7 @@ final class JaclineInit {
           }
         }
         obj = kenc.end().end().getEncoded();
-      } catch (RuntimeException e) {
+      } catch (RuntimeException e) { // NOPMD
         CommonLog.error("Could not encode object for Jacline", e);
         throw e;
       } catch (Exception e) { // NOPMD

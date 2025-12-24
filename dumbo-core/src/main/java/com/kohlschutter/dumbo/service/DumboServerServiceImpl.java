@@ -63,6 +63,7 @@ public class DumboServerServiceImpl implements DumboServerService {
     return proxy;
   }
 
+  @SuppressWarnings("null")
   @Override
   public <T> Collection<T> getDumboServices(Class<T> clazz) {
     DumboService ds = clazz.getAnnotation(DumboService.class);
